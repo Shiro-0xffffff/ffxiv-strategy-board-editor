@@ -2,13 +2,14 @@
 
 import { ReactNode, createContext, useState, useContext, useMemo, useCallback } from 'react'
 import { produce } from 'immer'
-import { StrategyBoardScene, StrategyBoardObject, sceneToShareCode, shareCodeToScene } from '@/lib/ffxiv-strategy-board'
+import { StrategyBoardScene, StrategyBoardBackground, StrategyBoardObject, sceneToShareCode, shareCodeToScene } from '@/lib/ffxiv-strategy-board'
 
 export interface StrategyBoardContextProps {
   scene: StrategyBoardScene
   importFromShareCode: (shareCode: string) => Promise<void>
   exportToShareCode: () => Promise<string>
   setName: (name: string) => void
+  setBackground: (background: StrategyBoardBackground) => void
   selectedObjectIndexes: number[]
   selectedObjects: StrategyBoardObject[]
   selectObjects: (indexes: number[]) => void
@@ -47,6 +48,11 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
       scene.name = name
     }))
   }, [scene, onSceneChange])
+  const setBackground = useCallback((background: StrategyBoardBackground): void => {
+    onSceneChange?.(produce(scene, scene => {
+      scene.background = background
+    }))
+  }, [scene, onSceneChange])
 
   const [selectedObjectIndexes, setSelectedObjectIndexes] = useState<number[]>([])
   const selectedObjects = useMemo(() => selectedObjectIndexes.map(index => scene.objects[index]), [scene.objects, selectedObjectIndexes])
@@ -71,6 +77,7 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     importFromShareCode,
     exportToShareCode,
     setName,
+    setBackground,
     selectedObjectIndexes,
     selectedObjects,
     selectObjects,

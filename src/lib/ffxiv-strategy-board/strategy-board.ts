@@ -1,12 +1,12 @@
 
 export enum StrategyBoardBackground {
-  None = 0x01,
-  Checkered = 0x02,
-  CheckeredCircleField = 0x03,
-  CheckeredSquareField = 0x04,
-  Gray = 0x05,
-  GrayCircleField = 0x06,
-  GraySquareField = 0x07,
+  None = 'none',
+  Checkered = 'checkered',
+  CheckeredCircleField = 'checkered-circle-field',
+  CheckeredSquareField = 'checkered-square-field',
+  Gray = 'gray',
+  GrayCircleField = 'gray-circle-field',
+  GraySquareField = 'gray-square-field',
 }
 
 export enum StrategyBoardObjectType {

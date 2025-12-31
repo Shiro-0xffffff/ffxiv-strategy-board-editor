@@ -55,3 +55,7 @@ export function crc32(data: Uint8Array): number {
   crc = crc ^ 0xffffffff
   return crc >>> 0
 }
+
+export function reverseMap<K, V>(map: Map<K, V>): Map<V, K> {
+  return new Map([...map].map(([key, value]) => [value, key]))
+}
