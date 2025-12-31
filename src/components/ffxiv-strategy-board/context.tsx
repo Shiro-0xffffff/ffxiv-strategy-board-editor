@@ -9,9 +9,9 @@ export interface StrategyBoardContextProps {
   importFromShareCode: (shareCode: string) => Promise<void>
   exportToShareCode: () => Promise<string>
   setName: (name: string) => void
-  selectedObjectIndex: number | null
-  selectedObject: StrategyBoardObject | null
-  selectObject: (index: number | null) => void
+  selectedObjectIndexes: number[]
+  selectedObjects: StrategyBoardObject[]
+  selectObjects: (indexes: number[]) => void
   toggleObjectVisible: (index: number) => void
   toggleObjectLocked: (index: number) => void
 }
@@ -48,11 +48,11 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     }))
   }, [scene, onSceneChange])
 
-  const [selectedObjectIndex, setSelectedObjectIndex] = useState<number | null>(null)
-  const selectedObject = useMemo(() => selectedObjectIndex === null ? null : scene.objects[selectedObjectIndex] ?? null, [scene, selectedObjectIndex])
+  const [selectedObjectIndexes, setSelectedObjectIndexes] = useState<number[]>([])
+  const selectedObjects = useMemo(() => selectedObjectIndexes.map(index => scene.objects[index]), [scene.objects, selectedObjectIndexes])
 
-  const selectObject = useCallback((index: number | null): void => {
-    setSelectedObjectIndex(index)
+  const selectObjects = useCallback((indexes: number[]): void => {
+    setSelectedObjectIndexes(indexes)
   }, [])
 
   const toggleObjectVisible = useCallback((index: number): void => {
@@ -71,9 +71,9 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     importFromShareCode,
     exportToShareCode,
     setName,
-    selectedObjectIndex,
-    selectedObject,
-    selectObject,
+    selectedObjectIndexes,
+    selectedObjects,
+    selectObjects,
     toggleObjectVisible,
     toggleObjectLocked,
   }

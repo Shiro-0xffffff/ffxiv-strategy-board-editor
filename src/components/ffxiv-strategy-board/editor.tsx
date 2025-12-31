@@ -51,17 +51,23 @@ function ObjectLibraryPanel() {
 }
 
 function PropertiesPanel() {
-  const { scene, selectedObject } = useStrategyBoard()
+  const { scene, selectedObjects } = useStrategyBoard()
 
-  return selectedObject ? (
+  return selectedObjects.length ? (
     <div className="size-full flex flex-col">
       <div className="p-4 flex items-center justify-between">
         <div className="font-semibold">图形属性</div>
       </div>
       <div className="flex-1 px-4 pb-4">
-        <div className="text-sm font-mono whitespace-pre">
-          {JSON.stringify(selectedObject, null, 2)}
-        </div>
+        {selectedObjects.length > 1 ? (
+          <div className="text-sm font-mono whitespace-pre">
+            {JSON.stringify(selectedObjects, null, 2)}
+          </div>
+        ) : (
+          <div className="text-sm font-mono whitespace-pre">
+            {JSON.stringify(selectedObjects[0], null, 2)}
+          </div>
+        )}
       </div>
     </div>
   ) : (
@@ -81,13 +87,13 @@ function PropertiesPanel() {
 function LayersPanelLayer(props: { object: StrategyBoardObject, index: number }) {
   const { object, index } = props
 
-  const { selectedObjectIndex, selectObject, toggleObjectVisible, toggleObjectLocked } = useStrategyBoard()
+  const { selectedObjectIndexes, selectObjects, toggleObjectVisible, toggleObjectLocked } = useStrategyBoard()
 
   const objectLibraryItem = objectLibrary.get(object.type)!
 
   const handleLayerClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
-    selectObject(index)
-  }, [index, selectObject])
+    selectObjects([index])
+  }, [index, selectObjects])
 
   const handleToggleLockedButtonClick = useCallback<MouseEventHandler<HTMLButtonElement>>(event => {
     event.stopPropagation()
@@ -101,8 +107,8 @@ function LayersPanelLayer(props: { object: StrategyBoardObject, index: number })
   return (
     <div
       className={cn('-mx-2 rounded p-2 flex items-center gap-2 hover:bg-muted cursor-pointer transition-colors', {
-        'hover:bg-muted': index !== selectedObjectIndex,
-        'z-10 inset-ring-1 ring-primary bg-primary/20': index === selectedObjectIndex,
+        'hover:bg-muted': !selectedObjectIndexes.includes(index),
+        'z-10 inset-ring-1 ring-primary bg-primary/20': selectedObjectIndexes.includes(index),
       })}
       onClick={handleLayerClick}
     >
@@ -154,11 +160,11 @@ function LayersPanel() {
 }
 
 function CanvasArea() {
-  const { selectObject } = useStrategyBoard()
+  const { selectObjects } = useStrategyBoard()
 
   const handleBackgroundClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
-    selectObject(null)
-  }, [selectObject])
+    selectObjects([])
+  }, [selectObjects])
   const handleCanvasContainerClick = useCallback<MouseEventHandler<HTMLDivElement>>(event => {
     event.stopPropagation()
   }, [])
