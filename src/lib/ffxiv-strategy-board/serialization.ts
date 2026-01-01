@@ -4,7 +4,7 @@ import {
   StrategyBoardObjectType,
   StrategyBoardObjectBase,
   StrategyBoardCommonObject,
-  StrategyBoardMechanicConeAoEObject,
+  StrategyBoardConeObject,
   StrategyBoardDonutObject,
   StrategyBoardMechanicLineStackObject,
   StrategyBoardMechanicLinearKnockbackObject,
@@ -440,7 +440,7 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
 
           // 扇形范围攻击
           case StrategyBoardObjectType.MechanicConeAoE:
-            const MechanicConeAoEObject: StrategyBoardMechanicConeAoEObject = {
+            const MechanicConeAoEObject: StrategyBoardConeObject = {
               ...objectBase,
               size: 100,
               angle: 0,

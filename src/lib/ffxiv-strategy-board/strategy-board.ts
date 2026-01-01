@@ -23,10 +23,44 @@ export enum StrategyBoardObjectType {
   SymbolArrow = 0x5e,
   SymbolRotate = 0x67,
 
-  // 敌人
-  EnemySmall = 0x3c,
-  EnemyMedium = 0x3e,
-  EnemyLarge = 0x40,
+  // 战斗机制
+  MechanicCircleAoE = 0x09,
+  MechanicConeAoE = 0x0a,
+  MechanicDonutAoE = 0x11,
+  MechanicMovingCircleAoE = 0x7e,
+
+  MechanicProximityAoE = 0x10,
+  MechanicTargetedProximityAoE = 0x6b,
+  MechanicStack = 0x0e,
+  MechanicMultiHitStack = 0x6a,
+  MechanicLineStack = 0x0f,
+  MechanicTankbuster = 0x6c,
+
+  MechanicRadialKnockback = 0x6d,
+  MechanicLinearKnockback = 0x6e,
+  MechanicGaze = 0x0d,
+  MechanicRotateClockwise = 0x8b,
+  MechanicRotateCounterclockwise = 0x8c,
+
+  MechanicTower = 0x6f,
+  MechanicTowerFor1 = 0x7f,
+  MechanicTowerFor2 = 0x80,
+  MechanicTowerFor3 = 0x81,
+  MechanicTowerFor4 = 0x82,
+
+  Targeted = 0x70,
+  TargetedRed = 0x83,
+  TargetedBlue = 0x84,
+  TargetedPurple = 0x85,
+  TargetedGreen = 0x86,
+
+  PairedCircle = 0x87,
+  PairedCross = 0x88,
+  PairedTriangle = 0x8a,
+  PairedSquare = 0x89,
+
+  Buff = 0x71,
+  Debuff = 0x72,
 
   // 职能
   RoleTank = 0x2f,
@@ -86,44 +120,10 @@ export enum StrategyBoardObjectType {
   ClassJobTHM = 0x18,
   ClassJobACN = 0x19,
 
-  // 战斗机制
-  MechanicCircleAoE = 0x09,
-  MechanicMovingCircleAoE = 0x7e,
-  MechanicConeAoE = 0x0a,
-  MechanicDonutAoE = 0x11,
-
-  MechanicProximityAoE = 0x10,
-  MechanicTargetedProximityAoE = 0x6b,
-  MechanicStack = 0x0e,
-  MechanicMultiHitStack = 0x6a,
-  MechanicLineStack = 0x0f,
-  MechanicTankbuster = 0x6c,
-
-  MechanicRadialKnockback = 0x6d,
-  MechanicLinearKnockback = 0x6e,
-  MechanicGaze = 0x0d,
-  MechanicRotateClockwise = 0x8b,
-  MechanicRotateCounterclockwise = 0x8c,
-
-  MechanicTower = 0x6f,
-  MechanicTowerFor1 = 0x7f,
-  MechanicTowerFor2 = 0x80,
-  MechanicTowerFor3 = 0x81,
-  MechanicTowerFor4 = 0x82,
-
-  Targeted = 0x70,
-  TargetedRed = 0x83,
-  TargetedBlue = 0x84,
-  TargetedPurple = 0x85,
-  TargetedGreen = 0x86,
-
-  PairedCircle = 0x87,
-  PairedCross = 0x88,
-  PairedSquare = 0x89,
-  PairedTriangle = 0x8a,
-
-  Buff = 0x71,
-  Debuff = 0x72,
+  // 敌人
+  EnemySmall = 0x3c,
+  EnemyMedium = 0x3e,
+  EnemyLarge = 0x40,
 
   // 目标标记
   SignAttack1 = 0x41,
@@ -233,7 +233,7 @@ export interface StrategyBoardRectangleObject extends StrategyBoardObjectBase {
   }
 }
 
-export interface StrategyBoardMechanicConeAoEObject extends StrategyBoardObjectBase {
+export interface StrategyBoardConeObject extends StrategyBoardObjectBase {
   type: StrategyBoardObjectType.MechanicConeAoE
   size: number
   angle: number
@@ -272,7 +272,7 @@ export type StrategyBoardObject =
   StrategyBoardLineObject |
   StrategyBoardRectangleObject |
   StrategyBoardCommonObject |
-  StrategyBoardMechanicConeAoEObject |
+  StrategyBoardConeObject |
   StrategyBoardDonutObject |
   StrategyBoardMechanicLineStackObject |
   StrategyBoardMechanicLinearKnockbackObject
