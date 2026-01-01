@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { StrategyBoardProvider, StrategyBoardEditor, StrategyBoardName, ImportButton, ExportButton, ShareButton } from '@/components/ffxiv-strategy-board'
 import { House } from 'lucide-react'
 import { StrategyBoardScene, StrategyBoardBackground } from '@/lib/ffxiv-strategy-board'
+import { debounce } from 'es-toolkit'
 
 function TopBar() {
   return (
@@ -45,10 +46,14 @@ export default function EditPage() {
     Promise.resolve().then(() => setScene({ name: '未命名战术板', background: StrategyBoardBackground.None, objects: [] }))
   }, [])
 
+  const saveSceneDraft = useMemo(() => debounce((scene: StrategyBoardScene) => {
+    window.sessionStorage.setItem('scene', JSON.stringify(scene))
+  }, 300), [])
+
   const handleEditorSceneChange = useCallback((scene: StrategyBoardScene): void => {
     setScene(scene)
-    window.sessionStorage.setItem('scene', JSON.stringify(scene))
-  }, [])
+    saveSceneDraft(scene)
+  }, [saveSceneDraft])
 
   return (
     <div className="w-screen h-screen flex flex-col">
