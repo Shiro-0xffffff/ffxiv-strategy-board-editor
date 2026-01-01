@@ -5,7 +5,7 @@ import {
   StrategyBoardObjectBase,
   StrategyBoardCommonObject,
   StrategyBoardConeObject,
-  StrategyBoardDonutObject,
+  StrategyBoardArcObject,
   StrategyBoardMechanicLineStackObject,
   StrategyBoardMechanicLinearKnockbackObject,
   StrategyBoardRectangleObject,
@@ -152,11 +152,16 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
           // 图形标志位区段
           case 0x0004:
             scene.objects.forEach(object => {
-              const flags = 0
-                | (object.visible ? 0x0001 : 0)
-                | (object.horizontalFlipped ? 0x0002 : 0)
-                | (object.verticalFlipped ? 0x0004 : 0)
-                | (object.locked ? 0x0008 : 0)
+              let flags = 0
+              if (object.visible) flags |= 0x0001
+              if (object.locked) flags |= 0x0008
+              if (
+                object.type !== StrategyBoardObjectType.Text &&
+                object.type !== StrategyBoardObjectType.Line &&
+                object.type !== StrategyBoardObjectType.Rectangle
+              ) {
+                if (object.flipped) flags |= 0x0002
+              }
               items.push(flags)
             })
             break
@@ -173,11 +178,14 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
           // 图形角度区段
           case 0x0006:
             scene.objects.forEach(object => {
-              let angle = 0
-              if (object.type !== StrategyBoardObjectType.Text) {
-                angle = object.angle < 0 ? object.angle + 0xffff : object.angle
+              let rotation = 0
+              if (
+                object.type !== StrategyBoardObjectType.Text &&
+                object.type !== StrategyBoardObjectType.Line
+              ) {
+                rotation = object.rotation < 0 ? object.rotation + 0xffff : object.rotation
               }
-              items.push(angle)
+              items.push(rotation)
             })
             break
 
@@ -226,7 +234,7 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
                   param1 = object.endPoint.x
                   break
                 case StrategyBoardObjectType.Rectangle:
-                  param1 = object.width
+                  param1 = Math.round(object.width / 10)
                   break
                 case StrategyBoardObjectType.MechanicConeAoE:
                 case StrategyBoardObjectType.MechanicDonutAoE:
@@ -249,7 +257,7 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
                   param2 = object.endPoint.y
                   break
                 case StrategyBoardObjectType.Rectangle:
-                  param2 = object.height
+                  param2 = Math.round(object.height / 10)
                   break
                 case StrategyBoardObjectType.MechanicDonutAoE:
                   param2 = object.innerRadius
@@ -271,7 +279,7 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
               let param3 = 0
               switch (object.type) {
                 case StrategyBoardObjectType.Line:
-                  param3 = object.width
+                  param3 = Math.round(object.width / 10)
                   break
               }
               items.push(param3)
@@ -431,8 +439,6 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
             x: 0,
             y: 0,
           },
-          horizontalFlipped: false,
-          verticalFlipped: false,
         }
 
         // 添加图形，按不同图形类型区分处理
@@ -442,8 +448,9 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
           case StrategyBoardObjectType.MechanicConeAoE:
             const MechanicConeAoEObject: StrategyBoardConeObject = {
               ...objectBase,
-              size: 100,
-              angle: 0,
+              size: 50,
+              flipped: false,
+              rotation: 0,
               transparency: 0,
               arcAngle: 90,
             }
@@ -452,15 +459,16 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
 
           // 环形范围攻击
           case StrategyBoardObjectType.MechanicDonutAoE:
-            const donutObject: StrategyBoardDonutObject = {
+            const arcObject: StrategyBoardArcObject = {
               ...objectBase,
-              size: 100,
-              angle: 0,
-              transparency: 0,
+              size: 50,
+              flipped: false,
+              rotation: 0,
+              transparency: 30,
               arcAngle: 360,
               innerRadius: 50,
             }
-            scene.objects.push(donutObject)
+            scene.objects.push(arcObject)
             break
 
           // 分摊伤害攻击：直线型
@@ -468,7 +476,8 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
             const MechanicLineStackObject: StrategyBoardMechanicLineStackObject = {
               ...objectBase,
               size: 100,
-              angle: 0,
+              flipped: false,
+              rotation: 0,
               transparency: 0,
               displayCount: 1,
             }
@@ -480,7 +489,8 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
             const MechanicLinearKnockbackObject: StrategyBoardMechanicLinearKnockbackObject = {
               ...objectBase,
               size: 100,
-              angle: 0,
+              flipped: false,
+              rotation: 0,
               transparency: 0,
               horizontalCount: 1,
               verticalCount: 1,
@@ -494,7 +504,7 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
               ...objectBase,
               width: 128,
               height: 128,
-              angle: 0,
+              rotation: 0,
               transparency: 0,
               color: {
                 r: 255,
@@ -509,13 +519,12 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
           case StrategyBoardObjectType.Line:
             const lineObject: StrategyBoardLineObject = {
               ...objectBase,
+              width: 6,
               endPoint: {
                 x: 0,
                 y: 0,
               },
-              angle: 0,
               transparency: 0,
-              width: 6,
               color: {
                 r: 255,
                 g: 128,
@@ -557,7 +566,8 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
             const commonObject: StrategyBoardCommonObject = {
               ...objectBase,
               size: 100,
-              angle: 0,
+              flipped: false,
+              rotation: 0,
               transparency: 0,
             }
             scene.objects.push(commonObject)
@@ -652,9 +662,19 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
               if (!object) throw new Error('战术板图形标志位区段存在无法识别的数据')
 
               object.visible = Boolean(flags & 0x0001)
-              object.horizontalFlipped = Boolean(flags & 0x0002)
-              object.verticalFlipped = Boolean(flags & 0x0004)
               object.locked = Boolean(flags & 0x0008)
+
+              const horizontalFlipped = Boolean(flags & 0x0002)
+              const verticalFlipped = Boolean(flags & 0x0004)
+              if (
+                object.type !== StrategyBoardObjectType.Text &&
+                object.type !== StrategyBoardObjectType.Line &&
+                object.type !== StrategyBoardObjectType.Rectangle
+              ) {
+                object.flipped = horizontalFlipped !== verticalFlipped
+                object.rotation += verticalFlipped ? 180 : 0
+                object.rotation = object.rotation > 180 ? object.rotation - 360 : object.rotation
+              }
             })
             break
 
@@ -671,12 +691,16 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
 
           // 图形角度区段
           case 0x0006:
-            ;(items as number[]).forEach((angle, index) => {
+            ;(items as number[]).forEach((rotation, index) => {
               const object = scene.objects[index]
               if (!object) throw new Error('战术板图形角度区段存在无法识别的数据')
 
-              if (object.type !== StrategyBoardObjectType.Text) {
-                object.angle = angle > 180 ? angle - 0xffff : angle
+              if (
+                object.type !== StrategyBoardObjectType.Text &&
+                object.type !== StrategyBoardObjectType.Line
+              ) {
+                object.rotation += rotation > 180 ? rotation - 0xffff : rotation
+                object.rotation = object.rotation > 180 ? object.rotation - 360 : object.rotation
               }
             })
             break
@@ -730,7 +754,7 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
                   object.endPoint.x = param1
                   break
                 case StrategyBoardObjectType.Rectangle:
-                  object.width = param1
+                  object.width = Math.round(param1 * 10)
                   break
                 case StrategyBoardObjectType.MechanicConeAoE:
                 case StrategyBoardObjectType.MechanicDonutAoE:
@@ -754,7 +778,7 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
                   object.endPoint.y = param2
                   break
                 case StrategyBoardObjectType.Rectangle:
-                  object.height = param2
+                  object.height = Math.round(param2 * 10)
                   break
                 case StrategyBoardObjectType.MechanicDonutAoE:
                   object.innerRadius = param2
@@ -777,7 +801,7 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
 
               switch (object.type) {
                 case StrategyBoardObjectType.Line:
-                  object.width = param3
+                  object.width = Math.round(param3 * 10)
                   break
               }
             })

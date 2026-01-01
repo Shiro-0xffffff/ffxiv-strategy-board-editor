@@ -3,10 +3,16 @@
 import { useCallback } from 'react'
 import Konva from 'konva'
 import { Stage, Layer, Group, Rect, Text } from 'react-konva'
-import { StrategyBoardObject } from '@/lib/ffxiv-strategy-board'
+import { StrategyBoardObjectType } from '@/lib/ffxiv-strategy-board'
 
-import { backgroundOptions, objectLibrary } from '../constants'
+import { backgroundOptions } from '../constants'
 import { useStrategyBoard } from '../context'
+import { TextCanvasObject } from './text'
+import { LineCanvasObject } from './line'
+import { RectangleCanvasObject } from './rectangle'
+import { ConeCanvasObject } from './cone'
+import { ArcCanvasObject } from './arc'
+import { ImageCanvasObject } from './image'
 import { canvasWidth, canvasHeight, positionToCanvasPosition, canvasPositionToPosition } from './calc'
 
 export interface CanvasObjectProps {
@@ -20,7 +26,7 @@ export function CanvasObject(props: CanvasObjectProps) {
   const { scene, selectedObjectIndexes, selectObjects, setObjectPosition } = useStrategyBoard()
   
   const object = scene.objects[index]
-  const objectLibraryItem = objectLibrary.get(object.type)!
+  const { type, visible, locked, position } = object
 
   // 点击选中图形
   const handleCanvasObjectClick = useCallback((event: Konva.KonvaEventObject<MouseEvent>) => {
@@ -60,34 +66,44 @@ export function CanvasObject(props: CanvasObjectProps) {
   return (
     <Group
       id={String(index)}
-      {...positionToCanvasPosition(object.position)}
-      draggable={!readOnly}
+      {...positionToCanvasPosition(position)}
+      visible={visible}
+      draggable={!readOnly && !locked}
       onClick={handleCanvasObjectClick}
       onDragStart={handleCanvasObjectDragStart}
       onDragMove={handleCanvasObjectDragMove}
       onDragEnd={handleCanvasObjectDragEnd}
     >
-      <Rect
-        offsetX={39 / 2}
-        offsetY={39 / 2}
-        width={39}
-        height={39}
-        strokeWidth={1}
-        stroke="#ffffff1a"
-        cornerRadius={3}
-        fill="#171717"
-      />
-      <Text
-        offsetX={20}
-        offsetY={20}
-        width={40}
-        height={40}
-        text={objectLibraryItem.icon}
-        fontSize={12}
-        align="center"
-        verticalAlign="middle"
-        fill="#a1a1a1"
-      />
+      {(() => {
+        if (type === StrategyBoardObjectType.Text) {
+          return (
+            <TextCanvasObject object={object} readOnly={readOnly} />
+          )
+        }
+        if (type === StrategyBoardObjectType.Line) {
+          return (
+            <LineCanvasObject object={object} readOnly={readOnly} />
+          )
+        }
+        if (type === StrategyBoardObjectType.Rectangle) {
+          return (
+            <RectangleCanvasObject object={object} readOnly={readOnly} />
+          )
+        }
+        if (type === StrategyBoardObjectType.MechanicConeAoE) {
+          return (
+            <ConeCanvasObject object={object} readOnly={readOnly} />
+          )
+        }
+        if (type === StrategyBoardObjectType.MechanicDonutAoE) {
+          return (
+            <ArcCanvasObject object={object} readOnly={readOnly} />
+          )
+        }
+        return (
+          <ImageCanvasObject object={object} readOnly={readOnly} />
+        )
+      })()}
     </Group>
   )
 }

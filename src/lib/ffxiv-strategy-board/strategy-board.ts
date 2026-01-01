@@ -174,8 +174,6 @@ export interface StrategyBoardObjectBase {
     x: number // 0-5120
     y: number // 0-3840
   }
-  horizontalFlipped?: boolean
-  verticalFlipped?: boolean
 }
 
 export interface StrategyBoardCommonObject extends StrategyBoardObjectBase {
@@ -190,7 +188,8 @@ export interface StrategyBoardCommonObject extends StrategyBoardObjectBase {
     StrategyBoardObjectType.MechanicLinearKnockback
   >
   size: number // 50-200
-  angle: number // -180-180
+  flipped?: boolean
+  rotation: number // -180-180
   transparency: number // 0-100
 }
 
@@ -206,13 +205,12 @@ export interface StrategyBoardTextObject extends StrategyBoardObjectBase {
 
 export interface StrategyBoardLineObject extends StrategyBoardObjectBase {
   type: StrategyBoardObjectType.Line
+  width: number // 2-10
   endPoint: {
     x: number
     y: number
   }
-  angle: number
   transparency: number
-  width: number // 2-10
   color: {
     r: number
     g: number
@@ -222,9 +220,9 @@ export interface StrategyBoardLineObject extends StrategyBoardObjectBase {
 
 export interface StrategyBoardRectangleObject extends StrategyBoardObjectBase {
   type: StrategyBoardObjectType.Rectangle
-  width: number // 160-5120
-  height: number // 160-3840
-  angle: number
+  width: number // 16-512
+  height: number // 16-384
+  rotation: number
   transparency: number
   color: {
     r: number
@@ -235,16 +233,18 @@ export interface StrategyBoardRectangleObject extends StrategyBoardObjectBase {
 
 export interface StrategyBoardConeObject extends StrategyBoardObjectBase {
   type: StrategyBoardObjectType.MechanicConeAoE
-  size: number
-  angle: number
+  size: number // 10-200
+  flipped?: boolean
+  rotation: number
   transparency: number
   arcAngle: number // 10-360
 }
 
-export interface StrategyBoardDonutObject extends StrategyBoardObjectBase {
+export interface StrategyBoardArcObject extends StrategyBoardObjectBase {
   type: StrategyBoardObjectType.MechanicDonutAoE
-  size: number
-  angle: number
+  size: number // 10-200
+  flipped?: boolean
+  rotation: number
   transparency: number
   arcAngle: number
   innerRadius: number // 0-240
@@ -253,7 +253,8 @@ export interface StrategyBoardDonutObject extends StrategyBoardObjectBase {
 export interface StrategyBoardMechanicLineStackObject extends StrategyBoardObjectBase {
   type: StrategyBoardObjectType.MechanicLineStack
   size: number
-  angle: number
+  flipped?: boolean
+  rotation: number
   transparency: number
   displayCount: number // 1-5
 }
@@ -261,7 +262,8 @@ export interface StrategyBoardMechanicLineStackObject extends StrategyBoardObjec
 export interface StrategyBoardMechanicLinearKnockbackObject extends StrategyBoardObjectBase {
   type: StrategyBoardObjectType.MechanicLinearKnockback
   size: number
-  angle: number
+  flipped?: boolean
+  rotation: number
   transparency: number
   horizontalCount: number // 1-5
   verticalCount: number // 1-5
@@ -273,7 +275,7 @@ export type StrategyBoardObject =
   StrategyBoardRectangleObject |
   StrategyBoardCommonObject |
   StrategyBoardConeObject |
-  StrategyBoardDonutObject |
+  StrategyBoardArcObject |
   StrategyBoardMechanicLineStackObject |
   StrategyBoardMechanicLinearKnockbackObject
 
