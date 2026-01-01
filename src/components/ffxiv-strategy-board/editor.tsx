@@ -4,7 +4,7 @@ import { MouseEventHandler, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectLabel, SelectItem } from '@/components/ui/select'
 import { FieldGroup, Field, FieldLabel, FieldDescription } from '@/components/ui/field'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { Lock, Unlock, Eye, EyeOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { StrategyBoardBackground } from '@/lib/ffxiv-strategy-board'
@@ -203,16 +203,18 @@ function CanvasArea() {
   }, [])
 
   return (
-    <div className="size-full flex flex-col bg-muted/30 overflow-hidden" onClick={handleBackgroundClick}>
-      <div className="flex-1 flex items-center justify-center">
-        <div className="shadow-xl" onClick={handleCanvasContainerClick}>
-          <StrategyBoardCanvas />
+    <div className="size-full flex flex-col bg-muted/30 overflow-auto" onClick={handleBackgroundClick}>
+      <div className="flex-1 min-w-max flex flex-col">
+        <div className="flex-1 p-12 flex items-center justify-center">
+          <div className="shadow-xl" onClick={handleCanvasContainerClick}>
+            <StrategyBoardCanvas />
+          </div>
         </div>
-      </div>
-      <div className="p-4">
-        <div className="text-center text-balance text-xs text-muted-foreground/15">
-          <p>FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.</p>
-          <p>FINAL FANTASY XI © 2002 - 2020 SQUARE ENIX CO., LTD. All Rights Reserved.</p>
+        <div className="min-w-0 min-h-0 p-4">
+          <div className="text-center text-balance text-xs text-muted-foreground/15">
+            <p>FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.</p>
+            <p>FINAL FANTASY XI © 2002 - 2020 SQUARE ENIX CO., LTD. All Rights Reserved.</p>
+          </div>
         </div>
       </div>
     </div>
