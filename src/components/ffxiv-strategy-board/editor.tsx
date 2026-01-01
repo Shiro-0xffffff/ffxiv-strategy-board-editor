@@ -36,7 +36,7 @@ function ObjectLibraryPanel() {
                         key={index}
                         className="size-10 rounded-sm cursor-grab"
                       >
-                        <div className="size-10 border rounded-sm flex items-center justify-center">
+                        <div className="size-10 border rounded-sm flex items-center justify-center bg-card">
                           <div className="text-xs/4 text-center text-balance text-muted-foreground">{item.icon}</div>
                         </div>
                       </div>
@@ -144,7 +144,7 @@ function LayersPanelLayer(props: { object: StrategyBoardObject, index: number })
       })}
       onClick={handleLayerClick}
     >
-      <div className="size-10 border rounded-sm flex items-center justify-center">
+      <div className="size-10 border rounded-sm flex items-center justify-center bg-card">
         <div className="text-xs/4 text-center text-balance text-muted-foreground">{objectLibraryItem.icon}</div>
       </div>
       <div className="flex-1 min-w-0">

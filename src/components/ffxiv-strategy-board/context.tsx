@@ -15,6 +15,7 @@ export interface StrategyBoardContextProps {
   selectObjects: (indexes: number[]) => void
   toggleObjectVisible: (index: number) => void
   toggleObjectLocked: (index: number) => void
+  setObjectPosition: (index: number, position: { x: number, y: number }) => void
 }
 
 const StrategyBoardContext = createContext<StrategyBoardContextProps | null>(null)
@@ -72,6 +73,12 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     }))
   }, [scene, onSceneChange])
 
+  const setObjectPosition = useCallback((index: number, position: { x: number, y: number }): void => {
+    onSceneChange?.(produce(scene, scene => {
+      scene.objects[index].position = position
+    }))
+  }, [scene, onSceneChange])
+
   const contextValue: StrategyBoardContextProps = {
     scene,
     importFromShareCode,
@@ -83,6 +90,7 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     selectObjects,
     toggleObjectVisible,
     toggleObjectLocked,
+    setObjectPosition,
   }
 
   return (

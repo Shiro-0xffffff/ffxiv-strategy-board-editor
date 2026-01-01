@@ -163,6 +163,9 @@ export enum StrategyBoardObjectType {
   FieldGraySquare = 0x7d,
 }
 
+export const sceneWidth = 5120
+export const sceneHeight = 3840
+
 export interface StrategyBoardObjectBase {
   type: StrategyBoardObjectType | number
   visible: boolean
