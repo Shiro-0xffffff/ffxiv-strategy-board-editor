@@ -7,7 +7,7 @@ import { FieldGroup, Field, FieldLabel, FieldDescription } from '@/components/ui
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Lock, Unlock, Eye, EyeOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { StrategyBoardObject, StrategyBoardBackground } from '@/lib/ffxiv-strategy-board'
+import { StrategyBoardBackground } from '@/lib/ffxiv-strategy-board'
 
 import { backgroundOptions, objectLibrary, objectLibraryGroups } from './constants'
 import { useStrategyBoard } from './context'
@@ -116,11 +116,12 @@ function PropertiesPanel() {
   )
 }
 
-function LayersPanelLayer(props: { object: StrategyBoardObject, index: number }) {
-  const { object, index } = props
+function LayersPanelLayer(props: { index: number }) {
+  const { index } = props
 
-  const { selectedObjectIndexes, selectObjects, toggleObjectVisible, toggleObjectLocked } = useStrategyBoard()
+  const { scene, selectedObjectIndexes, selectObjects, toggleObjectVisible, toggleObjectLocked } = useStrategyBoard()
 
+  const object = scene.objects[index]
   const objectLibraryItem = objectLibrary.get(object.type)!
 
   const handleLayerClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
@@ -183,7 +184,7 @@ function LayersPanel() {
       <ScrollArea className="flex-1 min-h-0 pb-4">
         <div className="px-4 flex flex-col gap-0.5">
           {scene.objects.map((object, index) => (
-            <LayersPanelLayer key={index} object={object} index={index} />
+            <LayersPanelLayer key={index} index={index} />
           ))}
         </div>
       </ScrollArea>
