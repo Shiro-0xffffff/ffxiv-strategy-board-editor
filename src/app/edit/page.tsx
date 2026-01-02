@@ -48,7 +48,7 @@ export default function EditPage() {
 
   const saveSceneDraft = useMemo(() => debounce((scene: StrategyBoardScene) => {
     window.sessionStorage.setItem('scene', JSON.stringify(scene))
-  }, 300), [])
+  }, 500), [])
 
   const handleEditorSceneChange = useCallback((scene: StrategyBoardScene): void => {
     setScene(scene)
