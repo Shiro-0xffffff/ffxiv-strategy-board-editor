@@ -126,24 +126,26 @@ export function StrategyBoardCanvas(props: StrategyBoardCanvasProps) {
   }, [selectObjects])
 
   return (
-    <Stage width={canvasWidth} height={canvasHeight} onClick={handleStageClick}>
-      <Layer>
-        <Rect width={canvasWidth} height={canvasHeight} fill="#171717" />
-        <Text
-          width={canvasWidth}
-          height={canvasHeight}
-          text={backgroundOption.image}
-          fontSize={200}
-          align="center"
-          verticalAlign="middle"
-          fill="#fafafa0d"
-        />
-      </Layer>
-      <Layer>
-        {scene.objects.map((object, index) => scene.objects.length - index - 1).map(index => (
-          <CanvasObject key={index} index={index} readOnly={readOnly} />
-        ))}
-      </Layer>
-    </Stage>
+    <div style={{ width: canvasWidth, height: canvasHeight }}>
+      <Stage width={canvasWidth} height={canvasHeight} onClick={handleStageClick}>
+        <Layer>
+          <Rect width={canvasWidth} height={canvasHeight} fill="#171717" />
+          <Text
+            width={canvasWidth}
+            height={canvasHeight}
+            text={backgroundOption.image}
+            fontSize={200}
+            align="center"
+            verticalAlign="middle"
+            fill="#fafafa0d"
+          />
+        </Layer>
+        <Layer>
+          {scene.objects.map((object, index) => scene.objects.length - index - 1).map(index => (
+            <CanvasObject key={index} index={index} readOnly={readOnly} />
+          ))}
+        </Layer>
+      </Stage>
+    </div>
   )
 }
