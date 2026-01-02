@@ -14,17 +14,17 @@ export function RectangleCanvasObject(props: RectangleCanvasObjectProps) {
   const { object } = props
   const { width, height, rotation, transparency, color } = object
 
-  const canvasSize = sizeToCanvasSize({ width, height })
-  const canvasColor = colorToCanvasColor(color)
+  const rectSize = sizeToCanvasSize({ width, height })
+  const rectColor = colorToCanvasColor(color)
 
   return (
     <>
       <Rect
-        offsetX={canvasSize.width / 2}
-        offsetY={canvasSize.height / 2}
-        width={canvasSize.width}
-        height={canvasSize.height}
-        fill={canvasColor}
+        offsetX={rectSize.width / 2}
+        offsetY={rectSize.height / 2}
+        width={rectSize.width}
+        height={rectSize.height}
+        fill={rectColor}
         opacity={1 - transparency / 100}
         rotation={rotation}
       />

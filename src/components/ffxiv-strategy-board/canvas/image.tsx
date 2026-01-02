@@ -1,7 +1,9 @@
 'use client'
 
-import { Group, Rect, Text } from 'react-konva'
+import { Group, Image } from 'react-konva'
+import useImage from 'use-image'
 import { StrategyBoardCommonObject, StrategyBoardMechanicLineStackObject, StrategyBoardMechanicLinearKnockbackObject } from '@/lib/ffxiv-strategy-board'
+import { ffxivImageUrl } from '@/lib/utils'
 
 import { objectLibrary } from '../constants'
 import { sizeToCanvasSize } from './calc'
@@ -17,7 +19,9 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
   
   const objectLibraryItem = objectLibrary.get(type)!
 
-  const canvasSize = sizeToCanvasSize({
+  const [backgroundImage] = useImage(ffxivImageUrl(objectLibraryItem.image ?? ''))
+
+  const imageSize = sizeToCanvasSize({
     width: objectLibraryItem.baseSize * size / 100,
     height: objectLibraryItem.baseSize * size / 100,
   })
@@ -29,26 +33,13 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
         scaleX={flipped ? -1 : 1}
         rotation={rotation}
       >
-        <Rect
-          offsetX={(canvasSize.width - 1) / 2}
-          offsetY={(canvasSize.height - 1) / 2}
-          width={canvasSize.width - 1}
-          height={canvasSize.height - 1}
-          strokeWidth={1}
-          stroke="#ffffff1a"
-          cornerRadius={3}
-          fill="#171717d9"
-        />
-        <Text
-          offsetX={canvasSize.width / 2}
-          offsetY={canvasSize.height / 2}
-          width={canvasSize.width}
-          height={canvasSize.height}
-          text={objectLibraryItem.icon}
-          fontSize={12}
-          align="center"
-          verticalAlign="middle"
-          fill="#a1a1a1"
+        <Image
+          offsetX={imageSize.width / 2}
+          offsetY={imageSize.height / 2}
+          width={imageSize.width}
+          height={imageSize.height}
+          image={backgroundImage}
+          alt={objectLibraryItem.abbr}
         />
       </Group>
     </>

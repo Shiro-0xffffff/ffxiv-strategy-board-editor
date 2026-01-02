@@ -1,9 +1,11 @@
 'use client'
 
 import { useCallback } from 'react'
+import useImage from 'use-image'
 import Konva from 'konva'
-import { Stage, Layer, Group, Rect, Text } from 'react-konva'
+import { Stage, Layer, Group, Image } from 'react-konva'
 import { StrategyBoardObjectType } from '@/lib/ffxiv-strategy-board'
+import { ffxivImageUrl } from '@/lib/utils'
 
 import { backgroundOptions } from '../constants'
 import { useStrategyBoard } from '../context'
@@ -119,6 +121,8 @@ export function StrategyBoardCanvas(props: StrategyBoardCanvasProps) {
 
   const backgroundOption = backgroundOptions.get(scene.background)!
 
+  const [backgroundImage] = useImage(ffxivImageUrl(backgroundOption.image))
+
   // 点击空白区域取消选中图形
   const handleStageClick = useCallback((event: Konva.KonvaEventObject<MouseEvent>) => {
     if (event.evt.shiftKey || event.evt.ctrlKey) return
@@ -129,15 +133,12 @@ export function StrategyBoardCanvas(props: StrategyBoardCanvasProps) {
     <div style={{ width: canvasWidth, height: canvasHeight }}>
       <Stage width={canvasWidth} height={canvasHeight} onClick={handleStageClick}>
         <Layer>
-          <Rect width={canvasWidth} height={canvasHeight} fill="#171717" />
-          <Text
+          <Image
             width={canvasWidth}
             height={canvasHeight}
-            text={backgroundOption.image}
-            fontSize={200}
-            align="center"
-            verticalAlign="middle"
-            fill="#fafafa0d"
+            image={backgroundImage}
+            alt={backgroundOption.name}
+            fill="#595959"
           />
         </Layer>
         <Layer>

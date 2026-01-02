@@ -1,12 +1,13 @@
 'use client'
 
 import { MouseEventHandler, useCallback } from 'react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectLabel, SelectItem } from '@/components/ui/select'
 import { FieldGroup, Field, FieldLabel, FieldDescription } from '@/components/ui/field'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Lock, Unlock, Eye, EyeOff } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, ffxivImageUrl } from '@/lib/utils'
 import { StrategyBoardBackground } from '@/lib/ffxiv-strategy-board'
 
 import { backgroundOptions, objectLibrary, objectLibraryGroups } from './constants'
@@ -36,9 +37,7 @@ function ObjectLibraryPanel() {
                         key={index}
                         className="size-10 rounded-sm cursor-grab"
                       >
-                        <div className="size-10 border rounded-sm flex items-center justify-center bg-card">
-                          <div className="text-xs/4 text-center text-balance text-muted-foreground">{item.icon}</div>
-                        </div>
+                        <Image className="size-10" src={ffxivImageUrl(item.icon)} alt={item.abbr} width={40} height={40} />
                       </div>
                     ))}
                   </div>
@@ -145,9 +144,7 @@ function LayersPanelLayer(props: { index: number }) {
       })}
       onClick={handleLayerClick}
     >
-      <div className="size-10 border rounded-sm flex items-center justify-center bg-card">
-        <div className="text-xs/4 text-center text-balance text-muted-foreground">{objectLibraryItem.icon}</div>
-      </div>
+      <Image className="size-10" src={ffxivImageUrl(objectLibraryItem.icon)} alt={objectLibraryItem.abbr} width={40} height={40} />
       <div className="flex-1 min-w-0">
         <div className="text-sm truncate">
           {objectLibraryItem.name}

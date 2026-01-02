@@ -16,19 +16,19 @@ export function LineCanvasObject(props: LineCanvasObjectProps) {
 
   const projection = { width: endPoint.x - position.x, height: endPoint.y - position.y }
 
-  const canvasSize = sizeToCanvasSize({ width, height: Math.hypot(projection.width, projection.height) })
-  const canvasRotation = -Math.atan2(projection.width, projection.height) * 180 / Math.PI
-  const canvasColor = colorToCanvasColor(color)
+  const rectSize = sizeToCanvasSize({ width, height: Math.hypot(projection.width, projection.height) })
+  const rectRotation = -Math.atan2(projection.width, projection.height) * 180 / Math.PI
+  const rectColor = colorToCanvasColor(color)
 
   return (
     <>
       <Rect
-        offsetX={canvasSize.width / 2}
-        width={canvasSize.width}
-        height={canvasSize.height}
-        fill={canvasColor}
+        offsetX={rectSize.width / 2}
+        width={rectSize.width}
+        height={rectSize.height}
+        fill={rectColor}
         opacity={1 - transparency / 100}
-        rotation={canvasRotation}
+        rotation={rectRotation}
       />
     </>
   )

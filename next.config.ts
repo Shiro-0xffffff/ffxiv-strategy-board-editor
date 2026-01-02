@@ -1,8 +1,17 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  /* config options here */
   reactCompiler: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'v2.xivapi.com',
+        port: '',
+        pathname: '/api/asset',
+      },
+    ],
+  },
 }
 
 export default nextConfig
