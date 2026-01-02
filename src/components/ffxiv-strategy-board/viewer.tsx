@@ -1,15 +1,19 @@
 'use client'
 
 import { Card, CardContent } from '@/components/ui/card'
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 
 import { StrategyBoardCanvas } from './canvas'
 
 export function StrategyBoardViewer() {
   return (
-    <div className="size-full flex flex-col items-center justify-center">
-      <Card>
+    <div>
+      <Card className="mx-auto max-w-fit">
         <CardContent>
-          <StrategyBoardCanvas readOnly />
+          <ScrollArea className="">
+            <StrategyBoardCanvas readOnly />
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
         </CardContent>
       </Card>
     </div>

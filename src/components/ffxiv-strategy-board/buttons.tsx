@@ -32,8 +32,11 @@ export function ImportButton() {
 
   return (
     <>
-      <Button className="w-20 cursor-pointer" variant="outline" onClick={handleButtonClick}>
+      <Button className="hidden sm:flex w-20 cursor-pointer" variant="outline" onClick={handleButtonClick}>
         <Download /> 导入
+      </Button>
+      <Button className="sm:hidden cursor-pointer" variant="outline" size="icon" onClick={handleButtonClick}>
+        <Download />
       </Button>
       <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="sm:max-w-150">
@@ -76,8 +79,11 @@ export function ExportButton() {
 
   return (
     <>
-      <Button className="w-20 cursor-pointer" variant="outline" onClick={handleButtonClick}>
+      <Button className="hidden sm:flex w-20 cursor-pointer" variant="outline" onClick={handleButtonClick}>
         <Upload /> 导出
+      </Button>
+      <Button className="sm:hidden cursor-pointer" variant="outline" size="icon" onClick={handleButtonClick}>
+        <Upload />
       </Button>
       <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="sm:max-w-150">
@@ -122,8 +128,11 @@ export function ShareButton() {
 
   return (
     <>
-      <Button className="w-20 cursor-pointer" variant="outline" onClick={handleButtonClick}>
+      <Button className="hidden sm:flex w-20 cursor-pointer" variant="outline" onClick={handleButtonClick}>
         <Share2 /> 分享
+      </Button>
+      <Button className="sm:hidden cursor-pointer" variant="outline" size="icon" onClick={handleButtonClick}>
+        <Share2 />
       </Button>
       <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="sm:max-w-150">

@@ -24,7 +24,7 @@ function TopBar() {
   return (
     <header className="h-16 border-b bg-card">
       <div className="mx-auto container p-4">
-        <div className="mx-auto max-w-6xl flex items-center justify-between">
+        <div className="mx-auto max-w-6xl flex items-center justify-between gap-2">
           <div className="flex-1 flex items-center gap-2">
             <Button variant="ghost" size="icon" asChild>
               <Link href="/">
@@ -35,8 +35,11 @@ function TopBar() {
             <StrategyBoardName readOnly />
           </div>
           <div className="flex items-center gap-2">
-            <Button className="w-20 cursor-pointer" variant="outline" onClick={handleEditButtonClick}>
+            <Button className="hidden sm:flex w-20 cursor-pointer" variant="outline" onClick={handleEditButtonClick}>
               <Pencil /> 编辑
+            </Button>
+            <Button className="sm:hidden cursor-pointer" variant="outline" size="icon" onClick={handleEditButtonClick}>
+              <Pencil />
             </Button>
             <ExportButton />
             <ShareButton />

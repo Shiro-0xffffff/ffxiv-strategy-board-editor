@@ -28,10 +28,10 @@ export function StrategyBoardName(props: StrategyBoardNameProps) {
   }, [setName, nameDraft])
 
   return readOnly ? (
-    <p className="max-w-120 border-x border-transparent px-2 text-lg/8 font-semibold text-ellipsis">{scene.name}</p>
+    <p className="flex-1 w-0 max-w-120 border-x border-transparent px-2 text-lg/8 font-semibold truncate">{scene.name}</p>
   ) : (
     <Input
-      className="max-w-120 not-hover:not-focus:border-transparent px-2 text-lg/8 md:text-lg/8 font-semibold text-ellipsis dark:not-hover:not-focus:bg-transparent"
+      className="flex-1 w-0 max-w-120 not-hover:not-focus:border-transparent px-2 text-lg/8 md:text-lg/8 font-semibold text-ellipsis dark:not-hover:not-focus:bg-transparent"
       value={nameDraft ?? scene.name}
       spellCheck={false}
       readOnly={readOnly}

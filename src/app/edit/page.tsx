@@ -11,7 +11,7 @@ import { debounce } from 'es-toolkit'
 
 function TopBar() {
   return (
-    <header className="h-16 border-b px-4 flex items-center justify-between bg-card">
+    <header className="h-16 border-b px-4 flex items-center justify-between gap-2 bg-card">
       <div className="flex-1 flex items-center gap-2">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/">
