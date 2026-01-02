@@ -12,6 +12,7 @@ import {
   StrategyBoardLineObject,
   StrategyBoardTextObject,
 } from './strategy-board'
+import { uuid } from '@/lib/utils'
 import { reverseMap } from './utils'
 
 const backgroundValues = new Map<StrategyBoardBackground, number>()
@@ -432,6 +433,7 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
 
         // 图形基本信息
         const objectBase: StrategyBoardObjectBase = {
+          id: uuid(),
           type,
           visible: true,
           locked: false,

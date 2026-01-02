@@ -1,11 +1,15 @@
 'use client'
 
-import { MouseEventHandler, useCallback } from 'react'
+import { MouseEventHandler, useState, useCallback } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectLabel, SelectItem } from '@/components/ui/select'
 import { FieldGroup, Field, FieldLabel, FieldDescription } from '@/components/ui/field'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { PointerSensor, DragEndEvent, DndContext, DragOverlay, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { restrictToVerticalAxis, restrictToFirstScrollableAncestor } from '@dnd-kit/modifiers'
+import { CSS } from '@dnd-kit/utilities'
 import { Lock, Unlock, Eye, EyeOff } from 'lucide-react'
 import { cn, ffxivImageUrl } from '@/lib/utils'
 import { StrategyBoardBackground, StrategyBoardObjectType } from '@/lib/ffxiv-strategy-board'
@@ -115,32 +119,33 @@ function PropertiesPanel() {
   )
 }
 
-function LayersPanelLayer(props: { index: number }) {
-  const { index } = props
+function LayersPanelLayer(props: { id: string }) {
+  const { id } = props
 
-  const { scene, selectedObjectIndexes, selectObjects, toggleObjectVisible, toggleObjectLocked } = useStrategyBoard()
+  const { selectedObjectIds, selectObjects, getObject, toggleObjectVisible, toggleObjectLocked } = useStrategyBoard()
 
-  const object = scene.objects[index]
+  const object = getObject(id)!
   const objectLibraryItem = objectLibrary.get(object.type)!
+  const selected = selectedObjectIds.includes(id)
 
   const handleLayerClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
-    selectObjects([index])
-  }, [index, selectObjects])
+    selectObjects([id])
+  }, [id, selectObjects])
 
   const handleToggleLockedButtonClick = useCallback<MouseEventHandler<HTMLButtonElement>>(event => {
     event.stopPropagation()
-    toggleObjectLocked(index)
-  }, [index, toggleObjectLocked])
+    toggleObjectLocked(id)
+  }, [id, toggleObjectLocked])
   const handleToggleVisibleButtonClick = useCallback<MouseEventHandler<HTMLButtonElement>>(event => {
     event.stopPropagation()
-    toggleObjectVisible(index)
-  }, [index, toggleObjectVisible])
+    toggleObjectVisible(id)
+  }, [id, toggleObjectVisible])
 
   return (
     <div
-      className={cn('-mx-2 rounded p-2 flex items-center gap-2 hover:bg-muted cursor-pointer transition-colors', {
-        'hover:bg-muted': !selectedObjectIndexes.includes(index),
-        'z-10 inset-ring-1 ring-primary bg-primary/20': selectedObjectIndexes.includes(index),
+      className={cn('rounded p-2 flex items-center gap-2 cursor-pointer transition-colors', {
+        'hover:bg-muted': !selected,
+        'inset-ring-1 ring-primary bg-[color-mix(in_oklab,var(--primary)_20%,var(--card))]': selected,
       })}
       onClick={handleLayerClick}
     >
@@ -168,8 +173,53 @@ function LayersPanelLayer(props: { index: number }) {
   )
 }
 
+function SortableLayersPanelLayer(props: { id: string }) {
+  const { id } = props
+
+  const { isDragging, setNodeRef, transform, transition, attributes, listeners } = useSortable({ id })
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn({ 'invisible': isDragging })}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+      {...attributes}
+      {...listeners}
+    >
+      <LayersPanelLayer id={id} />
+    </div>
+  )
+}
+
 function LayersPanel() {
-  const { scene } = useStrategyBoard()
+  const { scene, selectObjects, reorderObject } = useStrategyBoard()
+
+  const [draggingObjectId, setDraggingObjectId] = useState<string | null>(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 4,
+      },
+    }),
+  )
+
+  const handleDragStart = useCallback((event: DragEndEvent): void => {
+    const { active } = event
+    const id = active.id as string
+    selectObjects([id])
+    setDraggingObjectId(id)
+  }, [selectObjects])
+  const handleDragEnd = useCallback((event: DragEndEvent): void => {
+    const { active, over } = event
+    const id = active.id as string
+    const targetIndex = scene.objects.findIndex(object => object.id === over?.id)
+    reorderObject(id, targetIndex)
+    setDraggingObjectId(null)
+  }, [reorderObject, scene.objects])
 
   return (
     <div className="size-full flex flex-col">
@@ -177,10 +227,25 @@ function LayersPanel() {
         <div className="font-semibold">图层</div>
       </div>
       <ScrollArea className="flex-1 min-h-0 pb-4">
-        <div className="px-4 flex flex-col gap-0.5">
-          {scene.objects.map((object, index) => (
-            <LayersPanelLayer key={index} index={index} />
-          ))}
+        <div className="px-2 flex flex-col gap-0.5">
+          <DndContext 
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            modifiers={[restrictToVerticalAxis, restrictToFirstScrollableAncestor]}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={scene.objects} strategy={verticalListSortingStrategy}>
+              {scene.objects.map(({ id }) => (
+                <SortableLayersPanelLayer key={id} id={id} />
+              ))}
+              <DragOverlay className="**:cursor-grabbing">
+                {draggingObjectId && (
+                  <LayersPanelLayer id={draggingObjectId} />
+                )}
+              </DragOverlay>
+            </SortableContext>
+          </DndContext>
         </div>
       </ScrollArea>
     </div>

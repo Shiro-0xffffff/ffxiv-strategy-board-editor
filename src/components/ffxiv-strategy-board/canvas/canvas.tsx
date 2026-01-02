@@ -18,56 +18,53 @@ import { ImageCanvasObject } from './image'
 import { canvasWidth, canvasHeight, positionToCanvasPosition, canvasPositionToPosition } from './calc'
 
 export interface CanvasObjectProps {
-  index: number
+  id: string
   readOnly?: boolean
 }
 
 export function CanvasObject(props: CanvasObjectProps) {
-  const { index, readOnly } = props
+  const { id, readOnly } = props
 
-  const { scene, selectedObjectIndexes, selectObjects, setObjectPosition } = useStrategyBoard()
+  const { selectedObjectIds, selectObjects, getObject, setObjectPosition } = useStrategyBoard()
   
-  const object = scene.objects[index]
+  const object = getObject(id)!
   const { type, visible, locked, position } = object
 
   // 点击选中图形
   const handleCanvasObjectClick = useCallback((event: Konva.KonvaEventObject<MouseEvent>) => {
     event.cancelBubble = true
 
-    const isObjectSelected = selectedObjectIndexes.includes(index)
+    const isObjectSelected = selectedObjectIds.includes(id)
 
     if (event.evt.shiftKey || event.evt.ctrlKey) {
       if (isObjectSelected) {
-        selectObjects(selectedObjectIndexes.filter(selectedObjectIndex => selectedObjectIndex !== index))
+        selectObjects(selectedObjectIds.filter(selectedObjectIndex => selectedObjectIndex !== id))
       } else {
-        selectObjects([...selectedObjectIndexes, index])
+        selectObjects([...selectedObjectIds, id])
       }
       return
     }
 
-    if (!isObjectSelected) {
-      selectObjects([index])
-    }
-  }, [index, selectObjects, selectedObjectIndexes])
+    if (!isObjectSelected) selectObjects([id])
+  }, [id, selectObjects, selectedObjectIds])
 
   // 拖动图形位置
   const handleCanvasObjectDragStart = useCallback((event: Konva.KonvaEventObject<DragEvent>) => {
-    selectObjects([index])
+    selectObjects([id])
     const position = canvasPositionToPosition({ x: event.target.x(), y: event.target.y() })
-    setObjectPosition(index, position)
-  }, [index, selectObjects, setObjectPosition])
+    setObjectPosition(id, position)
+  }, [id, selectObjects, setObjectPosition])
   const handleCanvasObjectDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>) => {
     const position = canvasPositionToPosition({ x: event.target.x(), y: event.target.y() })
-    setObjectPosition(index, position)
-  }, [index, setObjectPosition])
+    setObjectPosition(id, position)
+  }, [id, setObjectPosition])
   const handleCanvasObjectDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>) => {
     const position = canvasPositionToPosition({ x: event.target.x(), y: event.target.y() })
-    setObjectPosition(index, position)
-  }, [index, setObjectPosition])
+    setObjectPosition(id, position)
+  }, [id, setObjectPosition])
 
   return (
     <Group
-      id={String(index)}
       {...positionToCanvasPosition(position)}
       visible={visible}
       draggable={!readOnly && !locked}
@@ -142,8 +139,8 @@ export function StrategyBoardCanvas(props: StrategyBoardCanvasProps) {
           />
         </Layer>
         <Layer>
-          {scene.objects.map((object, index) => scene.objects.length - index - 1).map(index => (
-            <CanvasObject key={index} index={index} readOnly={readOnly} />
+          {scene.objects.slice().reverse().map(({ id }) => (
+            <CanvasObject key={id} id={id} readOnly={readOnly} />
           ))}
         </Layer>
       </Stage>

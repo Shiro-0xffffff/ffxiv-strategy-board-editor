@@ -10,12 +10,14 @@ export interface StrategyBoardContextProps {
   exportToShareCode: () => Promise<string>
   setName: (name: string) => void
   setBackground: (background: StrategyBoardBackground) => void
-  selectedObjectIndexes: number[]
+  selectedObjectIds: string[]
   selectedObjects: StrategyBoardObject[]
-  selectObjects: (indexes: number[]) => void
-  toggleObjectVisible: (index: number) => void
-  toggleObjectLocked: (index: number) => void
-  setObjectPosition: (index: number, position: { x: number, y: number }) => void
+  selectObjects: (ids: string[]) => void
+  getObject: (id: string) => StrategyBoardObject | null
+  reorderObject: (id: string, newIndex: number) => void
+  toggleObjectVisible: (id: string) => void
+  toggleObjectLocked: (id: string) => void
+  setObjectPosition: (id: string, position: { x: number, y: number }) => void
 }
 
 const StrategyBoardContext = createContext<StrategyBoardContextProps | null>(null)
@@ -55,29 +57,50 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     }))
   }, [scene, onSceneChange])
 
-  const [selectedObjectIndexes, setSelectedObjectIndexes] = useState<number[]>([])
-  const selectedObjects = useMemo(() => selectedObjectIndexes.map(index => scene.objects[index]), [scene.objects, selectedObjectIndexes])
+  const [selectedObjectIds, setSelectedObjectIds] = useState<string[]>([])
+  const selectedObjects = useMemo(() => (
+    selectedObjectIds.map(id => scene.objects.find(object => object.id === id)).filter(object => !!object)
+  ), [scene.objects, selectedObjectIds])
 
-  const selectObjects = useCallback((indexes: number[]): void => {
-    setSelectedObjectIndexes(indexes)
+  const selectObjects = useCallback((ids: string[]): void => {
+    setSelectedObjectIds(ids)
   }, [])
 
-  const toggleObjectVisible = useCallback((index: number): void => {
+  const getObject = useCallback((id: string): StrategyBoardObject | null => {
+    return scene.objects.find(object => object.id === id) ?? null
+  }, [scene])
+
+  const reorderObject = useCallback((id: string, newIndex: number): void => {
     onSceneChange?.(produce(scene, scene => {
-      scene.objects[index].visible = !scene.objects[index].visible
-    }))
-  }, [scene, onSceneChange])
-  const toggleObjectLocked = useCallback((index: number): void => {
-    onSceneChange?.(produce(scene, scene => {
-      scene.objects[index].locked = !scene.objects[index].locked
+      const index = scene.objects.findIndex(object => object.id === id)
+      if (index < 0 || index === newIndex) return
+      const [object] = scene.objects.splice(index, 1)
+      scene.objects.splice(newIndex, 0, object)
     }))
   }, [scene, onSceneChange])
 
-  const setObjectPosition = useCallback((index: number, position: { x: number, y: number }): void => {
+  const modifyObject = useCallback((id: string, modification: (object: StrategyBoardObject) => void): void => {
     onSceneChange?.(produce(scene, scene => {
-      scene.objects[index].position = position
+      const object = scene.objects.find(object => object.id === id)
+      if (!object) return
+      modification(object)
     }))
   }, [scene, onSceneChange])
+  const toggleObjectVisible = useCallback((id: string): void => {
+    modifyObject(id, object => {
+      object.visible = !object.visible
+    })
+  }, [modifyObject])
+  const toggleObjectLocked = useCallback((id: string): void => {
+    modifyObject(id, object => {
+      object.locked = !object.locked
+    })
+  }, [modifyObject])
+  const setObjectPosition = useCallback((id: string, position: { x: number, y: number }): void => {
+    modifyObject(id, object => {
+      object.position = position
+    })
+  }, [modifyObject])
 
   const contextValue: StrategyBoardContextProps = {
     scene,
@@ -85,9 +108,11 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     exportToShareCode,
     setName,
     setBackground,
-    selectedObjectIndexes,
+    selectedObjectIds,
     selectedObjects,
     selectObjects,
+    getObject,
+    reorderObject,
     toggleObjectVisible,
     toggleObjectLocked,
     setObjectPosition,
