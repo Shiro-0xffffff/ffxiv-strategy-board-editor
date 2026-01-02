@@ -90,7 +90,7 @@ export default function HomePage() {
           </section>
           <section className="space-y-6">
             <div className="flex items-start gap-3">
-              <div className="size-14 border rounded-lg flex items-center justify-center bg-card">
+              <div className="size-14 ring-1 ring-foreground/10 rounded-lg flex items-center justify-center bg-card">
                 <FileInput className="size-6 text-primary" />
               </div>
               <div className="flex-1">
@@ -104,7 +104,7 @@ export default function HomePage() {
           </section>
           <section className="space-y-6">
             <div className="flex items-start gap-3">
-              <div className="size-14 border rounded-lg flex items-center justify-center bg-card">
+              <div className="size-14 ring-1 ring-foreground/10 rounded-lg flex items-center justify-center bg-card">
                 <FilePlus className="size-6 text-primary" />
               </div>
               <div className="flex-1">
