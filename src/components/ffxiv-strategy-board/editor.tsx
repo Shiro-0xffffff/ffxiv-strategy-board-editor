@@ -37,7 +37,7 @@ function ObjectLibraryPanel() {
                         key={index}
                         className="size-10 rounded-sm cursor-grab"
                       >
-                        <Image className="size-10" src={ffxivImageUrl(item.icon)} alt={item.abbr} width={40} height={40} />
+                        <Image className="size-10" src={ffxivImageUrl(item.icon)} alt={item.abbr} width={80} height={80} />
                       </div>
                     ))}
                   </div>
@@ -144,7 +144,7 @@ function LayersPanelLayer(props: { index: number }) {
       })}
       onClick={handleLayerClick}
     >
-      <Image className="size-10" src={ffxivImageUrl(objectLibraryItem.icon)} alt={objectLibraryItem.abbr} width={40} height={40} />
+      <Image className="size-10" src={ffxivImageUrl(objectLibraryItem.icon)} alt={objectLibraryItem.abbr} width={80} height={80} />
       <div className="flex-1 min-w-0">
         <div className="text-sm truncate">
           {objectLibraryItem.name}
