@@ -39,7 +39,6 @@ export function ArcCanvasObject(props: ArcCanvasObjectProps) {
           outerRadius={canvasRadius * 0.96}
           angle={arcAngle}
           fill="#ffa131"
-          opacity={1 - transparency / 100}
           rotation={-90}
         />
       </Group>

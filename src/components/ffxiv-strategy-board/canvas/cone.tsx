@@ -37,7 +37,6 @@ export function ConeCanvasObject(props: ConeCanvasObjectProps) {
           outerRadius={canvasRadius * 0.96}
           angle={arcAngle}
           fill="#ffa13140"
-          opacity={1 - transparency / 100}
           rotation={-90}
         />
       </Group>
