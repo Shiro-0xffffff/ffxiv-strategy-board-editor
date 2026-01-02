@@ -8,7 +8,7 @@ import { FieldGroup, Field, FieldLabel, FieldDescription } from '@/components/ui
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Lock, Unlock, Eye, EyeOff } from 'lucide-react'
 import { cn, ffxivImageUrl } from '@/lib/utils'
-import { StrategyBoardBackground } from '@/lib/ffxiv-strategy-board'
+import { StrategyBoardBackground, StrategyBoardObjectType } from '@/lib/ffxiv-strategy-board'
 
 import { backgroundOptions, objectLibrary, objectLibraryGroups } from './constants'
 import { useStrategyBoard } from './context'
@@ -145,10 +145,8 @@ function LayersPanelLayer(props: { index: number }) {
       onClick={handleLayerClick}
     >
       <Image className="size-10" src={ffxivImageUrl(objectLibraryItem.icon)} alt={objectLibraryItem.abbr} width={80} height={80} />
-      <div className="flex-1 min-w-0">
-        <div className="text-sm truncate">
-          {objectLibraryItem.name}
-        </div>
+      <div className="flex-1 w-0 text-sm truncate">
+        {object.type === StrategyBoardObjectType.Text ? object.content : objectLibraryItem.name}
       </div>
       <div className="flex gap-1">
         <Button className="cursor-pointer" variant="ghost" size="icon-sm" onClick={handleToggleLockedButtonClick}>
