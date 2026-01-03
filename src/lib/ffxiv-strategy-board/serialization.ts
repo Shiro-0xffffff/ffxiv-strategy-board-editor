@@ -450,6 +450,7 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
           case StrategyBoardObjectType.MechanicConeAoE:
             const MechanicConeAoEObject: StrategyBoardConeObject = {
               ...objectBase,
+              type,
               size: 50,
               flipped: false,
               rotation: 0,
@@ -463,6 +464,7 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
           case StrategyBoardObjectType.MechanicDonutAoE:
             const arcObject: StrategyBoardArcObject = {
               ...objectBase,
+              type,
               size: 50,
               flipped: false,
               rotation: 0,
@@ -477,6 +479,7 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
           case StrategyBoardObjectType.MechanicLineStack:
             const MechanicLineStackObject: StrategyBoardMechanicLineStackObject = {
               ...objectBase,
+              type,
               size: 100,
               flipped: false,
               rotation: 0,
@@ -490,6 +493,7 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
           case StrategyBoardObjectType.MechanicLinearKnockback:
             const MechanicLinearKnockbackObject: StrategyBoardMechanicLinearKnockbackObject = {
               ...objectBase,
+              type,
               size: 100,
               flipped: false,
               rotation: 0,
@@ -504,6 +508,7 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
           case StrategyBoardObjectType.Rectangle:
             const RectangleObject: StrategyBoardRectangleObject = {
               ...objectBase,
+              type,
               width: 128,
               height: 128,
               rotation: 0,
@@ -521,6 +526,7 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
           case StrategyBoardObjectType.Line:
             const lineObject: StrategyBoardLineObject = {
               ...objectBase,
+              type,
               width: 6,
               endPoint: {
                 x: 0,
@@ -553,6 +559,7 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
 
             const textObject: StrategyBoardTextObject = {
               ...objectBase,
+              type,
               content: textContent,
               color: {
                 r: 255,
@@ -567,6 +574,7 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
           default:
             const commonObject: StrategyBoardCommonObject = {
               ...objectBase,
+              type,
               size: 100,
               flipped: false,
               rotation: 0,

@@ -168,7 +168,7 @@ export const sceneHeight = 3840
 
 export interface StrategyBoardObjectBase {
   id: string
-  type: StrategyBoardObjectType | number
+  type: StrategyBoardObjectType
   visible: boolean
   locked: boolean
   position: {
