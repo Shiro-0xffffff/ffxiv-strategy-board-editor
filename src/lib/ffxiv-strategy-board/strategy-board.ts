@@ -289,7 +289,10 @@ export function createObject(type: StrategyBoardObjectType, position?: { x: numb
     type,
     visible: true,
     locked: false,
-    position: position ?? { x: 0, y: 0 },
+    position: {
+      x: Math.min(Math.max(Math.round(position?.x ?? 0), 0), sceneWidth),
+      y: Math.min(Math.max(Math.round(position?.y ?? 0), 0), sceneHeight),
+    },
   }
 
   // 按不同图形类型区分处理
