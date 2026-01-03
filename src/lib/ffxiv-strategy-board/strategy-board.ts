@@ -1,3 +1,4 @@
+import { uuid } from '@/lib/utils'
 
 export enum StrategyBoardBackground {
   None = 'none',
@@ -279,6 +280,154 @@ export type StrategyBoardObject =
   StrategyBoardArcObject |
   StrategyBoardMechanicLineStackObject |
   StrategyBoardMechanicLinearKnockbackObject
+
+export function createObject(type: StrategyBoardObjectType, position?: { x: number, y: number }): StrategyBoardObject {
+
+  // 图形基本信息
+  const objectBase: StrategyBoardObjectBase = {
+    id: uuid(),
+    type,
+    visible: true,
+    locked: false,
+    position: position ?? { x: 0, y: 0 },
+  }
+
+  // 按不同图形类型区分处理
+  switch (type) {
+
+    // 文字
+    case StrategyBoardObjectType.Text:
+      const textObject: StrategyBoardTextObject = {
+        ...objectBase,
+        type,
+        content: '文本',
+        color: {
+          r: 255,
+          g: 255,
+          b: 255,
+        },
+      }
+      return textObject
+
+    // 线
+    case StrategyBoardObjectType.Line:
+      const lineObject: StrategyBoardLineObject = {
+        ...objectBase,
+        type,
+        width: 60,
+        position: {
+          x: Math.min(Math.max(objectBase.position.x - 1280, 0), sceneWidth),
+          y: objectBase.position.y,
+        },
+        endPoint: {
+          x: Math.min(Math.max(objectBase.position.x + 1280, 0), sceneWidth),
+          y: objectBase.position.y,
+        },
+        transparency: 0,
+        color: {
+          r: 255,
+          g: 128,
+          b: 0,
+        },
+      }
+      return lineObject
+
+    // 矩形
+    case StrategyBoardObjectType.Rectangle:
+      const RectangleObject: StrategyBoardRectangleObject = {
+        ...objectBase,
+        type,
+        width: 1280,
+        height: 1280,
+        rotation: 0,
+        transparency: 0,
+        color: {
+          r: 255,
+          g: 128,
+          b: 0,
+        },
+      }
+      return RectangleObject
+
+    // 圆形 AoE
+    case StrategyBoardObjectType.MechanicCircleAoE:
+      const mechanicCircleAoEObject: StrategyBoardCommonObject = {
+        ...objectBase,
+        type,
+        size: 50,
+        flipped: false,
+        rotation: 0,
+        transparency: 0,
+      }
+      return mechanicCircleAoEObject
+
+    // 扇形 AoE
+    case StrategyBoardObjectType.MechanicConeAoE:
+      const coneObject: StrategyBoardConeObject = {
+        ...objectBase,
+        type,
+        size: 50,
+        flipped: false,
+        rotation: 0,
+        transparency: 0,
+        arcAngle: 90,
+      }
+      return coneObject
+
+    // 环形 AoE
+    case StrategyBoardObjectType.MechanicDonutAoE:
+      const arcObject: StrategyBoardArcObject = {
+        ...objectBase,
+        type,
+        size: 50,
+        flipped: false,
+        rotation: 0,
+        transparency: 30,
+        arcAngle: 360,
+        innerRadius: 50,
+      }
+      return arcObject
+
+    // 直线分摊伤害
+    case StrategyBoardObjectType.MechanicLineStack:
+      const mechanicLineStackObject: StrategyBoardMechanicLineStackObject = {
+        ...objectBase,
+        type,
+        size: 100,
+        flipped: false,
+        rotation: 0,
+        transparency: 0,
+        displayCount: 1,
+      }
+      return mechanicLineStackObject
+
+    // 单向击退
+    case StrategyBoardObjectType.MechanicLinearKnockback:
+      const mechanicLinearKnockbackObject: StrategyBoardMechanicLinearKnockbackObject = {
+        ...objectBase,
+        type,
+        size: 100,
+        flipped: false,
+        rotation: 0,
+        transparency: 0,
+        horizontalCount: 1,
+        verticalCount: 1,
+      }
+      return mechanicLinearKnockbackObject
+
+    // 其他一般图形
+    default:
+      const commonObject: StrategyBoardCommonObject = {
+        ...objectBase,
+        type,
+        size: 100,
+        flipped: false,
+        rotation: 0,
+        transparency: 0,
+      }
+      return commonObject
+  }
+}
 
 export interface StrategyBoardScene {
   name: string

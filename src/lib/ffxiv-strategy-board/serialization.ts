@@ -1,18 +1,4 @@
-import {
-  StrategyBoardScene,
-  StrategyBoardBackground,
-  StrategyBoardObjectType,
-  StrategyBoardObjectBase,
-  StrategyBoardCommonObject,
-  StrategyBoardConeObject,
-  StrategyBoardArcObject,
-  StrategyBoardMechanicLineStackObject,
-  StrategyBoardMechanicLinearKnockbackObject,
-  StrategyBoardRectangleObject,
-  StrategyBoardLineObject,
-  StrategyBoardTextObject,
-} from './strategy-board'
-import { uuid } from '@/lib/utils'
+import { StrategyBoardScene, StrategyBoardBackground, StrategyBoardObjectType, StrategyBoardObject, createObject } from './strategy-board'
 import { reverseMap } from './utils'
 
 const backgroundValues = new Map<StrategyBoardBackground, number>()
@@ -432,156 +418,26 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
         offset += 2
 
         // 图形基本信息
-        const objectBase: StrategyBoardObjectBase = {
-          id: uuid(),
-          type,
-          visible: true,
-          locked: false,
-          position: {
-            x: 0,
-            y: 0,
-          },
+        const object: StrategyBoardObject = createObject(type)
+
+        // 对于文字，需要额外读取文本内容
+        if (object.type === StrategyBoardObjectType.Text) {
+
+          // 前缀，2字节
+          offset += 2
+
+          // 文本长度，2字节
+          const textContentLength = dataView.getUint16(offset, true)
+          offset += 2
+
+          // 文本内容，需要去除末尾的空字符
+          const textContentData = data.slice(offset, offset + textContentLength)
+          object.content = utf8Decoder.decode(textContentData).replace(/\0*$/, '')
+          offset += textContentLength
         }
 
-        // 添加图形，按不同图形类型区分处理
-        switch (type) {
-
-          // 扇形范围攻击
-          case StrategyBoardObjectType.MechanicConeAoE:
-            const MechanicConeAoEObject: StrategyBoardConeObject = {
-              ...objectBase,
-              type,
-              size: 50,
-              flipped: false,
-              rotation: 0,
-              transparency: 0,
-              arcAngle: 90,
-            }
-            scene.objects.push(MechanicConeAoEObject)
-            break
-
-          // 环形范围攻击
-          case StrategyBoardObjectType.MechanicDonutAoE:
-            const arcObject: StrategyBoardArcObject = {
-              ...objectBase,
-              type,
-              size: 50,
-              flipped: false,
-              rotation: 0,
-              transparency: 30,
-              arcAngle: 360,
-              innerRadius: 50,
-            }
-            scene.objects.push(arcObject)
-            break
-
-          // 分摊伤害攻击：直线型
-          case StrategyBoardObjectType.MechanicLineStack:
-            const MechanicLineStackObject: StrategyBoardMechanicLineStackObject = {
-              ...objectBase,
-              type,
-              size: 100,
-              flipped: false,
-              rotation: 0,
-              transparency: 0,
-              displayCount: 1,
-            }
-            scene.objects.push(MechanicLineStackObject)
-            break
-
-          // 击退攻击：直线型
-          case StrategyBoardObjectType.MechanicLinearKnockback:
-            const MechanicLinearKnockbackObject: StrategyBoardMechanicLinearKnockbackObject = {
-              ...objectBase,
-              type,
-              size: 100,
-              flipped: false,
-              rotation: 0,
-              transparency: 0,
-              horizontalCount: 1,
-              verticalCount: 1,
-            }
-            scene.objects.push(MechanicLinearKnockbackObject)
-            break
-
-          // 直线范围攻击
-          case StrategyBoardObjectType.Rectangle:
-            const RectangleObject: StrategyBoardRectangleObject = {
-              ...objectBase,
-              type,
-              width: 128,
-              height: 128,
-              rotation: 0,
-              transparency: 0,
-              color: {
-                r: 255,
-                g: 128,
-                b: 0,
-              },
-            }
-            scene.objects.push(RectangleObject)
-            break
-
-          // 线
-          case StrategyBoardObjectType.Line:
-            const lineObject: StrategyBoardLineObject = {
-              ...objectBase,
-              type,
-              width: 6,
-              endPoint: {
-                x: 0,
-                y: 0,
-              },
-              transparency: 0,
-              color: {
-                r: 255,
-                g: 128,
-                b: 0,
-              },
-            }
-            scene.objects.push(lineObject)
-            break
-
-          // 文字，需要额外读取文本内容
-          case StrategyBoardObjectType.Text:
-
-            // 前缀，2字节
-            offset += 2
-
-            // 文本长度，2字节
-            const textContentLength = dataView.getUint16(offset, true)
-            offset += 2
-
-            // 文本内容，需要去除末尾的空字符
-            const textContentData = data.slice(offset, offset + textContentLength)
-            const textContent = utf8Decoder.decode(textContentData).replace(/\0*$/, '')
-            offset += textContentLength
-
-            const textObject: StrategyBoardTextObject = {
-              ...objectBase,
-              type,
-              content: textContent,
-              color: {
-                r: 255,
-                g: 255,
-                b: 255,
-              },
-            }
-            scene.objects.push(textObject)
-            break
-
-          // 其他一般图形
-          default:
-            const commonObject: StrategyBoardCommonObject = {
-              ...objectBase,
-              type,
-              size: 100,
-              flipped: false,
-              rotation: 0,
-              transparency: 0,
-            }
-            scene.objects.push(commonObject)
-        }
+        // 添加图形
+        scene.objects.push(object)
 
         break
 
