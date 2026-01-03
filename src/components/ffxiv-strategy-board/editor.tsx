@@ -1,22 +1,56 @@
 'use client'
 
-import { MouseEventHandler, useState, useCallback } from 'react'
+import { MouseEventHandler, useState, useCallback, useId } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectLabel, SelectItem } from '@/components/ui/select'
 import { FieldGroup, Field, FieldLabel, FieldDescription } from '@/components/ui/field'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { PointerSensor, DragEndEvent, DndContext, DragOverlay, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
+import { PointerSensor, DragStartEvent, DragEndEvent, DndContext, DragOverlay, useSensor, useSensors, useDroppable, useDraggable } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { restrictToVerticalAxis, restrictToFirstScrollableAncestor } from '@dnd-kit/modifiers'
+import { restrictToVerticalAxis, restrictToWindowEdges, restrictToFirstScrollableAncestor } from '@dnd-kit/modifiers'
 import { CSS } from '@dnd-kit/utilities'
 import { Lock, Unlock, Eye, EyeOff } from 'lucide-react'
 import { cn, ffxivImageUrl } from '@/lib/utils'
-import { StrategyBoardBackground, StrategyBoardObjectType } from '@/lib/ffxiv-strategy-board'
+import { StrategyBoardBackground, StrategyBoardObjectType, sceneWidth, sceneHeight } from '@/lib/ffxiv-strategy-board'
 
 import { backgroundOptions, objectLibrary, objectLibraryGroups } from './constants'
 import { useStrategyBoard } from './context'
-import { StrategyBoardCanvas } from './canvas'
+import { StrategyBoardCanvas, StrategyBoardCanvasObjectPreview } from './canvas'
+
+function ObjectLibraryPanelObject(props: { objectType: StrategyBoardObjectType }) {
+  const { objectType } = props
+
+  const objectLibraryItem = objectLibrary.get(objectType)!
+
+  return (
+    <div className="size-10 rounded-sm cursor-grab">
+      <Image className="size-10" src={ffxivImageUrl(objectLibraryItem.icon)} alt={objectLibraryItem.abbr} width={80} height={80} />
+    </div>
+  )
+}
+
+function DraggableObjectLibraryPanelObject(props: { objectType: StrategyBoardObjectType }) {
+  const { objectType } = props
+
+  const { setNodeRef, attributes, listeners } = useDraggable({ id: objectType })
+
+  return (
+    <div ref={setNodeRef} {...attributes} {...listeners}>
+      <ObjectLibraryPanelObject objectType={objectType} />
+    </div>
+  )
+}
+
+function ObjectLibraryPanelObjectPreview(props: { objectType: StrategyBoardObjectType }) {
+  const { objectType } = props
+
+  return (
+    <div className="size-10 flex items-center justify-center">
+      <StrategyBoardCanvasObjectPreview objectType={objectType} />
+    </div>
+  )
+}
 
 function ObjectLibraryPanel() {
   return (
@@ -34,15 +68,10 @@ function ObjectLibraryPanel() {
                 </div>
               )}
               <div className="flex flex-col gap-1">
-                {group.items.map((row, index) => (
+                {group.objectTypes.map((row, index) => (
                   <div key={index} className="flex flex-wrap gap-1">
-                    {row.map((item, index) => (
-                      <div
-                        key={index}
-                        className="size-10 rounded-sm cursor-grab"
-                      >
-                        <Image className="size-10" src={ffxivImageUrl(item.icon)} alt={item.abbr} width={80} height={80} />
-                      </div>
+                    {row.map((objectType, index) => (
+                      <DraggableObjectLibraryPanelObject key={index} objectType={objectType} />
                     ))}
                   </div>
                 ))}
@@ -199,6 +228,8 @@ function LayersPanel() {
 
   const [draggingObjectId, setDraggingObjectId] = useState<string | null>(null)
 
+  const contextId = useId()
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -207,7 +238,7 @@ function LayersPanel() {
     }),
   )
 
-  const handleDragStart = useCallback((event: DragEndEvent): void => {
+  const handleDragStart = useCallback((event: DragStartEvent): void => {
     const { active } = event
     const id = active.id as string
     selectObjects([id])
@@ -228,9 +259,9 @@ function LayersPanel() {
       </div>
       <ScrollArea className="flex-1 min-h-0 pb-4">
         <div className="px-2 flex flex-col gap-0.5">
-          <DndContext 
+          <DndContext
+            id={contextId}
             sensors={sensors}
-            collisionDetection={closestCenter}
             modifiers={[restrictToVerticalAxis, restrictToFirstScrollableAncestor]}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
@@ -255,6 +286,8 @@ function LayersPanel() {
 function CanvasArea() {
   const { selectObjects } = useStrategyBoard()
 
+  const { setNodeRef } = useDroppable({ id: 'canvas' })
+
   const handleBackgroundClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
     selectObjects([])
   }, [selectObjects])
@@ -266,7 +299,7 @@ function CanvasArea() {
     <div className="size-full flex flex-col bg-muted/30 overflow-auto" onClick={handleBackgroundClick}>
       <div className="flex-1 min-w-max flex flex-col">
         <div className="flex-1 p-12 flex items-center justify-center">
-          <div className="shadow-xl" onClick={handleCanvasContainerClick}>
+          <div ref={setNodeRef} className="shadow-xl" onClick={handleCanvasContainerClick}>
             <StrategyBoardCanvas />
           </div>
         </div>
@@ -282,23 +315,63 @@ function CanvasArea() {
 }
 
 export function StrategyBoardEditor() {
+  const [draggingObjectType, setDraggingObjectType] = useState<StrategyBoardObjectType | null>(null)
+
+  const { addObject } = useStrategyBoard()
+
+  const contextId = useId()
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+  )
+
+  const handleDragStart = useCallback((event: DragStartEvent): void => {
+    const { active } = event
+    const objectType = active.id as StrategyBoardObjectType
+    setDraggingObjectType(objectType)
+  }, [])
+  const handleDragEnd = useCallback((event: DragEndEvent): void => {
+    const { active, over } = event
+    setDraggingObjectType(null)
+    if (!draggingObjectType || !over || !active.rect.current.translated) return
+    const x = ((active.rect.current.translated.left + active.rect.current.translated.right) / 2 - over.rect.left) * sceneWidth / over.rect.width
+    const y = ((active.rect.current.translated.top + active.rect.current.translated.bottom) / 2 - over.rect.top) * sceneHeight / over.rect.height
+    if (x >= 0 && x < sceneWidth && y >= 0 && y < sceneHeight) {
+      addObject(draggingObjectType, { x, y })
+    }
+  }, [draggingObjectType, addObject])
+
   return (
-    <div className="flex-1 min-h-0 flex overflow-hidden">
-      <div className="w-110 border-r flex flex-col bg-card">
-        <ObjectLibraryPanel />
-      </div>
-      <div className="flex-1 min-w-0">
-        <CanvasArea />
-      </div>
-      <div className="w-80 border-l flex flex-col bg-card">
-        <div className="h-120">
-          <PropertiesPanel />
+    <DndContext
+      id={contextId}
+      sensors={sensors}
+      autoScroll={false}
+      modifiers={[restrictToWindowEdges]}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="flex-1 min-h-0 flex overflow-hidden">
+        <div className="w-110 border-r flex flex-col bg-card">
+          <ObjectLibraryPanel />
         </div>
-        <div className="border-b" />
-        <div className="flex-1 min-h-0">
-          <LayersPanel />
+        <div className="flex-1 min-w-0">
+          <CanvasArea />
+        </div>
+        <div className="w-80 border-l flex flex-col bg-card">
+          <div className="h-120">
+            <PropertiesPanel />
+          </div>
+          <div className="border-b" />
+          <div className="flex-1 min-h-0">
+            <LayersPanel />
+          </div>
         </div>
       </div>
-    </div>
+      <DragOverlay className="**:cursor-grabbing" dropAnimation={null}>
+        {draggingObjectType && (
+          <ObjectLibraryPanelObjectPreview objectType={draggingObjectType} />
+        )}
+      </DragOverlay>
+    </DndContext>
   )
 }

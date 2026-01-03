@@ -4,7 +4,7 @@ import { useCallback } from 'react'
 import useImage from 'use-image'
 import Konva from 'konva'
 import { Stage, Layer, Group, Image } from 'react-konva'
-import { StrategyBoardObjectType } from '@/lib/ffxiv-strategy-board'
+import { StrategyBoardObject, StrategyBoardObjectType, createObject } from '@/lib/ffxiv-strategy-board'
 import { ffxivImageUrl } from '@/lib/utils'
 
 import { backgroundOptions } from '../constants'
@@ -17,18 +17,73 @@ import { ArcCanvasObject } from './arc'
 import { ImageCanvasObject } from './image'
 import { canvasWidth, canvasHeight, positionToCanvasPosition, canvasPositionToPosition } from './calc'
 
-export interface CanvasObjectProps {
-  id: string
-  readOnly?: boolean
+function CanvasObjectContent(props: { object: StrategyBoardObject, readOnly?: boolean }) {
+  const { object, readOnly } = props
+
+  if (object.type === StrategyBoardObjectType.Text) {
+    return (
+      <TextCanvasObject object={object} readOnly={readOnly} />
+    )
+  }
+  if (object.type === StrategyBoardObjectType.Line) {
+    return (
+      <LineCanvasObject object={object} readOnly={readOnly} />
+    )
+  }
+  if (object.type === StrategyBoardObjectType.Rectangle) {
+    return (
+      <RectangleCanvasObject object={object} readOnly={readOnly} />
+    )
+  }
+  if (object.type === StrategyBoardObjectType.MechanicConeAoE) {
+    return (
+      <ConeCanvasObject object={object} readOnly={readOnly} />
+    )
+  }
+  if (object.type === StrategyBoardObjectType.MechanicDonutAoE) {
+    return (
+      <ArcCanvasObject object={object} readOnly={readOnly} />
+    )
+  }
+  return (
+    <ImageCanvasObject object={object} readOnly={readOnly} />
+  )
 }
 
-export function CanvasObject(props: CanvasObjectProps) {
+export interface StrategyBoardCanvasObjectPreviewProps {
+  objectType: StrategyBoardObjectType
+}
+
+export function StrategyBoardCanvasObjectPreview(props: StrategyBoardCanvasObjectPreviewProps) {
+  const { objectType } = props
+
+  const previewCanvasSize = 512
+  const object = createObject(objectType, canvasPositionToPosition({ x: previewCanvasSize / 2, y: previewCanvasSize / 2 }))
+  
+  return (
+    <div className="size-0">
+      <Stage
+        width={previewCanvasSize}
+        height={previewCanvasSize}
+        style={{ margin: -previewCanvasSize / 2 }}
+      >
+        <Layer>
+          <Group x={previewCanvasSize / 2} y={previewCanvasSize / 2}>
+            <CanvasObjectContent object={object} readOnly />
+          </Group>
+        </Layer>
+      </Stage>
+    </div>
+  )
+}
+
+function CanvasObject(props: { id: string, readOnly?: boolean }) {
   const { id, readOnly } = props
 
   const { selectedObjectIds, selectObjects, getObject, setObjectPosition } = useStrategyBoard()
   
   const object = getObject(id)!
-  const { type, visible, locked, position } = object
+  const { visible, locked, position } = object
 
   // 点击选中图形
   const handleCanvasObjectClick = useCallback((event: Konva.KonvaEventObject<MouseEvent>) => {
@@ -73,36 +128,7 @@ export function CanvasObject(props: CanvasObjectProps) {
       onDragMove={handleCanvasObjectDragMove}
       onDragEnd={handleCanvasObjectDragEnd}
     >
-      {(() => {
-        if (type === StrategyBoardObjectType.Text) {
-          return (
-            <TextCanvasObject object={object} readOnly={readOnly} />
-          )
-        }
-        if (type === StrategyBoardObjectType.Line) {
-          return (
-            <LineCanvasObject object={object} readOnly={readOnly} />
-          )
-        }
-        if (type === StrategyBoardObjectType.Rectangle) {
-          return (
-            <RectangleCanvasObject object={object} readOnly={readOnly} />
-          )
-        }
-        if (type === StrategyBoardObjectType.MechanicConeAoE) {
-          return (
-            <ConeCanvasObject object={object} readOnly={readOnly} />
-          )
-        }
-        if (type === StrategyBoardObjectType.MechanicDonutAoE) {
-          return (
-            <ArcCanvasObject object={object} readOnly={readOnly} />
-          )
-        }
-        return (
-          <ImageCanvasObject object={object} readOnly={readOnly} />
-        )
-      })()}
+      <CanvasObjectContent object={object} readOnly={readOnly} />
     </Group>
   )
 }

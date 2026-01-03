@@ -1,3 +1,3 @@
-export { StrategyBoardCanvas } from './canvas'
+export { StrategyBoardCanvas, StrategyBoardCanvasObjectPreview } from './canvas'
 
-export type { StrategyBoardCanvasProps } from './canvas'
+export type { StrategyBoardCanvasProps, StrategyBoardCanvasObjectPreviewProps } from './canvas'

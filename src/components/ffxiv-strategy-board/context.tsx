@@ -2,7 +2,15 @@
 
 import { ReactNode, createContext, useState, useContext, useMemo, useCallback } from 'react'
 import { produce } from 'immer'
-import { StrategyBoardScene, StrategyBoardBackground, StrategyBoardObject, sceneToShareCode, shareCodeToScene } from '@/lib/ffxiv-strategy-board'
+import {
+  StrategyBoardScene,
+  StrategyBoardBackground,
+  StrategyBoardObject,
+  StrategyBoardObjectType,
+  createObject,
+  sceneToShareCode,
+  shareCodeToScene,
+} from '@/lib/ffxiv-strategy-board'
 
 export interface StrategyBoardContextProps {
   scene: StrategyBoardScene
@@ -14,6 +22,7 @@ export interface StrategyBoardContextProps {
   selectedObjects: StrategyBoardObject[]
   selectObjects: (ids: string[]) => void
   getObject: (id: string) => StrategyBoardObject | null
+  addObject: (type: StrategyBoardObjectType, position: { x: number, y: number }) => void
   reorderObject: (id: string, newIndex: number) => void
   toggleObjectVisible: (id: string) => void
   toggleObjectLocked: (id: string) => void
@@ -70,6 +79,13 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     return scene.objects.find(object => object.id === id) ?? null
   }, [scene])
 
+  const addObject = useCallback((type: StrategyBoardObjectType, position: { x: number, y: number }): void => {
+    const object = createObject(type, position)
+    onSceneChange?.(produce(scene, scene => {
+      scene.objects.unshift(object)
+    }))
+  }, [scene, onSceneChange])
+
   const reorderObject = useCallback((id: string, newIndex: number): void => {
     onSceneChange?.(produce(scene, scene => {
       const index = scene.objects.findIndex(object => object.id === id)
@@ -112,6 +128,7 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     selectedObjects,
     selectObjects,
     getObject,
+    addObject,
     reorderObject,
     toggleObjectVisible,
     toggleObjectLocked,
