@@ -1,15 +1,4 @@
 import { StrategyBoardScene, StrategyBoardBackground, StrategyBoardObjectType, StrategyBoardObject, createObject } from './strategy-board'
-import { reverseMap } from './utils'
-
-const backgroundValues = new Map<StrategyBoardBackground, number>()
-backgroundValues.set(StrategyBoardBackground.None, 0x01)
-backgroundValues.set(StrategyBoardBackground.Checkered, 0x02)
-backgroundValues.set(StrategyBoardBackground.CheckeredCircleField, 0x03)
-backgroundValues.set(StrategyBoardBackground.CheckeredSquareField, 0x04)
-backgroundValues.set(StrategyBoardBackground.Gray, 0x05)
-backgroundValues.set(StrategyBoardBackground.GrayCircleField, 0x06)
-backgroundValues.set(StrategyBoardBackground.GraySquareField, 0x07)
-const mapValuesToBackground = reverseMap(backgroundValues)
 
 const utf8Decoder = new TextDecoder()
 const utf8Encoder = new TextEncoder()
@@ -133,7 +122,7 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
 
           // 背景区段
           case 0x0003:
-            items.push(backgroundValues.get(scene.background)!)
+            items.push(scene.background)
             break
 
           // 图形标志位区段
@@ -518,7 +507,7 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
 
           // 背景区段
           case 0x0003:
-            scene.background = mapValuesToBackground.get(items[0] as number)!
+            scene.background = items[0] as number
             break
 
           // 图形标志位区段

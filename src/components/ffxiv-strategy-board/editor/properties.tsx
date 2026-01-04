@@ -9,14 +9,56 @@ import { StrategyBoardBackground } from '@/lib/ffxiv-strategy-board'
 import { backgroundOptions } from '../constants'
 import { useStrategyBoard } from '../context'
 
-export function PropertiesPanel() {
-  const { scene, setBackground, selectedObjects } = useStrategyBoard()
+function ScenePropertiesPanel() {
+  const { scene, setBackground } = useStrategyBoard()
 
-  const handleSceneBackgroundSelectValueChange = useCallback((background: StrategyBoardBackground) => {
+  const handleSceneBackgroundSelectValueChange = useCallback((value: string): void => {
+    const background: StrategyBoardBackground = Number(value)
     setBackground(background)
   }, [setBackground])
 
-  return selectedObjects.length ? (
+  return (
+    <div className="size-full flex flex-col">
+      <div className="p-4 flex items-center justify-between">
+        <div className="font-semibold">战术板属性</div>
+      </div>
+      <ScrollArea className="flex-1 min-h-0 pb-4">
+        <div className="px-4">
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="background">背景</FieldLabel>
+              <FieldDescription>
+                背景不可旋转缩放移动，如需调整可从左侧图形库另外添加场地
+              </FieldDescription>
+              <div className="*:w-full">
+                <Select value={String(scene.background)} onValueChange={handleSceneBackgroundSelectValueChange}>
+                  <SelectTrigger id="background">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>战术板背景</SelectLabel>
+                      {[...backgroundOptions.entries()].map(([background, backgroundOption]) => (
+                        <SelectItem key={background} value={String(background)}>
+                          {backgroundOption.name}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+            </Field>
+          </FieldGroup>
+        </div>
+      </ScrollArea>
+    </div>
+  )
+}
+
+function ObjectPropertiesPanel() {
+  const { selectedObjects } = useStrategyBoard()
+
+  return (
     <div className="size-full flex flex-col">
       <div className="p-4 flex items-center justify-between">
         <div className="font-semibold">图形属性</div>
@@ -35,40 +77,15 @@ export function PropertiesPanel() {
         </div>
       </ScrollArea>
     </div>
+  )
+}
+
+export function PropertiesPanel() {
+  const { selectedObjects } = useStrategyBoard()
+
+  return selectedObjects.length ? (
+    <ObjectPropertiesPanel />
   ) : (
-    <div className="size-full flex flex-col">
-      <div className="p-4 flex items-center justify-between">
-        <div className="font-semibold">战术板属性</div>
-      </div>
-      <ScrollArea className="flex-1 min-h-0 pb-4">
-        <div className="px-4">
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="background">背景</FieldLabel>
-              <FieldDescription>
-                背景不可旋转缩放移动，如需调整可从左侧图形库另外添加场地
-              </FieldDescription>
-              <div className="*:w-full">
-                <Select value={scene.background} onValueChange={handleSceneBackgroundSelectValueChange}>
-                  <SelectTrigger id="background">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>战术板背景</SelectLabel>
-                      {[...backgroundOptions.entries()].map(([background, backgroundOption]) => (
-                        <SelectItem key={background} value={background}>
-                          {backgroundOption.name}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-            </Field>
-          </FieldGroup>
-        </div>
-      </ScrollArea>
-    </div>
+    <ScenePropertiesPanel />
   )
 }
