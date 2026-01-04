@@ -1,6 +1,6 @@
 'use client'
 
-import { MouseEventHandler, useState, useCallback, useId } from 'react'
+import { MouseEventHandler, PointerEventHandler, useState, useCallback, useId } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectLabel, SelectItem } from '@/components/ui/select'
@@ -159,15 +159,19 @@ function PropertiesPanel() {
 function LayersPanelLayer(props: { id: string }) {
   const { id } = props
 
-  const { selectedObjectIds, selectObjects, getObject, toggleObjectVisible, toggleObjectLocked } = useStrategyBoard()
+  const { selectedObjectIds, selectObjects, toggleObjectSelected, getObject, toggleObjectVisible, toggleObjectLocked } = useStrategyBoard()
 
   const object = getObject(id)!
   const objectLibraryItem = objectLibrary.get(object.type)!
   const selected = selectedObjectIds.includes(id)
 
-  const handleLayerClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
-    selectObjects([id])
-  }, [id, selectObjects])
+  const handlePointerDown = useCallback<MouseEventHandler<HTMLDivElement>>(event => {
+    if (event.shiftKey || event.ctrlKey) {
+      toggleObjectSelected(id)
+    } else {
+      selectObjects([id])
+    }
+  }, [id, selectObjects, toggleObjectSelected])
 
   const handleToggleLockedButtonClick = useCallback<MouseEventHandler<HTMLButtonElement>>(event => {
     event.stopPropagation()
@@ -184,7 +188,7 @@ function LayersPanelLayer(props: { id: string }) {
         'hover:bg-muted': !selected,
         'inset-ring-1 ring-primary bg-[color-mix(in_oklab,var(--primary)_20%,var(--card))]': selected,
       })}
-      onClick={handleLayerClick}
+      onPointerDown={handlePointerDown}
     >
       <Image className="size-10" src={ffxivImageUrl(objectLibraryItem.icon)} alt={objectLibraryItem.abbr} width={80} height={80} />
       <div className="flex-1 w-0 text-sm truncate">
@@ -232,7 +236,7 @@ function SortableLayersPanelLayer(props: { id: string }) {
 }
 
 function LayersPanel() {
-  const { scene, selectObjects, reorderObject } = useStrategyBoard()
+  const { scene, reorderObject } = useStrategyBoard()
 
   const [draggingObjectId, setDraggingObjectId] = useState<string | null>(null)
 
@@ -249,9 +253,8 @@ function LayersPanel() {
   const handleDragStart = useCallback((event: DragStartEvent): void => {
     const { active } = event
     const id = active.id as string
-    selectObjects([id])
     setDraggingObjectId(id)
-  }, [selectObjects])
+  }, [])
   const handleDragEnd = useCallback((event: DragEndEvent): void => {
     const { active, over } = event
     const id = active.id as string
@@ -296,18 +299,18 @@ function CanvasArea() {
 
   const { setNodeRef } = useDroppable({ id: 'canvas' })
 
-  const handleBackgroundClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
+  const handleBackgroundPointerDown = useCallback<PointerEventHandler<HTMLDivElement>>(() => {
     selectObjects([])
   }, [selectObjects])
-  const handleCanvasContainerClick = useCallback<MouseEventHandler<HTMLDivElement>>(event => {
+  const handleCanvasContainerPointerDown = useCallback<PointerEventHandler<HTMLDivElement>>(event => {
     event.stopPropagation()
   }, [])
 
   return (
-    <div className="size-full flex flex-col bg-muted/30 overflow-auto" onClick={handleBackgroundClick}>
+    <div className="size-full flex flex-col bg-muted/30 overflow-auto" onPointerDown={handleBackgroundPointerDown}>
       <div className="flex-1 min-w-max flex flex-col">
         <div className="flex-1 p-12 flex items-center justify-center">
-          <div ref={setNodeRef} className="shadow-xl" onClick={handleCanvasContainerClick}>
+          <div ref={setNodeRef} className="shadow-xl" onPointerDown={handleCanvasContainerPointerDown}>
             <StrategyBoardCanvas />
           </div>
         </div>

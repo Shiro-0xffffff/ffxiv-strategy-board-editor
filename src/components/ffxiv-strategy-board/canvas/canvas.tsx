@@ -80,40 +80,31 @@ export function StrategyBoardCanvasObjectPreview(props: StrategyBoardCanvasObjec
 function CanvasObject(props: { id: string, readOnly?: boolean }) {
   const { id, readOnly } = props
 
-  const { selectedObjectIds, selectObjects, getObject, setObjectPosition } = useStrategyBoard()
+  const { selectObjects, toggleObjectSelected, getObject, setObjectPosition } = useStrategyBoard()
   
   const object = getObject(id)!
   const { visible, locked, position } = object
 
-  // 点击选中图形
-  const handleCanvasObjectClick = useCallback((event: Konva.KonvaEventObject<MouseEvent>) => {
+  // 按下选中图形
+  const handlePointerDown = useCallback((event: Konva.KonvaEventObject<PointerEvent>) => {
     event.cancelBubble = true
-
-    const isObjectSelected = selectedObjectIds.includes(id)
-
     if (event.evt.shiftKey || event.evt.ctrlKey) {
-      if (isObjectSelected) {
-        selectObjects(selectedObjectIds.filter(selectedObjectIndex => selectedObjectIndex !== id))
-      } else {
-        selectObjects([...selectedObjectIds, id])
-      }
-      return
+      toggleObjectSelected(id)
+    } else {
+      selectObjects([id])
     }
-
-    if (!isObjectSelected) selectObjects([id])
-  }, [id, selectObjects, selectedObjectIds])
+  }, [id, selectObjects, toggleObjectSelected])
 
   // 拖动图形位置
-  const handleCanvasObjectDragStart = useCallback((event: Konva.KonvaEventObject<DragEvent>) => {
-    selectObjects([id])
-    const position = canvasPositionToPosition({ x: event.target.x(), y: event.target.y() })
-    setObjectPosition(id, position)
-  }, [id, selectObjects, setObjectPosition])
-  const handleCanvasObjectDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>) => {
+  const handleDragStart = useCallback((event: Konva.KonvaEventObject<DragEvent>) => {
     const position = canvasPositionToPosition({ x: event.target.x(), y: event.target.y() })
     setObjectPosition(id, position)
   }, [id, setObjectPosition])
-  const handleCanvasObjectDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>) => {
+  const handleDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>) => {
+    const position = canvasPositionToPosition({ x: event.target.x(), y: event.target.y() })
+    setObjectPosition(id, position)
+  }, [id, setObjectPosition])
+  const handleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>) => {
     const position = canvasPositionToPosition({ x: event.target.x(), y: event.target.y() })
     setObjectPosition(id, position)
   }, [id, setObjectPosition])
@@ -123,10 +114,10 @@ function CanvasObject(props: { id: string, readOnly?: boolean }) {
       {...positionToCanvasPosition(position)}
       visible={visible}
       draggable={!readOnly && !locked}
-      onClick={handleCanvasObjectClick}
-      onDragStart={handleCanvasObjectDragStart}
-      onDragMove={handleCanvasObjectDragMove}
-      onDragEnd={handleCanvasObjectDragEnd}
+      onPointerDown={handlePointerDown}
+      onDragStart={handleDragStart}
+      onDragMove={handleDragMove}
+      onDragEnd={handleDragEnd}
     >
       <CanvasObjectContent object={object} readOnly={readOnly} />
     </Group>
@@ -146,15 +137,15 @@ export function StrategyBoardCanvas(props: StrategyBoardCanvasProps) {
 
   const [backgroundImage] = useImage(ffxivImageUrl(backgroundOption.image))
 
-  // 点击空白区域取消选中图形
-  const handleStageClick = useCallback((event: Konva.KonvaEventObject<MouseEvent>) => {
+  // 在空白区域按下取消选中图形
+  const handleStagePointerDown = useCallback((event: Konva.KonvaEventObject<MouseEvent>) => {
     if (event.evt.shiftKey || event.evt.ctrlKey) return
     selectObjects([])
   }, [selectObjects])
 
   return (
     <div style={{ width: canvasWidth, height: canvasHeight }}>
-      <Stage width={canvasWidth} height={canvasHeight} onClick={handleStageClick}>
+      <Stage width={canvasWidth} height={canvasHeight} onPointerDown={handleStagePointerDown}>
         <Layer>
           <Image
             width={canvasWidth}

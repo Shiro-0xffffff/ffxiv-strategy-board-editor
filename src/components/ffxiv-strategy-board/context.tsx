@@ -21,6 +21,7 @@ export interface StrategyBoardContextProps {
   selectedObjectIds: string[]
   selectedObjects: StrategyBoardObject[]
   selectObjects: (ids: string[]) => void
+  toggleObjectSelected: (id: string) => void
   getObject: (id: string) => StrategyBoardObject | null
   addObject: (type: StrategyBoardObjectType, position: { x: number, y: number }) => void
   reorderObject: (id: string, newIndex: number) => void
@@ -74,6 +75,15 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
   const selectObjects = useCallback((ids: string[]): void => {
     setSelectedObjectIds(ids)
   }, [])
+  const toggleObjectSelected = useCallback((id: string): void => {
+    setSelectedObjectIds(selectedObjectIds => {
+      if (selectedObjectIds.includes(id)) {
+        return selectedObjectIds.filter(selectedObjectId => selectedObjectId !== id)
+      } else {
+        return [...selectedObjectIds, id]
+      }
+    })
+  }, [])
 
   const getObject = useCallback((id: string): StrategyBoardObject | null => {
     return scene.objects.find(object => object.id === id) ?? null
@@ -84,6 +94,7 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     onSceneChange?.(produce(scene, scene => {
       scene.objects.unshift(object)
     }))
+    setSelectedObjectIds([object.id])
   }, [scene, onSceneChange])
 
   const reorderObject = useCallback((id: string, newIndex: number): void => {
@@ -127,6 +138,7 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     selectedObjectIds,
     selectedObjects,
     selectObjects,
+    toggleObjectSelected,
     getObject,
     addObject,
     reorderObject,
