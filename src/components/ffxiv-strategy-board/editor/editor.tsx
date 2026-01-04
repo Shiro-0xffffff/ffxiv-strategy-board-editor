@@ -1,0 +1,65 @@
+'use client'
+
+import { PointerEventHandler, useCallback } from 'react'
+
+import { useStrategyBoard } from '../context'
+import { StrategyBoardCanvas } from '../canvas'
+
+import { ObjectLibraryDraggingContainer, ObjectLibraryDraggingTargetCanvas, ObjectLibraryPanel } from './object-library'
+import { PropertiesPanel } from './properties'
+import { LayersPanel } from './layers'
+
+function CanvasArea() {
+  const { selectObjects } = useStrategyBoard()
+
+  const handleBackgroundPointerDown = useCallback<PointerEventHandler<HTMLDivElement>>(() => {
+    selectObjects([])
+  }, [selectObjects])
+  const handleCanvasContainerPointerDown = useCallback<PointerEventHandler<HTMLDivElement>>(event => {
+    event.stopPropagation()
+  }, [])
+
+  return (
+    <div className="size-full flex flex-col bg-muted/30 overflow-auto" onPointerDown={handleBackgroundPointerDown}>
+      <div className="flex-1 min-w-max flex flex-col">
+        <div className="flex-1 p-12 flex items-center justify-center">
+          <div className="shadow-xl" onPointerDown={handleCanvasContainerPointerDown}>
+            <ObjectLibraryDraggingTargetCanvas>
+              <StrategyBoardCanvas />
+            </ObjectLibraryDraggingTargetCanvas>
+          </div>
+        </div>
+        <div className="min-w-0 min-h-0 p-4">
+          <div className="text-center text-balance text-xs text-muted-foreground/15">
+            <p>FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.</p>
+            <p>FINAL FANTASY XI © 2002 - 2020 SQUARE ENIX CO., LTD. All Rights Reserved.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function StrategyBoardEditor() {
+  return (
+    <ObjectLibraryDraggingContainer>
+      <div className="flex-1 min-h-0 flex overflow-hidden">
+        <div className="w-110 border-r flex flex-col bg-card">
+          <ObjectLibraryPanel />
+        </div>
+        <div className="flex-1 min-w-0">
+          <CanvasArea />
+        </div>
+        <div className="w-80 border-l flex flex-col bg-card">
+          <div className="h-120">
+            <PropertiesPanel />
+          </div>
+          <div className="border-b" />
+          <div className="flex-1 min-h-0">
+            <LayersPanel />
+          </div>
+        </div>
+      </div>
+    </ObjectLibraryDraggingContainer>
+  )
+}
