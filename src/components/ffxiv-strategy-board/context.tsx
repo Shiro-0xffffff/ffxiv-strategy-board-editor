@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode, createContext, useState, useContext, useMemo, useCallback } from 'react'
+import { ReactNode, createContext, useState, useContext, useCallback } from 'react'
 import { produce } from 'immer'
 import {
   StrategyBoardScene,
@@ -14,20 +14,21 @@ import {
 
 export interface StrategyBoardContextProps {
   scene: StrategyBoardScene
-  importFromShareCode: (shareCode: string) => Promise<void>
-  exportToShareCode: () => Promise<string>
   setName: (name: string) => void
   setBackground: (background: StrategyBoardBackground) => void
   selectedObjectIds: string[]
-  selectedObjects: StrategyBoardObject[]
   selectObjects: (ids: string[]) => void
   toggleObjectSelected: (id: string) => void
   getObject: (id: string) => StrategyBoardObject | null
   addObject: (type: StrategyBoardObjectType, position: { x: number, y: number }) => void
+  deleteObject: (id: string) => void
+  deleteObjects: (ids: string[]) => void
   reorderObject: (id: string, newIndex: number) => void
   toggleObjectVisible: (id: string) => void
   toggleObjectLocked: (id: string) => void
   setObjectPosition: (id: string, position: { x: number, y: number }) => void
+  importFromShareCode: (shareCode: string) => Promise<void>
+  exportToShareCode: () => Promise<string>
 }
 
 const StrategyBoardContext = createContext<StrategyBoardContextProps | null>(null)
@@ -47,15 +48,6 @@ export interface StrategyBoardProviderProps {
 export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
   const { scene, onSceneChange, children } = props
 
-  const importFromShareCode = useCallback(async (shareCode: string): Promise<void> => {
-    const scene = await shareCodeToScene(shareCode)
-    onSceneChange?.(scene)
-  }, [onSceneChange])
-  const exportToShareCode = useCallback(async (): Promise<string> => {
-    const shareCode = await sceneToShareCode(scene)
-    return shareCode
-  }, [scene])
-
   const setName = useCallback((name: string): void => {
     onSceneChange?.(produce(scene, scene => {
       scene.name = name
@@ -68,9 +60,6 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
   }, [scene, onSceneChange])
 
   const [selectedObjectIds, setSelectedObjectIds] = useState<string[]>([])
-  const selectedObjects = useMemo(() => (
-    selectedObjectIds.map(id => scene.objects.find(object => object.id === id)).filter(object => !!object)
-  ), [scene.objects, selectedObjectIds])
 
   const selectObjects = useCallback((ids: string[]): void => {
     setSelectedObjectIds(ids)
@@ -96,6 +85,19 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     }))
     setSelectedObjectIds([object.id])
   }, [scene, onSceneChange])
+  const deleteObjects = useCallback((ids: string[]): void => {
+    onSceneChange?.(produce(scene, scene => {
+      ids.forEach(id => {
+        const index = scene.objects.findIndex(object => object.id === id)
+        if (index < 0) return
+        scene.objects.splice(index, 1)
+      })
+    }))
+    setSelectedObjectIds(selectedObjectIds => selectedObjectIds.filter(selectedObjectId => !ids.includes(selectedObjectId)))
+  }, [scene, onSceneChange])
+  const deleteObject = useCallback((id: string): void => {
+    deleteObjects([id])
+  }, [deleteObjects])
 
   const reorderObject = useCallback((id: string, newIndex: number): void => {
     onSceneChange?.(produce(scene, scene => {
@@ -129,22 +131,33 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     })
   }, [modifyObject])
 
+  const importFromShareCode = useCallback(async (shareCode: string): Promise<void> => {
+    const scene = await shareCodeToScene(shareCode)
+    setSelectedObjectIds([])
+    onSceneChange?.(scene)
+  }, [onSceneChange])
+  const exportToShareCode = useCallback(async (): Promise<string> => {
+    const shareCode = await sceneToShareCode(scene)
+    return shareCode
+  }, [scene])
+
   const contextValue: StrategyBoardContextProps = {
     scene,
-    importFromShareCode,
-    exportToShareCode,
     setName,
     setBackground,
     selectedObjectIds,
-    selectedObjects,
     selectObjects,
     toggleObjectSelected,
     getObject,
     addObject,
+    deleteObject,
+    deleteObjects,
     reorderObject,
     toggleObjectVisible,
     toggleObjectLocked,
     setObjectPosition,
+    importFromShareCode,
+    exportToShareCode,
   }
 
   return (
