@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectLabel, SelectItem } from '@/components/ui/select'
 import { FieldGroup, Field, FieldLabel, FieldDescription } from '@/components/ui/field'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { PointerSensor, DragStartEvent, DragEndEvent, DndContext, DragOverlay, useSensor, useSensors, useDroppable, useDraggable } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { restrictToVerticalAxis, restrictToWindowEdges, restrictToFirstScrollableAncestor } from '@dnd-kit/modifiers'
@@ -24,9 +25,16 @@ function ObjectLibraryPanelObject(props: { objectType: StrategyBoardObjectType }
   const objectLibraryItem = objectLibrary.get(objectType)!
 
   return (
-    <div className="size-10 rounded-sm cursor-grab">
-      <Image className="size-10" src={ffxivImageUrl(objectLibraryItem.icon)} alt={objectLibraryItem.abbr} width={80} height={80} />
-    </div>
+    <Tooltip delayDuration={700}>
+      <TooltipTrigger asChild>
+        <div className="size-10 rounded-sm cursor-grab">
+          <Image className="size-10" src={ffxivImageUrl(objectLibraryItem.icon)} alt={objectLibraryItem.abbr} width={80} height={80} />
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">
+        <p>{objectLibraryItem.name}</p>
+      </TooltipContent>
+    </Tooltip>
   )
 }
 
