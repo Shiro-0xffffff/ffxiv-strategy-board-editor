@@ -1,6 +1,6 @@
 'use client'
 
-import { MouseEventHandler, useState, useCallback, useId } from 'react'
+import { MouseEventHandler, useState, useRef, useEffect, useCallback, useId } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -24,6 +24,13 @@ function Layer(props: { id: string }) {
   const objectLibraryItem = objectLibrary.get(object.type)!
   const selected = selectedObjectIds.includes(id)
 
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!selected) return
+    ref.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [selected])
+
   const handlePointerDown = useCallback<MouseEventHandler<HTMLDivElement>>(event => {
     if (event.shiftKey || event.ctrlKey) {
       toggleObjectSelected(id)
@@ -43,6 +50,7 @@ function Layer(props: { id: string }) {
 
   return (
     <div
+      ref={ref}
       className={cn('rounded p-2 flex items-center gap-2 cursor-pointer transition-colors', {
         'hover:bg-muted': !selected,
         'inset-ring-1 ring-primary bg-[color-mix(in_oklab,var(--primary)_20%,var(--card))]': selected,
