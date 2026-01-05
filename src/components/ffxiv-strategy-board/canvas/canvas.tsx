@@ -12,6 +12,7 @@ import { useStrategyBoard } from '../context'
 import { TextCanvasObject } from './text'
 import { LineCanvasObject } from './line'
 import { RectangleCanvasObject } from './rectangle'
+import { CircleCanvasObject } from './circle'
 import { ConeCanvasObject } from './cone'
 import { ArcCanvasObject } from './arc'
 import { ImageCanvasObject } from './image'
@@ -33,6 +34,11 @@ function CanvasObjectContent(props: { object: StrategyBoardObject, readOnly?: bo
   if (object.type === StrategyBoardObjectType.Rectangle) {
     return (
       <RectangleCanvasObject object={object} readOnly={readOnly} />
+    )
+  }
+  if (object.type === StrategyBoardObjectType.MechanicCircleAoE) {
+    return (
+      <CircleCanvasObject object={object} readOnly={readOnly} />
     )
   }
   if (object.type === StrategyBoardObjectType.MechanicConeAoE) {
@@ -156,9 +162,11 @@ export function StrategyBoardCanvas(props: StrategyBoardCanvasProps) {
           />
         </Layer>
         <Layer>
-          {scene.objects.slice().reverse().map(({ id }) => (
-            <CanvasObject key={id} id={id} readOnly={readOnly} />
-          ))}
+          <Group x={canvasWidth / 2} y={canvasHeight / 2}>
+            {scene.objects.slice().reverse().map(({ id }) => (
+              <CanvasObject key={id} id={id} readOnly={readOnly} />
+            ))}
+          </Group>
         </Layer>
       </Stage>
     </div>

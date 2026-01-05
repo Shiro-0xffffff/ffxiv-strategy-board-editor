@@ -1,4 +1,5 @@
 import { uuid } from '@/lib/utils'
+import { clampInt } from './utils'
 
 export enum StrategyBoardBackground {
   None = 0x01,
@@ -173,8 +174,8 @@ export interface StrategyBoardObjectBase {
   visible: boolean
   locked: boolean
   position: {
-    x: number // 0-5120
-    y: number // 0-3840
+    x: number
+    y: number
   }
 }
 
@@ -184,34 +185,33 @@ export interface StrategyBoardCommonObject extends StrategyBoardObjectBase {
     StrategyBoardObjectType.Text |
     StrategyBoardObjectType.Line |
     StrategyBoardObjectType.Rectangle |
+    StrategyBoardObjectType.MechanicCircleAoE |
     StrategyBoardObjectType.MechanicConeAoE |
     StrategyBoardObjectType.MechanicDonutAoE |
     StrategyBoardObjectType.MechanicLineStack |
     StrategyBoardObjectType.MechanicLinearKnockback
   >
-  size: number // 50-200
+  size: number
   flipped?: boolean
-  rotation: number // -180-180
-  transparency: number // 0-100
+  rotation: number
+  transparency: number
 }
 
 export interface StrategyBoardTextObject extends StrategyBoardObjectBase {
   type: StrategyBoardObjectType.Text
   content: string
   color: {
-    r: number // 0-255
-    g: number // 0-255
-    b: number // 0-255
+    r: number
+    g: number
+    b: number
   }
 }
 
 export interface StrategyBoardLineObject extends StrategyBoardObjectBase {
   type: StrategyBoardObjectType.Line
-  width: number // 2-10
-  endPoint: {
-    x: number
-    y: number
-  }
+  length: number
+  lineWidth: number
+  rotation: number
   transparency: number
   color: {
     r: number
@@ -222,8 +222,10 @@ export interface StrategyBoardLineObject extends StrategyBoardObjectBase {
 
 export interface StrategyBoardRectangleObject extends StrategyBoardObjectBase {
   type: StrategyBoardObjectType.Rectangle
-  width: number // 16-512
-  height: number // 16-384
+  size: {
+    width: number
+    height: number
+  }
   rotation: number
   transparency: number
   color: {
@@ -233,23 +235,30 @@ export interface StrategyBoardRectangleObject extends StrategyBoardObjectBase {
   }
 }
 
-export interface StrategyBoardConeObject extends StrategyBoardObjectBase {
-  type: StrategyBoardObjectType.MechanicConeAoE
-  size: number // 10-200
-  flipped?: boolean
+export interface StrategyBoardCircleObject extends StrategyBoardObjectBase {
+  type: StrategyBoardObjectType.MechanicCircleAoE
+  size: number
   rotation: number
   transparency: number
-  arcAngle: number // 10-360
 }
 
-export interface StrategyBoardArcObject extends StrategyBoardObjectBase {
-  type: StrategyBoardObjectType.MechanicDonutAoE
-  size: number // 10-200
+export interface StrategyBoardConeObject extends StrategyBoardObjectBase {
+  type: StrategyBoardObjectType.MechanicConeAoE
+  size: number
   flipped?: boolean
   rotation: number
   transparency: number
   arcAngle: number
-  innerRadius: number // 0-240
+}
+
+export interface StrategyBoardArcObject extends StrategyBoardObjectBase {
+  type: StrategyBoardObjectType.MechanicDonutAoE
+  size: number
+  flipped?: boolean
+  rotation: number
+  transparency: number
+  arcAngle: number
+  innerRadius: number
 }
 
 export interface StrategyBoardMechanicLineStackObject extends StrategyBoardObjectBase {
@@ -258,7 +267,7 @@ export interface StrategyBoardMechanicLineStackObject extends StrategyBoardObjec
   flipped?: boolean
   rotation: number
   transparency: number
-  displayCount: number // 1-5
+  displayCount: number
 }
 
 export interface StrategyBoardMechanicLinearKnockbackObject extends StrategyBoardObjectBase {
@@ -267,8 +276,10 @@ export interface StrategyBoardMechanicLinearKnockbackObject extends StrategyBoar
   flipped?: boolean
   rotation: number
   transparency: number
-  horizontalCount: number // 1-5
-  verticalCount: number // 1-5
+  displayCount: {
+    horizontal: number
+    vertical: number
+  }
 }
 
 export type StrategyBoardObject =
@@ -276,10 +287,73 @@ export type StrategyBoardObject =
   StrategyBoardLineObject |
   StrategyBoardRectangleObject |
   StrategyBoardCommonObject |
+  StrategyBoardCircleObject |
   StrategyBoardConeObject |
   StrategyBoardArcObject |
   StrategyBoardMechanicLineStackObject |
   StrategyBoardMechanicLinearKnockbackObject
+
+export function normalizePosition(position: { x: number, y: number }): { x: number, y: number } {
+  return {
+    x: clampInt(position.x, -sceneWidth / 2, sceneWidth / 2),
+    y: clampInt(position.y, -sceneHeight / 2, sceneHeight / 2),
+  }
+}
+export function normalizeRotation(rotation: number): number {
+  if (rotation > 180) return Math.round((rotation + 180) % 360 - 180)
+  if (rotation < -180) return Math.round((rotation - 180) % 360 + 180)
+  return Math.round(rotation)
+}
+export function normalizeSize(size: number): number {
+  return clampInt(size, 50, 200)
+}
+export function normalizeRoundShapeSize(size: number): number {
+  return clampInt(size, 10, 200)
+}
+export function normalizeWidth(width: number): number {
+  return clampInt(width, 160, sceneWidth)
+}
+export function normalizeHeight(height: number): number {
+  return clampInt(height, 160, sceneHeight)
+}
+export function normalizeInnerRadius(innerRadius: number): number {
+  return clampInt(innerRadius, 0, 240)
+}
+export function normalizeLineEndPoint(position: { x: number, y: number }, rotation: number): (endPoint: { x: number, y: number }) => { x: number, y: number } {
+  const topIntersectionX = position.x + (-sceneHeight / 2 - position.y) / Math.tan(rotation * Math.PI / 180)
+  const bottomIntersectionX = position.x + (sceneHeight / 2 - position.y) / Math.tan(rotation * Math.PI / 180)
+  const leftIntersectionY = position.y + (-sceneWidth / 2 - position.x) * Math.tan(rotation * Math.PI / 180)
+  const rightIntersectionY = position.y + (sceneWidth / 2 - position.x) * Math.tan(rotation * Math.PI / 180)
+  const xLowerBound = Math.max(Math.min(topIntersectionX, bottomIntersectionX), -sceneWidth / 2)
+  const xUpperBound = Math.min(Math.max(topIntersectionX, bottomIntersectionX), sceneWidth / 2)
+  const yLowerBound = Math.max(Math.min(leftIntersectionY, rightIntersectionY), -sceneHeight / 2)
+  const yUpperBound = Math.min(Math.max(leftIntersectionY, rightIntersectionY), sceneHeight / 2)
+  return ({ x, y }) => ({
+    x: clampInt(x, xLowerBound, xUpperBound),
+    y: clampInt(y, yLowerBound, yUpperBound),
+  })
+}
+export function normalizeLineWidth(lineWidth: number): number {
+  return clampInt(lineWidth, 2, 10)
+}
+export function normalizeArcAngle(arcAngle: number): number {
+  if (arcAngle > 360) return Math.round(arcAngle % 360)
+  if (arcAngle < 0) return Math.round(arcAngle % 360 + 360)
+  return Math.round(arcAngle)
+}
+export function normalizeDisplayCount(displayCount: number): number {
+  return clampInt(displayCount, 1, 5)
+}
+export function normalizeColor(color: { r: number, g: number, b: number }): { r: number, g: number, b: number } {
+  return {
+    r: clampInt(color.r, 0, 255),
+    g: clampInt(color.g, 0, 255),
+    b: clampInt(color.b, 0, 255),
+  }
+}
+export function normalizeTransparency(transparency: number): number {
+  return clampInt(transparency, 0, 100)
+}
 
 export function createObject(type: StrategyBoardObjectType, position?: { x: number, y: number }): StrategyBoardObject {
 
@@ -289,10 +363,10 @@ export function createObject(type: StrategyBoardObjectType, position?: { x: numb
     type,
     visible: true,
     locked: false,
-    position: {
-      x: Math.min(Math.max(Math.round(position?.x ?? 0), 0), sceneWidth),
-      y: Math.min(Math.max(Math.round(position?.y ?? 0), 0), sceneHeight),
-    },
+    position: normalizePosition({
+      x: position?.x ?? 0,
+      y: position?.y ?? 0,
+    }),
   }
 
   // 按不同图形类型区分处理
@@ -317,15 +391,9 @@ export function createObject(type: StrategyBoardObjectType, position?: { x: numb
       const lineObject: StrategyBoardLineObject = {
         ...objectBase,
         type,
-        width: 60,
-        position: {
-          x: Math.min(Math.max(objectBase.position.x - 1280, 0), sceneWidth),
-          y: objectBase.position.y,
-        },
-        endPoint: {
-          x: Math.min(Math.max(objectBase.position.x + 1280, 0), sceneWidth),
-          y: objectBase.position.y,
-        },
+        length: 2560,
+        lineWidth: 6,
+        rotation: 0,
         transparency: 0,
         color: {
           r: 255,
@@ -340,8 +408,10 @@ export function createObject(type: StrategyBoardObjectType, position?: { x: numb
       const RectangleObject: StrategyBoardRectangleObject = {
         ...objectBase,
         type,
-        width: 1280,
-        height: 1280,
+        size: {
+          width: 1280,
+          height: 1280,
+        },
         rotation: 0,
         transparency: 0,
         color: {
@@ -354,15 +424,14 @@ export function createObject(type: StrategyBoardObjectType, position?: { x: numb
 
     // 圆形 AoE
     case StrategyBoardObjectType.MechanicCircleAoE:
-      const mechanicCircleAoEObject: StrategyBoardCommonObject = {
+      const circleObject: StrategyBoardCircleObject = {
         ...objectBase,
         type,
         size: 50,
-        flipped: false,
         rotation: 0,
         transparency: 0,
       }
-      return mechanicCircleAoEObject
+      return circleObject
 
     // 扇形 AoE
     case StrategyBoardObjectType.MechanicConeAoE:
@@ -413,8 +482,10 @@ export function createObject(type: StrategyBoardObjectType, position?: { x: numb
         flipped: false,
         rotation: 0,
         transparency: 0,
-        horizontalCount: 1,
-        verticalCount: 1,
+        displayCount: {
+          horizontal: 1,
+          vertical: 1,
+        },
       }
       return mechanicLinearKnockbackObject
 

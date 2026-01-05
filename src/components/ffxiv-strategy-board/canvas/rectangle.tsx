@@ -12,9 +12,9 @@ export interface RectangleCanvasObjectProps {
 
 export function RectangleCanvasObject(props: RectangleCanvasObjectProps) {
   const { object } = props
-  const { width, height, rotation, transparency, color } = object
+  const { size, rotation, transparency, color } = object
 
-  const rectSize = sizeToCanvasSize({ width, height })
+  const rectSize = sizeToCanvasSize(size)
   const rectColor = colorToCanvasColor(color)
 
   return (

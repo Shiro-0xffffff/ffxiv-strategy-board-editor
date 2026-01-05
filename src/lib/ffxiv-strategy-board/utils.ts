@@ -55,3 +55,7 @@ export function crc32(data: Uint8Array): number {
   crc = crc ^ 0xffffffff
   return crc >>> 0
 }
+
+export function clampInt(number: number, min: number, max: number): number {
+  return Math.round(Math.min(Math.max(number, min), max))
+}

@@ -76,9 +76,11 @@ export function ObjectLibraryDraggingContainer(props: { children?: ReactNode }) 
     const { active, over } = event
     setDraggingObjectType(null)
     if (!draggingObjectType || !over || !active.rect.current.translated) return
-    const x = ((active.rect.current.translated.left + active.rect.current.translated.right) / 2 - over.rect.left) * sceneWidth / over.rect.width
-    const y = ((active.rect.current.translated.top + active.rect.current.translated.bottom) / 2 - over.rect.top) * sceneHeight / over.rect.height
-    if (x >= 0 && x < sceneWidth && y >= 0 && y < sceneHeight) {
+    const canvasX = (active.rect.current.translated.left + active.rect.current.translated.right) / 2 - (over.rect.left + over.rect.right) / 2
+    const canvasY = (active.rect.current.translated.top + active.rect.current.translated.bottom) / 2 - (over.rect.top + over.rect.bottom) / 2
+    const x = canvasX * sceneWidth / over.rect.width
+    const y = canvasY * sceneHeight / over.rect.height
+    if (x >= -sceneWidth / 2 && x <= sceneWidth && y >= -sceneHeight / 2 && y <= sceneHeight / 2) {
       addObject(draggingObjectType, { x, y })
     }
   }, [draggingObjectType, addObject])
