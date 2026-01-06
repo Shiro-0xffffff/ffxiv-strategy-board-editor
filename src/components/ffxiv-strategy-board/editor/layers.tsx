@@ -28,7 +28,7 @@ function Layer(props: { id: string }) {
 
   useEffect(() => {
     if (!selected) return
-    ref.current?.scrollIntoView({ behavior: 'smooth' })
+    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }, [selected])
 
   const handlePointerDown = useCallback<MouseEventHandler<HTMLDivElement>>(event => {
