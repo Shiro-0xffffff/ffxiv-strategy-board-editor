@@ -311,10 +311,10 @@ export function normalizeRoundShapeSize(size: number): number {
   return clampInt(size, 10, 200)
 }
 export function normalizeWidth(width: number): number {
-  return clampInt(width, 160, sceneWidth)
+  return clampInt(width / 10, 16, sceneWidth / 10)
 }
 export function normalizeHeight(height: number): number {
-  return clampInt(height, 160, sceneHeight)
+  return clampInt(height / 10, 16, sceneHeight / 10)
 }
 export function normalizeInnerRadius(innerRadius: number): number {
   return clampInt(innerRadius, 0, 240)

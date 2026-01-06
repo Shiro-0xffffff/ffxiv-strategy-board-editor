@@ -248,13 +248,14 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
               switch (object.type) {
                 case StrategyBoardObjectType.Line:
                   const position = normalizeLineEndPoint(object.position, object.rotation)({
-                    x: object.position.x - object.length / 2 * Math.cos(object.rotation * Math.PI / 180),
-                    y: object.position.y - object.length / 2 * Math.sin(object.rotation * Math.PI / 180),
+                    x: object.position.x + object.length / 2 * Math.cos(object.rotation * Math.PI / 180),
+                    y: object.position.y + object.length / 2 * Math.sin(object.rotation * Math.PI / 180),
                   })
                   param1 = Math.round(position.x + sceneWidth / 2)
                   break
                 case StrategyBoardObjectType.Rectangle:
-                  param1 = normalizeWidth(object.size.width / 10)
+                  param1 = normalizeWidth(object.size.width)
+                  console.log(param1)
                   break
                 case StrategyBoardObjectType.MechanicConeAoE:
                 case StrategyBoardObjectType.MechanicDonutAoE:
@@ -275,13 +276,14 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
               switch (object.type) {
                 case StrategyBoardObjectType.Line:
                   const position = normalizeLineEndPoint(object.position, object.rotation)({
-                    x: object.position.x - object.length / 2 * Math.cos(object.rotation * Math.PI / 180),
-                    y: object.position.y - object.length / 2 * Math.sin(object.rotation * Math.PI / 180),
+                    x: object.position.x + object.length / 2 * Math.cos(object.rotation * Math.PI / 180),
+                    y: object.position.y + object.length / 2 * Math.sin(object.rotation * Math.PI / 180),
                   })
                   param2 = Math.round(position.y + sceneHeight / 2)
                   break
                 case StrategyBoardObjectType.Rectangle:
-                  param2 = normalizeHeight(object.size.height / 10)
+                  param2 = normalizeHeight(object.size.height)
+                  console.log(param2)
                   break
                 case StrategyBoardObjectType.MechanicDonutAoE:
                   param2 = normalizeInnerRadius(object.innerRadius)
