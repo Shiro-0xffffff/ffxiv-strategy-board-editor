@@ -255,7 +255,6 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
                   break
                 case StrategyBoardObjectType.Rectangle:
                   param1 = normalizeWidth(object.size.width)
-                  console.log(param1)
                   break
                 case StrategyBoardObjectType.MechanicConeAoE:
                 case StrategyBoardObjectType.MechanicDonutAoE:
@@ -283,7 +282,6 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
                   break
                 case StrategyBoardObjectType.Rectangle:
                   param2 = normalizeHeight(object.size.height)
-                  console.log(param2)
                   break
                 case StrategyBoardObjectType.MechanicDonutAoE:
                   param2 = normalizeInnerRadius(object.innerRadius)
