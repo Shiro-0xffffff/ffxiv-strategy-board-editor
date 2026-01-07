@@ -27,6 +27,7 @@ export interface StrategyBoardContextProps {
   toggleObjectVisible: (id: string) => void
   toggleObjectLocked: (id: string) => void
   setObjectPosition: (id: string, position: { x: number, y: number }) => void
+  setObjectsProperties: (modifications: { id: string, modification: (object: StrategyBoardObject) => void }[]) => void
   importFromShareCode: (shareCode: string) => Promise<void>
   exportToShareCode: () => Promise<string>
 }
@@ -131,6 +132,16 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     })
   }, [modifyObject])
 
+  const setObjectsProperties = useCallback((modifications: { id: string, modification: (object: StrategyBoardObject) => void }[]): void => {
+    onSceneChange?.(produce(scene, scene => {
+      modifications.forEach(({ id, modification }) => {
+        const object = scene.objects.find(object => object.id === id)
+        if (!object) return
+        modification(object)
+      })
+    }))
+  }, [scene, onSceneChange])
+
   const importFromShareCode = useCallback(async (shareCode: string): Promise<void> => {
     const scene = await shareCodeToScene(shareCode)
     setSelectedObjectIds([])
@@ -156,6 +167,7 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     toggleObjectVisible,
     toggleObjectLocked,
     setObjectPosition,
+    setObjectsProperties,
     importFromShareCode,
     exportToShareCode,
   }
