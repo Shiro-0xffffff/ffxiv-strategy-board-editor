@@ -8,14 +8,14 @@ import {
   normalizePosition,
   normalizeRotation,
   normalizeSize,
-  normalizeRoundShapeSize,
   normalizeWidth,
   normalizeHeight,
-  normalizeInnerRadius,
   normalizeLineEndPoint,
   normalizeLineWidth,
+  normalizeInnerRadius,
   normalizeArcAngle,
   normalizeDisplayCount,
+  normalizeText,
   normalizeColor,
   normalizeTransparency,
   createObject,
@@ -107,7 +107,7 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
         if (type === StrategyBoardObjectType.Text) {
 
           // 文本内容
-          const textContentData = utf8Encoder.encode(object.content)
+          const textContentData = utf8Encoder.encode(normalizeText(object.text))
 
           // 前缀，2字节
           dataView.setUint16(offset, 0x0003, true)
@@ -208,15 +208,7 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
                 object.type !== StrategyBoardObjectType.Line &&
                 object.type !== StrategyBoardObjectType.Rectangle
               ) {
-                if (
-                  object.type === StrategyBoardObjectType.MechanicCircleAoE ||
-                  object.type === StrategyBoardObjectType.MechanicConeAoE ||
-                  object.type === StrategyBoardObjectType.MechanicDonutAoE
-                ) {
-                  size = normalizeRoundShapeSize(object.size)
-                } else {
-                  size = normalizeSize(object.size)
-                }
+                size = normalizeSize(object.size)
               }
               items.push(size)
             })
@@ -259,6 +251,9 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
                 case StrategyBoardObjectType.MechanicConeAoE:
                 case StrategyBoardObjectType.MechanicDonutAoE:
                   param1 = normalizeArcAngle(object.arcAngle)
+                  break
+                case StrategyBoardObjectType.MechanicLineStack:
+                  param1 = 1
                   break
                 case StrategyBoardObjectType.MechanicLinearKnockback:
                   param1 = normalizeDisplayCount(object.displayCount.horizontal)
@@ -472,7 +467,7 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
 
           // 文本内容，需要去除末尾的空字符
           const textContentData = data.slice(offset, offset + textContentLength)
-          object.content = utf8Decoder.decode(textContentData).replace(/\0*$/, '')
+          object.text = utf8Decoder.decode(textContentData).replace(/\0*$/, '')
           offset += textContentLength
         }
 
@@ -723,7 +718,7 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
 
               switch (object.type) {
                 case StrategyBoardObjectType.Line:
-                  object.lineWidth = param3
+                  object.lineWidth = Math.round(param3 * 10)
                   break
               }
             })
@@ -745,11 +740,11 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
       throw new Error('战术板中存在数据不完整的线')
     }
     object.position = {
-      x: (x1 + x2) / 2,
-      y: (y1 + y2) / 2,
+      x: Math.round((x1 + x2) / 2),
+      y: Math.round((y1 + y2) / 2),
     }
-    object.length = Math.hypot(x1 - x2, y1 - y2)
-    object.rotation = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI
+    object.length = Math.round(Math.hypot(x1 - x2, y1 - y2))
+    object.rotation = Math.round(Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI)
   })
 
   return scene

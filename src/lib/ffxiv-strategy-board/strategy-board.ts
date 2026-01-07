@@ -1,5 +1,4 @@
-import { uuid } from '@/lib/utils'
-import { clampInt } from './utils'
+import { uuid, clampInt, truncateString } from './utils'
 
 export enum StrategyBoardBackground {
   None = 0x01,
@@ -199,7 +198,7 @@ export interface StrategyBoardCommonObject extends StrategyBoardObjectBase {
 
 export interface StrategyBoardTextObject extends StrategyBoardObjectBase {
   type: StrategyBoardObjectType.Text
-  content: string
+  text: string
   color: {
     r: number
     g: number
@@ -305,19 +304,13 @@ export function normalizeRotation(rotation: number): number {
   return Math.round(rotation)
 }
 export function normalizeSize(size: number): number {
-  return clampInt(size, 50, 200)
-}
-export function normalizeRoundShapeSize(size: number): number {
-  return clampInt(size, 10, 200)
+  return clampInt(size, 0, 255)
 }
 export function normalizeWidth(width: number): number {
-  return clampInt(width / 10, 16, sceneWidth / 10)
+  return clampInt(width / 10, 0, sceneWidth * 2 / 10)
 }
 export function normalizeHeight(height: number): number {
-  return clampInt(height / 10, 16, sceneHeight / 10)
-}
-export function normalizeInnerRadius(innerRadius: number): number {
-  return clampInt(innerRadius, 0, 240)
+  return clampInt(height / 10, 0, sceneHeight * 2 / 10)
 }
 export function normalizeLineEndPoint(position: { x: number, y: number }, rotation: number): (endPoint: { x: number, y: number }) => { x: number, y: number } {
   const topIntersectionX = position.x + (-sceneHeight / 2 - position.y) / Math.tan(rotation * Math.PI / 180)
@@ -334,7 +327,10 @@ export function normalizeLineEndPoint(position: { x: number, y: number }, rotati
   })
 }
 export function normalizeLineWidth(lineWidth: number): number {
-  return clampInt(lineWidth, 2, 10)
+  return clampInt(lineWidth / 10, 0, Math.hypot(sceneWidth * 2, sceneHeight * 2) / 10)
+}
+export function normalizeInnerRadius(innerRadius: number): number {
+  return clampInt(innerRadius, 0, 255)
 }
 export function normalizeArcAngle(arcAngle: number): number {
   if (arcAngle > 360) return Math.round(arcAngle % 360)
@@ -342,7 +338,10 @@ export function normalizeArcAngle(arcAngle: number): number {
   return Math.round(arcAngle)
 }
 export function normalizeDisplayCount(displayCount: number): number {
-  return clampInt(displayCount, 1, 5)
+  return clampInt(displayCount, 1, 63)
+}
+export function normalizeText(text: string): string {
+  return truncateString(text, 30)
 }
 export function normalizeColor(color: { r: number, g: number, b: number }): { r: number, g: number, b: number } {
   return {
@@ -377,7 +376,7 @@ export function createObject(type: StrategyBoardObjectType, position?: { x: numb
       const textObject: StrategyBoardTextObject = {
         ...objectBase,
         type,
-        content: '文本',
+        text: '文本',
         color: {
           r: 255,
           g: 255,
@@ -392,7 +391,7 @@ export function createObject(type: StrategyBoardObjectType, position?: { x: numb
         ...objectBase,
         type,
         length: 2560,
-        lineWidth: 6,
+        lineWidth: 60,
         rotation: 0,
         transparency: 0,
         color: {

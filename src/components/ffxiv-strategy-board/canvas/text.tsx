@@ -13,7 +13,7 @@ export interface TextCanvasObjectProps {
 
 export function TextCanvasObject(props: TextCanvasObjectProps) {
   const { object } = props
-  const { type, content, color } = object
+  const { type, text, color } = object
 
   const objectLibraryItem = objectLibrary.get(type)!
 
@@ -35,7 +35,7 @@ export function TextCanvasObject(props: TextCanvasObjectProps) {
             offsetY={textContainerSize.height / 2}
             width={textContainerSize.width}
             height={textContainerSize.height}
-            text={content}
+            text={text}
             fontSize={canvasFontSize}
             align="center"
             verticalAlign="middle"

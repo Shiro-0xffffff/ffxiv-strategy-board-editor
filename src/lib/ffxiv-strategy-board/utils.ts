@@ -1,3 +1,8 @@
+import { v7 as uuidV7 } from 'uuid'
+
+export function uuid(): string {
+  return uuidV7()
+}
 
 export function transformStreamToUint8ArrayTransformer(transformStream: TransformStream): (input: Uint8Array) => Promise<Uint8Array> {
   return async (input: Uint8Array) => {
@@ -58,4 +63,13 @@ export function crc32(data: Uint8Array): number {
 
 export function clampInt(number: number, min: number, max: number): number {
   return Math.round(Math.min(Math.max(number, min), max))
+}
+
+const utf8Decoder = new TextDecoder()
+const utf8Encoder = new TextEncoder()
+
+export function truncateString(string: string, maxBytes: number): string {
+  let truncatedString = utf8Decoder.decode(utf8Encoder.encode(string).subarray(0, maxBytes))
+  while (string.indexOf(truncatedString) === -1) truncatedString = truncatedString.slice(0, -1)
+  return truncatedString
 }

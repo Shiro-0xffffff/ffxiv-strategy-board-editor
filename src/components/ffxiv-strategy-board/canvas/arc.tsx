@@ -22,7 +22,7 @@ export function ArcCanvasObject(props: ArcCanvasObjectProps) {
   const [backgroundImage] = useImage(ffxivImageUrl(objectLibraryItem.image ?? ''))
 
   const radius = lengthToCanvasLength(objectLibraryItem.baseSize / 2 * size / 100)
-  const holeRadius = radius * innerRadius / 265 // 因为外圈没有顶满尺寸，内圈尺寸也要适当缩小
+  const holeRadius = radius * innerRadius / 266 // 因为外圈没有顶满尺寸，内圈尺寸也要适当缩小
   const arcAngleInRad = arcAngle * Math.PI / 180
   const arcOuterEndPointOffsetX = Math.sin(arcAngle * Math.PI / 180) * radius
   const arcOuterEndPointOffsetY = -Math.cos(arcAngle * Math.PI / 180) * radius

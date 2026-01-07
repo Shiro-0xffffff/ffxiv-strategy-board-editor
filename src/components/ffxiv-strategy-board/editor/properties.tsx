@@ -7,38 +7,13 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectL
 import { FieldGroup, FieldSet, Field, FieldLabel, FieldDescription } from '@/components/ui/field'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Trash2 } from 'lucide-react'
-import { StrategyBoardBackground, StrategyBoardObject, StrategyBoardObjectType } from '@/lib/ffxiv-strategy-board'
+import { StrategyBoardBackground, StrategyBoardObject, StrategyBoardObjectType, sceneWidth, sceneHeight, truncateString } from '@/lib/ffxiv-strategy-board'
 
 import { backgroundOptions } from '../constants'
 import { useStrategyBoard } from '../context'
 
-function InputField(props: { name: string, description?: string, value: string | null, onChange?: (value: string) => void }) {
-  const { name, description, value, onChange } = props
-
-  const id = useId()
-
-  const handleInputChange = useCallback<ChangeEventHandler<HTMLInputElement>>(event => {
-    const value: string = event.target.value
-    onChange?.(value)
-  }, [onChange])
-
-  return (
-    <Field>
-      <FieldLabel htmlFor={id}>{name}</FieldLabel>
-      {!!description && (
-        <FieldDescription>{description}</FieldDescription>
-      )}
-      <Input
-        id={id}
-        value={value ?? ''}
-        onChange={handleInputChange}
-      />
-    </Field>
-  )
-}
-
-function NumberInputField(props: { name: string, description?: string, value: number | null, onChange?: (value: number) => void }) {
-  const { name, description, value, onChange } = props
+function InputField(props: { name: string, description?: string, maxBytes?: number, value: string | null, onChange?: (value: string) => void }) {
+  const { name, description, maxBytes = Infinity, value, onChange } = props
 
   const [draft, setDraft] = useState<string | null>(null)
 
@@ -47,9 +22,9 @@ function NumberInputField(props: { name: string, description?: string, value: nu
   const handleInputChange = useCallback<ChangeEventHandler<HTMLInputElement>>(event => {
     const draft = event.target.value
     setDraft(draft)
-    const value = Math.round(Number(draft))
-    if (Number.isInteger(value)) onChange?.(value)
-  }, [onChange])
+    const value = truncateString(draft, maxBytes)
+    onChange?.(value)
+  }, [onChange, maxBytes])
   const handleInputFocus = useCallback<FocusEventHandler<HTMLInputElement>>(() => {
     const draft = String(value ?? '')
     setDraft(draft)
@@ -66,6 +41,48 @@ function NumberInputField(props: { name: string, description?: string, value: nu
       )}
       <Input
         id={id}
+        value={draft ?? value ?? ''}
+        onChange={handleInputChange}
+        onFocus={handleInputFocus}
+        onBlur={handleInputBlur}
+      />
+    </Field>
+  )
+}
+
+function NumberInputField(props: { name: string, description?: string, min?: number, max?: number, step?: number, value: number | null, onChange?: (value: number) => void }) {
+  const { name, description, min = -Infinity, max = Infinity, step, value, onChange } = props
+
+  const [draft, setDraft] = useState<string | null>(null)
+
+  const id = useId()
+
+  const handleInputChange = useCallback<ChangeEventHandler<HTMLInputElement>>(event => {
+    const draft = event.target.value
+    setDraft(draft)
+    const value = Math.round(Math.min(Math.max(Number(draft), min), max))
+    if (Number.isInteger(value)) onChange?.(value)
+  }, [onChange, min, max])
+  const handleInputFocus = useCallback<FocusEventHandler<HTMLInputElement>>(() => {
+    const draft = String(value ?? '')
+    setDraft(draft)
+  }, [value])
+  const handleInputBlur = useCallback<FocusEventHandler<HTMLInputElement>>(() => {
+    setDraft(null)
+  }, [])
+
+  return (
+    <Field>
+      <FieldLabel htmlFor={id}>{name}</FieldLabel>
+      {!!description && (
+        <FieldDescription>{description}</FieldDescription>
+      )}
+      <Input
+        id={id}
+        type="number"
+        min={min}
+        max={max}
+        step={step}
         value={draft ?? value ?? ''}
         onChange={handleInputChange}
         onFocus={handleInputFocus}
@@ -241,6 +258,9 @@ function ObjectPropertiesPanel() {
                   renderField={({ value, onChange }) => (
                     <NumberInputField
                       name="X"
+                      min={-sceneWidth / 2}
+                      max={sceneWidth / 2}
+                      step={10}
                       value={value}
                       onChange={onChange}
                     />
@@ -252,6 +272,9 @@ function ObjectPropertiesPanel() {
                   renderField={({ value, onChange }) => (
                     <NumberInputField
                       name="Y"
+                      min={-sceneHeight / 2}
+                      max={sceneHeight / 2}
+                      step={10}
                       value={value}
                       onChange={onChange}
                     />
@@ -265,6 +288,9 @@ function ObjectPropertiesPanel() {
                 renderField={({ value, onChange }) => (
                   <NumberInputField
                     name="角度"
+                    min={-180}
+                    max={180}
+                    step={10}
                     value={value}
                     onChange={onChange}
                   />
@@ -281,6 +307,9 @@ function ObjectPropertiesPanel() {
                 renderField={({ value, onChange }) => (
                   <NumberInputField
                     name="尺寸"
+                    min={0}
+                    max={255}
+                    step={10}
                     value={value}
                     onChange={onChange}
                   />
@@ -295,6 +324,9 @@ function ObjectPropertiesPanel() {
                     renderField={({ value, onChange }) => (
                       <NumberInputField
                         name="宽度"
+                        min={0}
+                        max={Math.hypot(sceneWidth * 2, sceneHeight * 2)}
+                        step={10}
                         value={value}
                         onChange={onChange}
                       />
@@ -307,6 +339,43 @@ function ObjectPropertiesPanel() {
                     renderField={({ value, onChange }) => (
                       <NumberInputField
                         name="高度"
+                        min={0}
+                        max={Math.hypot(sceneWidth * 2, sceneHeight * 2)}
+                        step={10}
+                        value={value}
+                        onChange={onChange}
+                      />
+                    )}
+                  />
+                </div>
+              </ObjectPropertyFieldGroup>
+              <ObjectPropertyFieldGroup availableFor={object => object.type === StrategyBoardObjectType.Line}>
+                <div className="grid grid-cols-2 gap-4">
+                  <ObjectPropertyField
+                    availableFor={object => object.type === StrategyBoardObjectType.Line}
+                    getValueFromObject={object => object.length}
+                    updateObjectWithValue={(object, value) => { object.length = value }}
+                    renderField={({ value, onChange }) => (
+                      <NumberInputField
+                        name="长度"
+                        min={0}
+                        max={Math.hypot(sceneWidth * 2, sceneHeight * 2)}
+                        step={10}
+                        value={value}
+                        onChange={onChange}
+                      />
+                    )}
+                  />
+                  <ObjectPropertyField
+                    availableFor={object => object.type === StrategyBoardObjectType.Line}
+                    getValueFromObject={object => object.lineWidth}
+                    updateObjectWithValue={(object, value) => { object.lineWidth = value }}
+                    renderField={({ value, onChange }) => (
+                      <NumberInputField
+                        name="线条宽度"
+                        min={0}
+                        max={Math.hypot(sceneWidth * 2, sceneHeight * 2)}
+                        step={10}
                         value={value}
                         onChange={onChange}
                       />
@@ -315,36 +384,15 @@ function ObjectPropertiesPanel() {
                 </div>
               </ObjectPropertyFieldGroup>
               <ObjectPropertyField
-                availableFor={object => object.type === StrategyBoardObjectType.Line}
-                getValueFromObject={object => object.length}
-                updateObjectWithValue={(object, value) => { object.length = value }}
-                renderField={({ value, onChange }) => (
-                  <NumberInputField
-                    name="长度"
-                    value={value}
-                    onChange={onChange}
-                  />
-                )}
-              />
-              <ObjectPropertyField
                 availableFor={object => object.type === StrategyBoardObjectType.MechanicDonutAoE}
                 getValueFromObject={object => object.innerRadius}
                 updateObjectWithValue={(object, value) => { object.innerRadius = value }}
                 renderField={({ value, onChange }) => (
                   <NumberInputField
                     name="环形范围"
-                    value={value}
-                    onChange={onChange}
-                  />
-                )}
-              />
-              <ObjectPropertyField
-                availableFor={object => object.type === StrategyBoardObjectType.Line}
-                getValueFromObject={object => object.lineWidth}
-                updateObjectWithValue={(object, value) => { object.lineWidth = value }}
-                renderField={({ value, onChange }) => (
-                  <NumberInputField
-                    name="线条宽度"
+                    min={0}
+                    max={255}
+                    step={10}
                     value={value}
                     onChange={onChange}
                   />
@@ -360,6 +408,9 @@ function ObjectPropertiesPanel() {
                 renderField={({ value, onChange }) => (
                   <NumberInputField
                     name="范围角度"
+                    min={0}
+                    max={360}
+                    step={10}
                     value={value}
                     onChange={onChange}
                   />
@@ -372,6 +423,9 @@ function ObjectPropertiesPanel() {
                 renderField={({ value, onChange }) => (
                   <NumberInputField
                     name="显示数量"
+                    min={1}
+                    max={63}
+                    step={1}
                     value={value}
                     onChange={onChange}
                   />
@@ -386,6 +440,9 @@ function ObjectPropertiesPanel() {
                     renderField={({ value, onChange }) => (
                       <NumberInputField
                         name="横向数量"
+                        min={1}
+                        max={63}
+                        step={1}
                         value={value}
                         onChange={onChange}
                       />
@@ -398,6 +455,9 @@ function ObjectPropertiesPanel() {
                     renderField={({ value, onChange }) => (
                       <NumberInputField
                         name="纵向数量"
+                        min={1}
+                        max={63}
+                        step={1}
                         value={value}
                         onChange={onChange}
                       />
@@ -407,11 +467,13 @@ function ObjectPropertiesPanel() {
               </ObjectPropertyFieldGroup>
               <ObjectPropertyField
                 availableFor={object => object.type === StrategyBoardObjectType.Text}
-                getValueFromObject={object => object.content}
-                updateObjectWithValue={(object, value) => { object.content = value }}
+                getValueFromObject={object => object.text}
+                updateObjectWithValue={(object, value) => { object.text = value }}
                 renderField={({ value, onChange }) => (
                   <InputField
                     name="文本"
+                    description="最多30字符，汉字及全角符号算作3字符"
+                    maxBytes={30}
                     value={value}
                     onChange={onChange}
                   />
@@ -440,6 +502,9 @@ function ObjectPropertiesPanel() {
                 renderField={({ value, onChange }) => (
                   <NumberInputField
                     name="透明度"
+                    min={0}
+                    max={100}
+                    step={10}
                     value={value}
                     onChange={onChange}
                   />

@@ -16,7 +16,7 @@ export function LineCanvasObject(props: LineCanvasObjectProps) {
 
   const rectSize = {
     width: lengthToCanvasLength(length),
-    height: lengthToCanvasLength(lineWidth * 10),
+    height: lengthToCanvasLength(lineWidth),
   }
   const rectColor = colorToCanvasColor(color)
 

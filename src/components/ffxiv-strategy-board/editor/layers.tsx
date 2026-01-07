@@ -59,7 +59,7 @@ function Layer(props: { id: string }) {
     >
       <Image className="size-10" src={ffxivImageUrl(objectLibraryItem.icon)} alt={objectLibraryItem.abbr} width={80} height={80} />
       <div className="flex-1 w-0 text-sm truncate">
-        {object.type === StrategyBoardObjectType.Text ? object.content : objectLibraryItem.name}
+        {object.type === StrategyBoardObjectType.Text ? object.text : objectLibraryItem.name}
       </div>
       <div className="flex gap-1">
         <Button className="cursor-pointer" variant="ghost" size="icon-sm" onClick={handleToggleLockedButtonClick}>
