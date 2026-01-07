@@ -102,16 +102,13 @@ function CanvasObject(props: { id: string, readOnly?: boolean }) {
   }, [id, selectObjects, toggleObjectSelected])
 
   // 拖动图形位置
-  const handleDragStart = useCallback((event: Konva.KonvaEventObject<DragEvent>) => {
-    const position = canvasPositionToPosition({ x: event.target.x(), y: event.target.y() })
-    setObjectPosition(id, position)
-  }, [id, setObjectPosition])
   const handleDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>) => {
-    const position = canvasPositionToPosition({ x: event.target.x(), y: event.target.y() })
-    setObjectPosition(id, position)
-  }, [id, setObjectPosition])
-  const handleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>) => {
-    const position = canvasPositionToPosition({ x: event.target.x(), y: event.target.y() })
+    const canvasPosition = {
+      x: Math.min(Math.max(event.target.x(), -canvasWidth / 2), canvasWidth / 2),
+      y: Math.min(Math.max(event.target.y(), -canvasHeight / 2), canvasHeight / 2),
+    }
+    event.target.position(canvasPosition)
+    const position = canvasPositionToPosition(canvasPosition)
     setObjectPosition(id, position)
   }, [id, setObjectPosition])
 
@@ -121,9 +118,7 @@ function CanvasObject(props: { id: string, readOnly?: boolean }) {
       visible={visible}
       draggable={!readOnly && !locked}
       onPointerDown={handlePointerDown}
-      onDragStart={handleDragStart}
       onDragMove={handleDragMove}
-      onDragEnd={handleDragEnd}
     >
       <CanvasObjectContent object={object} readOnly={readOnly} />
     </Group>

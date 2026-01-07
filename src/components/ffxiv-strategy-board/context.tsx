@@ -7,6 +7,8 @@ import {
   StrategyBoardBackground,
   StrategyBoardObject,
   StrategyBoardObjectType,
+  sceneWidth,
+  sceneHeight,
   createObject,
   sceneToShareCode,
   shareCodeToScene,
@@ -128,7 +130,10 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
   }, [modifyObject])
   const setObjectPosition = useCallback((id: string, position: { x: number, y: number }): void => {
     modifyObject(id, object => {
-      object.position = position
+      object.position = {
+        x: Math.round(Math.min(Math.max(position.x, -sceneWidth / 2), sceneWidth / 2)),
+        y: Math.round(Math.min(Math.max(position.y, -sceneHeight / 2), sceneHeight / 2)),
+      }
     })
   }, [modifyObject])
 
