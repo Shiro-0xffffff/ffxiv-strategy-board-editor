@@ -70,7 +70,7 @@ export function StrategyBoardEditor() {
           <CanvasArea />
         </div>
         <div className="w-80 border-l flex flex-col bg-card">
-          <div className="h-120">
+          <div className="h-1/3">
             <PropertiesPanel />
           </div>
           <div className="border-b" />
