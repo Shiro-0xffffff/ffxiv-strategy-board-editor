@@ -18,41 +18,41 @@ import { ArcCanvasObject } from './arc'
 import { ImageCanvasObject } from './image'
 import { canvasWidth, canvasHeight, positionToCanvasPosition, canvasPositionToPosition } from './calc'
 
-function CanvasObjectContent(props: { object: StrategyBoardObject, readOnly?: boolean }) {
-  const { object, readOnly } = props
+function CanvasObjectContent(props: { object: StrategyBoardObject, selected?: boolean }) {
+  const { object, ...restProps } = props
 
   if (object.type === StrategyBoardObjectType.Text) {
     return (
-      <TextCanvasObject object={object} readOnly={readOnly} />
+      <TextCanvasObject object={object} {...restProps} />
     )
   }
   if (object.type === StrategyBoardObjectType.Line) {
     return (
-      <LineCanvasObject object={object} readOnly={readOnly} />
+      <LineCanvasObject object={object} {...restProps} />
     )
   }
   if (object.type === StrategyBoardObjectType.Rectangle) {
     return (
-      <RectangleCanvasObject object={object} readOnly={readOnly} />
+      <RectangleCanvasObject object={object} {...restProps} />
     )
   }
   if (object.type === StrategyBoardObjectType.MechanicCircleAoE) {
     return (
-      <CircleCanvasObject object={object} readOnly={readOnly} />
+      <CircleCanvasObject object={object} {...restProps} />
     )
   }
   if (object.type === StrategyBoardObjectType.MechanicConeAoE) {
     return (
-      <ConeCanvasObject object={object} readOnly={readOnly} />
+      <ConeCanvasObject object={object} {...restProps} />
     )
   }
   if (object.type === StrategyBoardObjectType.MechanicDonutAoE) {
     return (
-      <ArcCanvasObject object={object} readOnly={readOnly} />
+      <ArcCanvasObject object={object} {...restProps} />
     )
   }
   return (
-    <ImageCanvasObject object={object} readOnly={readOnly} />
+    <ImageCanvasObject object={object} {...restProps} />
   )
 }
 
@@ -75,7 +75,7 @@ export function StrategyBoardCanvasObjectPreview(props: StrategyBoardCanvasObjec
       >
         <Layer>
           <Group x={previewCanvasSize / 2} y={previewCanvasSize / 2}>
-            <CanvasObjectContent object={object} readOnly />
+            <CanvasObjectContent object={object} />
           </Group>
         </Layer>
       </Stage>
@@ -86,20 +86,22 @@ export function StrategyBoardCanvasObjectPreview(props: StrategyBoardCanvasObjec
 function CanvasObject(props: { id: string, readOnly?: boolean }) {
   const { id, readOnly } = props
 
-  const { selectObjects, toggleObjectSelected, getObject, setObjectPosition } = useStrategyBoard()
+  const { selectedObjectIds, selectObjects, toggleObjectSelected, getObject, setObjectPosition } = useStrategyBoard()
   
   const object = getObject(id)!
   const { visible, locked, position } = object
+  const selected = selectedObjectIds.includes(id)
 
   // 按下选中图形
   const handlePointerDown = useCallback((event: Konva.KonvaEventObject<PointerEvent>) => {
     event.cancelBubble = true
+    if (readOnly) return
     if (event.evt.shiftKey || event.evt.ctrlKey) {
       toggleObjectSelected(id)
     } else {
       selectObjects([id])
     }
-  }, [id, selectObjects, toggleObjectSelected])
+  }, [id, readOnly, selectObjects, toggleObjectSelected])
 
   // 拖动图形位置
   const handleDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>) => {
@@ -108,6 +110,7 @@ function CanvasObject(props: { id: string, readOnly?: boolean }) {
       y: Math.min(Math.max(event.target.y(), -canvasHeight / 2), canvasHeight / 2),
     }
     event.target.position(canvasPosition)
+    event.target.getStage()?.findOne(`.object-${id}-bounding-box`)?.position(canvasPosition)
     const position = canvasPositionToPosition(canvasPosition)
     setObjectPosition(id, position)
   }, [id, setObjectPosition])
@@ -120,8 +123,26 @@ function CanvasObject(props: { id: string, readOnly?: boolean }) {
       onPointerDown={handlePointerDown}
       onDragMove={handleDragMove}
     >
-      <CanvasObjectContent object={object} readOnly={readOnly} />
+      <CanvasObjectContent object={object} selected={!readOnly && selected} />
     </Group>
+  )
+}
+
+function CanvasObjectBoundingBox(props: { id: string }) {
+  const { id } = props
+
+  const { getObject } = useStrategyBoard()
+  
+  const object = getObject(id)!
+  const { visible, position } = object
+
+  return (
+    <Group
+      name={`object-${id}-bounding-box`}
+      {...positionToCanvasPosition(position)}
+      visible={visible}
+      listening={false}
+    />
   )
 }
 
@@ -163,6 +184,15 @@ export function StrategyBoardCanvas(props: StrategyBoardCanvasProps) {
             ))}
           </Group>
         </Layer>
+        {!readOnly && (
+          <Layer>
+            <Group x={canvasWidth / 2} y={canvasHeight / 2}>
+              {scene.objects.slice().reverse().map(({ id }) => (
+                <CanvasObjectBoundingBox key={id} id={id} />
+              ))}
+            </Group>
+          </Layer>
+        )}
       </Stage>
     </div>
   )

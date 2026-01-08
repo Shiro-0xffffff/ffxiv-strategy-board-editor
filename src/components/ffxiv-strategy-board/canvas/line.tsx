@@ -1,18 +1,19 @@
 'use client'
 
 import { Rect } from 'react-konva'
+import { Portal } from 'react-konva-utils'
 import { StrategyBoardLineObject } from '@/lib/ffxiv-strategy-board'
 
 import { lengthToCanvasLength, colorToCanvasColor } from './calc'
 
 export interface LineCanvasObjectProps {
   object: StrategyBoardLineObject
-  readOnly?: boolean
+  selected?: boolean
 }
 
 export function LineCanvasObject(props: LineCanvasObjectProps) {
-  const { object } = props
-  const { length, lineWidth, rotation, transparency, color } = object
+  const { object, selected } = props
+  const { id, length, lineWidth, rotation, transparency, color } = object
 
   const rectSize = {
     width: lengthToCanvasLength(length),
@@ -31,6 +32,21 @@ export function LineCanvasObject(props: LineCanvasObjectProps) {
         opacity={1 - transparency / 100}
         rotation={rotation}
       />
+      {!!selected && (
+        <Portal selector={`.object-${id}-bounding-box`}>
+          <Rect
+            offsetX={rectSize.width / 2}
+            offsetY={rectSize.height / 2}
+            width={rectSize.width}
+            height={rectSize.height}
+            stroke="#fff"
+            strokeWidth={2}
+            shadowColor="#1A81B3"
+            shadowBlur={4}
+            rotation={rotation}
+          />
+        </Portal>
+      )}
     </>
   )
 }

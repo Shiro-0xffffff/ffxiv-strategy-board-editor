@@ -1,6 +1,7 @@
 'use client'
 
 import { Group, Rect, Image } from 'react-konva'
+import { Portal } from 'react-konva-utils'
 import useImage from 'use-image'
 import { StrategyBoardCommonObject, StrategyBoardMechanicLineStackObject, StrategyBoardMechanicLinearKnockbackObject, StrategyBoardObjectType } from '@/lib/ffxiv-strategy-board'
 import { ffxivImageUrl } from '@/lib/utils'
@@ -10,12 +11,12 @@ import { sizeToCanvasSize } from './calc'
 
 export interface ImageCanvasObjectProps {
   object: StrategyBoardCommonObject | StrategyBoardMechanicLineStackObject | StrategyBoardMechanicLinearKnockbackObject
-  readOnly?: boolean
+  selected?: boolean
 }
 
 export function ImageCanvasObject(props: ImageCanvasObjectProps) {
-  const { object } = props
-  const { type, size, flipped, rotation, transparency } = object
+  const { object, selected } = props
+  const { id, type, size, flipped, rotation, transparency } = object
 
   const repeat: { x: number, y: number } | null = (object => {
     if (object.type === StrategyBoardObjectType.MechanicLineStack) {
@@ -64,6 +65,23 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
           />
         )}
       </Group>
+      {!!selected && (
+        <Portal selector={`.object-${id}-bounding-box`}>
+          <Rect
+            offsetX={imageSize.width * (repeat ? repeat.x : 1) / 2}
+            offsetY={imageSize.height * (repeat ? repeat.y : 1) / 2}
+            width={imageSize.width * (repeat ? repeat.x : 1)}
+            height={imageSize.height * (repeat ? repeat.y : 1)}
+            stroke="#fff"
+            strokeWidth={2}
+            cornerRadius={4}
+            shadowColor="#1A81B3"
+            shadowBlur={4}
+            scaleX={flipped ? -1 : 1}
+            rotation={rotation}
+          />
+        </Portal>
+      )}
     </>
   )
 }
