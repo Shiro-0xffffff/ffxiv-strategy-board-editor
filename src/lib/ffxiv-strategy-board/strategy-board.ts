@@ -354,7 +354,7 @@ export function normalizeTransparency(transparency: number): number {
   return clampInt(transparency, 0, 100)
 }
 
-export function createObject(type: StrategyBoardObjectType, position?: { x: number, y: number }): StrategyBoardObject {
+export function createObject(type: StrategyBoardObjectType): StrategyBoardObject {
 
   // 图形基本信息
   const objectBase: StrategyBoardObjectBase = {
@@ -362,10 +362,10 @@ export function createObject(type: StrategyBoardObjectType, position?: { x: numb
     type,
     visible: true,
     locked: false,
-    position: normalizePosition({
-      x: position?.x ?? 0,
-      y: position?.y ?? 0,
-    }),
+    position: {
+      x: 0,
+      y: 0,
+    },
   }
 
   // 按不同图形类型区分处理

@@ -11,11 +11,21 @@ import { PropertiesPanel } from './properties'
 import { LayersPanel } from './layers'
 
 function CanvasArea() {
-  const { selectedObjectIds, selectObjects, deleteObjects } = useStrategyBoard()
+  const { selectedObjectIds, selectObjects, cutObjects, copyObjects, pasteObjects, deleteObjects } = useStrategyBoard()
 
   useHotkeys('delete', () => {
     deleteObjects(selectedObjectIds)
   }, [deleteObjects, selectedObjectIds])
+
+  useHotkeys('ctrl+x', () => {
+    cutObjects(selectedObjectIds)
+  }, [cutObjects, selectedObjectIds])
+  useHotkeys('ctrl+c', () => {
+    copyObjects(selectedObjectIds)
+  }, [copyObjects, selectedObjectIds])
+  useHotkeys('ctrl+v', () => {
+    pasteObjects()
+  }, [pasteObjects])
 
   const handleBackgroundPointerDown = useCallback<PointerEventHandler<HTMLDivElement>>(() => {
     selectObjects([])

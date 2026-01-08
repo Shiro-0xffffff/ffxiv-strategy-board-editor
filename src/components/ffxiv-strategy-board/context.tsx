@@ -14,6 +14,8 @@ import {
   shareCodeToScene,
 } from '@/lib/ffxiv-strategy-board'
 
+export type StrategyBoardObjectProperties = Partial<Omit<StrategyBoardObject, 'id' | 'type'>>
+
 export interface StrategyBoardContextProps {
   scene: StrategyBoardScene
   setName: (name: string) => void
@@ -22,9 +24,13 @@ export interface StrategyBoardContextProps {
   selectObjects: (ids: string[]) => void
   toggleObjectSelected: (id: string) => void
   getObject: (id: string) => StrategyBoardObject | null
-  addObject: (type: StrategyBoardObjectType, position: { x: number, y: number }) => void
+  addObject: (type: StrategyBoardObjectType, properties: StrategyBoardObjectProperties) => string
+  addObjects: (objectProperties: { type: StrategyBoardObjectType, properties: StrategyBoardObjectProperties }[]) => string[]
   deleteObject: (id: string) => void
   deleteObjects: (ids: string[]) => void
+  cutObjects: (ids: string[]) => void
+  copyObjects: (ids: string[]) => void
+  pasteObjects: () => void
   reorderObject: (id: string, newIndex: number) => void
   toggleObjectVisible: (id: string) => void
   toggleObjectLocked: (id: string) => void
@@ -81,14 +87,22 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     return scene.objects.find(object => object.id === id) ?? null
   }, [scene])
 
-  const addObject = useCallback((type: StrategyBoardObjectType, position: { x: number, y: number }): void => {
-    const object = createObject(type, position)
+  const addObjects = useCallback((objectProperties: { type: StrategyBoardObjectType, properties: StrategyBoardObjectProperties }[]): string[] => {
+    if (!objectProperties.length) return []
+    const objects = objectProperties.map(({ type, properties }) => ({ ...createObject(type), ...properties } as StrategyBoardObject))
     onSceneChange?.(produce(scene, scene => {
-      scene.objects.unshift(object)
+      objects.forEach(object => scene.objects.unshift(object))
     }))
-    setSelectedObjectIds([object.id])
+    const ids = objects.map(object => object.id)
+    setSelectedObjectIds(ids)
+    return ids
   }, [scene, onSceneChange])
+  const addObject = useCallback((type: StrategyBoardObjectType, properties: StrategyBoardObjectProperties): string => {
+    const [id] = addObjects([{ type, properties }])
+    return id
+  }, [addObjects])
   const deleteObjects = useCallback((ids: string[]): void => {
+    if (!ids.length) return
     onSceneChange?.(produce(scene, scene => {
       ids.forEach(id => {
         const index = scene.objects.findIndex(object => object.id === id)
@@ -101,6 +115,29 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
   const deleteObject = useCallback((id: string): void => {
     deleteObjects([id])
   }, [deleteObjects])
+
+  const [copiedObjects, setCopiedObjects] = useState<Omit<StrategyBoardObject, 'id'>[]>([])
+
+  const copyObjects = useCallback((ids: string[]): void => {
+    if (!ids.length) return
+    const copiedObjects = ids.map(id => {
+      const object = scene.objects.find(object => object.id === id)
+      if (!object) return null
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { id: _id, ...copiedObject } = object
+      return copiedObject
+    }).filter(copiedObject => !!copiedObject)
+    setCopiedObjects(copiedObjects)
+  }, [scene])
+  const cutObjects = useCallback((ids: string[]): void => {
+    if (!ids.length) return
+    copyObjects(ids)
+    deleteObjects(ids)
+  }, [copyObjects, deleteObjects])
+  const pasteObjects = useCallback((): void => {
+    if (!copiedObjects.length) return
+    addObjects(copiedObjects.map(({ type, ...properties }) => ({ type, properties })))
+  }, [addObjects, copiedObjects])
 
   const reorderObject = useCallback((id: string, newIndex: number): void => {
     onSceneChange?.(produce(scene, scene => {
@@ -166,6 +203,10 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     toggleObjectSelected,
     getObject,
     addObject,
+    addObjects,
+    cutObjects,
+    copyObjects,
+    pasteObjects,
     deleteObject,
     deleteObjects,
     reorderObject,

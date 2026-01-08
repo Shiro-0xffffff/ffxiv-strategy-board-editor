@@ -64,7 +64,7 @@ export function StrategyBoardCanvasObjectPreview(props: StrategyBoardCanvasObjec
   const { objectType } = props
 
   const previewCanvasSize = 512
-  const object = createObject(objectType, canvasPositionToPosition({ x: previewCanvasSize / 2, y: previewCanvasSize / 2 }))
+  const object = createObject(objectType)
   
   return (
     <div className="size-0">

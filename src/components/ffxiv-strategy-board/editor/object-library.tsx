@@ -81,7 +81,7 @@ export function ObjectLibraryDraggingContainer(props: { children?: ReactNode }) 
     const x = canvasX * sceneWidth / over.rect.width
     const y = canvasY * sceneHeight / over.rect.height
     if (x >= -sceneWidth / 2 && x <= sceneWidth && y >= -sceneHeight / 2 && y <= sceneHeight / 2) {
-      addObject(draggingObjectType, { x, y })
+      addObject(draggingObjectType, { position: { x, y } })
     }
   }, [draggingObjectType, addObject])
 
