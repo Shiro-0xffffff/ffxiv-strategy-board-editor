@@ -1,6 +1,7 @@
 'use client'
 
 import { PointerEventHandler, useCallback } from 'react'
+import { useHotkeys } from 'react-hotkeys-hook'
 
 import { useStrategyBoard } from '../context'
 import { StrategyBoardCanvas } from '../canvas'
@@ -10,7 +11,11 @@ import { PropertiesPanel } from './properties'
 import { LayersPanel } from './layers'
 
 function CanvasArea() {
-  const { selectObjects } = useStrategyBoard()
+  const { selectedObjectIds, selectObjects, deleteObjects } = useStrategyBoard()
+
+  useHotkeys('delete', () => {
+    deleteObjects(selectedObjectIds)
+  }, [deleteObjects, selectedObjectIds])
 
   const handleBackgroundPointerDown = useCallback<PointerEventHandler<HTMLDivElement>>(() => {
     selectObjects([])

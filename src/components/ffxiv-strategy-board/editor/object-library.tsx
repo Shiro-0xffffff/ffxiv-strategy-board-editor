@@ -35,7 +35,7 @@ function ObjectIcon(props: { objectType: StrategyBoardObjectType }) {
 function DraggableObjectIcon(props: { objectType: StrategyBoardObjectType }) {
   const { objectType } = props
 
-  const { setNodeRef, attributes, listeners } = useDraggable({ id: objectType })
+  const { setNodeRef, attributes, listeners } = useDraggable({ id: objectType, attributes: { tabIndex: -1 } })
 
   return (
     <div ref={setNodeRef} {...attributes} {...listeners}>

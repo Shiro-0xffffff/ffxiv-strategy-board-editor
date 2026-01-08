@@ -84,7 +84,7 @@ function Layer(props: { id: string }) {
 function SortableLayer(props: { id: string }) {
   const { id } = props
 
-  const { isDragging, setNodeRef, transform, transition, attributes, listeners } = useSortable({ id })
+  const { isDragging, setNodeRef, transform, transition, attributes, listeners } = useSortable({ id, attributes: { tabIndex: -1 } })
 
   return (
     <div
