@@ -66,7 +66,6 @@ export function ConeCanvasObject(props: ConeCanvasObjectProps) {
               angle={arcAngle}
               stroke="#fff"
               strokeWidth={2}
-              shadowColor="#1A81B3"
               shadowBlur={4}
               rotation={-90}
             />
