@@ -134,8 +134,12 @@ export function ObjectLibraryPanel() {
               <div className="flex flex-col gap-1">
                 {group.objectTypes.map((row, index) => (
                   <div key={index} className="flex flex-wrap gap-1">
-                    {row.map((objectType, index) => (
-                      <DraggableObjectIcon key={index} objectType={objectType} />
+                    {row.map((segments, index) => (
+                      <div key={index} className="flex flex-wrap gap-1">
+                        {segments.map((objectType, index) => (
+                          <DraggableObjectIcon key={index} objectType={objectType} />
+                        ))}
+                      </div>
                     ))}
                   </div>
                 ))}

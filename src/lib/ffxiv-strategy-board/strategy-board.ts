@@ -30,11 +30,11 @@ export enum StrategyBoardObjectType {
   MechanicDonutAoE = 0x11,
   MechanicMovingCircleAoE = 0x7e,
 
-  MechanicProximityAoE = 0x10,
-  MechanicTargetedProximityAoE = 0x6b,
   MechanicStack = 0x0e,
   MechanicMultiHitStack = 0x6a,
   MechanicLineStack = 0x0f,
+  MechanicProximityAoE = 0x10,
+  MechanicTargetedProximityAoE = 0x6b,
   MechanicTankbuster = 0x6c,
 
   MechanicRadialKnockback = 0x6d,

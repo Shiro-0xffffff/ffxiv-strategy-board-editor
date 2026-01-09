@@ -41,7 +41,7 @@ function CanvasArea() {
   return (
     <div className="size-full flex flex-col bg-muted/30 overflow-auto" onPointerDown={handleBackgroundPointerDown}>
       <div className="flex-1 min-w-max flex flex-col">
-        <div className="flex-1 p-12 flex items-center justify-center">
+        <div className="flex-1 px-8 py-8 3xl:px-4 flex items-center justify-center">
           <div className="shadow-xl" onPointerDown={handleCanvasContainerPointerDown}>
             <ObjectLibraryDraggingTargetCanvas>
               <StrategyBoardCanvas />
@@ -63,13 +63,13 @@ export function StrategyBoardEditor() {
   return (
     <ObjectLibraryDraggingContainer>
       <div className="flex-1 min-h-0 flex overflow-hidden">
-        <div className="w-110 border-r flex flex-col bg-card">
+        <div className="w-74 3xl:w-107 max-w-1/4 border-r flex flex-col bg-card">
           <ObjectLibraryPanel />
         </div>
         <div className="flex-1 min-w-0">
           <CanvasArea />
         </div>
-        <div className="w-80 border-l flex flex-col bg-card">
+        <div className="w-80 3xl:w-100 max-w-1/4 border-l flex flex-col bg-card">
           <div className="h-1/3">
             <PropertiesPanel />
           </div>

@@ -41,11 +41,11 @@ objectLibrary.set(StrategyBoardObjectType.MechanicConeAoE, { name: '扇形 AoE',
 objectLibrary.set(StrategyBoardObjectType.MechanicDonutAoE, { name: '环形 AoE', abbr: '环形AoE', icon: '240304', image: '240218', baseSize: 5120 })
 objectLibrary.set(StrategyBoardObjectType.MechanicMovingCircleAoE, { name: '步进式 AoE', abbr: '步进AoE', icon: '240213', image: '240213', baseSize: 1280 })
 
-objectLibrary.set(StrategyBoardObjectType.MechanicProximityAoE, { name: '距离衰减伤害', abbr: '衰减', icon: '240205', image: '240205', baseSize: 2560 })
-objectLibrary.set(StrategyBoardObjectType.MechanicTargetedProximityAoE, { name: '目标衰减伤害', abbr: '核爆', icon: '240206', image: '240206', baseSize: 1280 })
 objectLibrary.set(StrategyBoardObjectType.MechanicStack, { name: '分摊伤害', abbr: '分摊', icon: '240202', image: '240202', baseSize: 1280 })
 objectLibrary.set(StrategyBoardObjectType.MechanicMultiHitStack, { name: '连续分摊伤害', abbr: '连续分摊', icon: '240203', image: '240203', baseSize: 1280 })
 objectLibrary.set(StrategyBoardObjectType.MechanicLineStack, { name: '直线分摊伤害', abbr: '直线分摊', icon: '240204', image: '240204', baseSize: 1280 })
+objectLibrary.set(StrategyBoardObjectType.MechanicProximityAoE, { name: '距离衰减伤害', abbr: '衰减', icon: '240205', image: '240205', baseSize: 2560 })
+objectLibrary.set(StrategyBoardObjectType.MechanicTargetedProximityAoE, { name: '目标衰减伤害', abbr: '核爆', icon: '240206', image: '240206', baseSize: 1280 })
 objectLibrary.set(StrategyBoardObjectType.MechanicTankbuster, { name: '死刑伤害', abbr: '死刑', icon: '240207', image: '240207', baseSize: 640 })
 
 objectLibrary.set(StrategyBoardObjectType.MechanicRadialKnockback, { name: '中心击退', abbr: '中心击退', icon: '240208', image: '240208', baseSize: 2560 })
@@ -170,7 +170,7 @@ objectLibrary.set(StrategyBoardObjectType.FieldGraySquare, { name: '方形灰底
 
 export interface ObjectLibraryGroup {
   name: string
-  objectTypes: StrategyBoardObjectType[][]
+  objectTypes: StrategyBoardObjectType[][][]
 }
 
 export const objectLibraryGroups: ObjectLibraryGroup[] = [
@@ -178,9 +178,11 @@ export const objectLibraryGroups: ObjectLibraryGroup[] = [
     name: '',
     objectTypes: [
       [
-        StrategyBoardObjectType.Text,
-        StrategyBoardObjectType.Line,
-        StrategyBoardObjectType.Rectangle,
+        [
+          StrategyBoardObjectType.Text,
+          StrategyBoardObjectType.Line,
+          StrategyBoardObjectType.Rectangle,
+        ],
       ],
     ],
   },
@@ -188,12 +190,16 @@ export const objectLibraryGroups: ObjectLibraryGroup[] = [
     name: '符号',
     objectTypes: [
       [
-        StrategyBoardObjectType.SymbolCircle,
-        StrategyBoardObjectType.SymbolCross,
-        StrategyBoardObjectType.SymbolTriangle,
-        StrategyBoardObjectType.SymbolSquare,
-        StrategyBoardObjectType.SymbolArrow,
-        StrategyBoardObjectType.SymbolRotate,
+        [
+          StrategyBoardObjectType.SymbolCircle,
+          StrategyBoardObjectType.SymbolCross,
+          StrategyBoardObjectType.SymbolTriangle,
+          StrategyBoardObjectType.SymbolSquare,
+        ],
+        [
+          StrategyBoardObjectType.SymbolArrow,
+          StrategyBoardObjectType.SymbolRotate,
+        ],
       ],
     ],
   },
@@ -201,49 +207,71 @@ export const objectLibraryGroups: ObjectLibraryGroup[] = [
     name: '战斗机制',
     objectTypes: [
       [
-        StrategyBoardObjectType.MechanicCircleAoE,
-        StrategyBoardObjectType.MechanicConeAoE,
-        StrategyBoardObjectType.MechanicDonutAoE,
-        StrategyBoardObjectType.MechanicMovingCircleAoE,
+        [
+          StrategyBoardObjectType.MechanicCircleAoE,
+          StrategyBoardObjectType.MechanicConeAoE,
+          StrategyBoardObjectType.MechanicDonutAoE,
+          StrategyBoardObjectType.MechanicMovingCircleAoE,
+        ],
       ],
       [
-        StrategyBoardObjectType.MechanicProximityAoE,
-        StrategyBoardObjectType.MechanicTargetedProximityAoE,
-        StrategyBoardObjectType.MechanicStack,
-        StrategyBoardObjectType.MechanicMultiHitStack,
-        StrategyBoardObjectType.MechanicLineStack,
-        StrategyBoardObjectType.MechanicTankbuster,
+        [
+          StrategyBoardObjectType.MechanicStack,
+          StrategyBoardObjectType.MechanicMultiHitStack,
+          StrategyBoardObjectType.MechanicLineStack,
+        ],
+        [
+          StrategyBoardObjectType.MechanicProximityAoE,
+          StrategyBoardObjectType.MechanicTargetedProximityAoE,
+          StrategyBoardObjectType.MechanicTankbuster,
+        ],
       ],
       [
-        StrategyBoardObjectType.MechanicRadialKnockback,
-        StrategyBoardObjectType.MechanicLinearKnockback,
-        StrategyBoardObjectType.MechanicGaze,
-        StrategyBoardObjectType.MechanicRotateClockwise,
-        StrategyBoardObjectType.MechanicRotateCounterclockwise,
+        [
+          StrategyBoardObjectType.MechanicRadialKnockback,
+          StrategyBoardObjectType.MechanicLinearKnockback,
+        ],
+        [
+          StrategyBoardObjectType.MechanicGaze,
+          StrategyBoardObjectType.MechanicRotateClockwise,
+          StrategyBoardObjectType.MechanicRotateCounterclockwise,
+        ],
       ],
       [
-        StrategyBoardObjectType.MechanicTower,
-        StrategyBoardObjectType.MechanicTowerFor1,
-        StrategyBoardObjectType.MechanicTowerFor2,
-        StrategyBoardObjectType.MechanicTowerFor3,
-        StrategyBoardObjectType.MechanicTowerFor4,
+        [
+          StrategyBoardObjectType.MechanicTower,
+        ],
+        [
+          StrategyBoardObjectType.MechanicTowerFor1,
+          StrategyBoardObjectType.MechanicTowerFor2,
+          StrategyBoardObjectType.MechanicTowerFor3,
+          StrategyBoardObjectType.MechanicTowerFor4,
+        ],
       ],
       [
-        StrategyBoardObjectType.Targeted,
-        StrategyBoardObjectType.TargetedRed,
-        StrategyBoardObjectType.TargetedBlue,
-        StrategyBoardObjectType.TargetedPurple,
-        StrategyBoardObjectType.TargetedGreen,
+        [
+          StrategyBoardObjectType.Targeted,
+        ],
+        [
+          StrategyBoardObjectType.TargetedRed,
+          StrategyBoardObjectType.TargetedBlue,
+          StrategyBoardObjectType.TargetedPurple,
+          StrategyBoardObjectType.TargetedGreen,
+        ],
       ],
       [
-        StrategyBoardObjectType.PairedCircle,
-        StrategyBoardObjectType.PairedCross,
-        StrategyBoardObjectType.PairedTriangle,
-        StrategyBoardObjectType.PairedSquare,
+        [
+          StrategyBoardObjectType.PairedCircle,
+          StrategyBoardObjectType.PairedCross,
+          StrategyBoardObjectType.PairedTriangle,
+          StrategyBoardObjectType.PairedSquare,
+        ],
       ],
       [
-        StrategyBoardObjectType.Buff,
-        StrategyBoardObjectType.Debuff,
+        [
+          StrategyBoardObjectType.Buff,
+          StrategyBoardObjectType.Debuff,
+        ],
       ],
     ],
   },
@@ -251,27 +279,35 @@ export const objectLibraryGroups: ObjectLibraryGroup[] = [
     name: '职能',
     objectTypes: [
       [
-        StrategyBoardObjectType.RoleTank,
-        StrategyBoardObjectType.RoleTank1,
-        StrategyBoardObjectType.RoleTank2,
+        [
+          StrategyBoardObjectType.RoleTank,
+          StrategyBoardObjectType.RoleTank1,
+          StrategyBoardObjectType.RoleTank2,
+        ],
       ],
       [
-        StrategyBoardObjectType.RoleHealer,
-        StrategyBoardObjectType.RolePureHealer,
-        StrategyBoardObjectType.RoleBarrierHealer,
-        StrategyBoardObjectType.RoleHealer1,
-        StrategyBoardObjectType.RoleHealer2,
+        [
+          StrategyBoardObjectType.RoleHealer,
+          StrategyBoardObjectType.RolePureHealer,
+          StrategyBoardObjectType.RoleBarrierHealer,
+          StrategyBoardObjectType.RoleHealer1,
+          StrategyBoardObjectType.RoleHealer2,
+        ],
       ],
       [
-        StrategyBoardObjectType.RoleDPS,
-        StrategyBoardObjectType.RoleMeleeDPS,
-        StrategyBoardObjectType.RoleRangedDPS,
-        StrategyBoardObjectType.RolePhysicalRangedDPS,
-        StrategyBoardObjectType.RoleMagicalRangedDPS,
-        StrategyBoardObjectType.RoleDPS1,
-        StrategyBoardObjectType.RoleDPS2,
-        StrategyBoardObjectType.RoleDPS3,
-        StrategyBoardObjectType.RoleDPS4,
+        [
+          StrategyBoardObjectType.RoleDPS,
+          StrategyBoardObjectType.RoleMeleeDPS,
+          StrategyBoardObjectType.RoleRangedDPS,
+          StrategyBoardObjectType.RolePhysicalRangedDPS,
+          StrategyBoardObjectType.RoleMagicalRangedDPS,
+        ],
+        [
+          StrategyBoardObjectType.RoleDPS1,
+          StrategyBoardObjectType.RoleDPS2,
+          StrategyBoardObjectType.RoleDPS3,
+          StrategyBoardObjectType.RoleDPS4,
+        ],
       ],
     ],
   },
@@ -279,45 +315,59 @@ export const objectLibraryGroups: ObjectLibraryGroup[] = [
     name: '职业',
     objectTypes: [
       [
-        StrategyBoardObjectType.ClassJobPLD,
-        StrategyBoardObjectType.ClassJobWAR,
-        StrategyBoardObjectType.ClassJobDRK,
-        StrategyBoardObjectType.ClassJobGNB,
+        [
+          StrategyBoardObjectType.ClassJobPLD,
+          StrategyBoardObjectType.ClassJobWAR,
+          StrategyBoardObjectType.ClassJobDRK,
+          StrategyBoardObjectType.ClassJobGNB,
+        ],
       ],
       [
-        StrategyBoardObjectType.ClassJobWHM,
-        StrategyBoardObjectType.ClassJobSCH,
-        StrategyBoardObjectType.ClassJobAST,
-        StrategyBoardObjectType.ClassJobSGE,
+        [
+          StrategyBoardObjectType.ClassJobWHM,
+          StrategyBoardObjectType.ClassJobSCH,
+          StrategyBoardObjectType.ClassJobAST,
+          StrategyBoardObjectType.ClassJobSGE,
+        ],
       ],
       [
-        StrategyBoardObjectType.ClassJobMNK,
-        StrategyBoardObjectType.ClassJobDRG,
-        StrategyBoardObjectType.ClassJobNIN,
-        StrategyBoardObjectType.ClassJobSAM,
-        StrategyBoardObjectType.ClassJobRPR,
-        StrategyBoardObjectType.ClassJobVPR,
+        [
+          StrategyBoardObjectType.ClassJobMNK,
+          StrategyBoardObjectType.ClassJobDRG,
+          StrategyBoardObjectType.ClassJobNIN,
+          StrategyBoardObjectType.ClassJobSAM,
+          StrategyBoardObjectType.ClassJobRPR,
+          StrategyBoardObjectType.ClassJobVPR,
+        ],
       ],
       [
-        StrategyBoardObjectType.ClassJobBRD,
-        StrategyBoardObjectType.ClassJobMCH,
-        StrategyBoardObjectType.ClassJobDNC,
-        StrategyBoardObjectType.ClassJobBLM,
-        StrategyBoardObjectType.ClassJobSMN,
-        StrategyBoardObjectType.ClassJobRDM,
-        StrategyBoardObjectType.ClassJobPCT,
-        StrategyBoardObjectType.ClassJobBLU,
+        [
+          StrategyBoardObjectType.ClassJobBRD,
+          StrategyBoardObjectType.ClassJobMCH,
+          StrategyBoardObjectType.ClassJobDNC,
+        ],
+        [
+          StrategyBoardObjectType.ClassJobBLM,
+          StrategyBoardObjectType.ClassJobSMN,
+          StrategyBoardObjectType.ClassJobRDM,
+          StrategyBoardObjectType.ClassJobPCT,
+          StrategyBoardObjectType.ClassJobBLU,
+        ],
       ],
       [
-        StrategyBoardObjectType.ClassJobGLA,
-        StrategyBoardObjectType.ClassJobMRD,
-        StrategyBoardObjectType.ClassJobCNJ,
-        StrategyBoardObjectType.ClassJobPGL,
-        StrategyBoardObjectType.ClassJobLNC,
-        StrategyBoardObjectType.ClassJobROG,
-        StrategyBoardObjectType.ClassJobARC,
-        StrategyBoardObjectType.ClassJobTHM,
-        StrategyBoardObjectType.ClassJobACN,
+        [
+          StrategyBoardObjectType.ClassJobGLA,
+          StrategyBoardObjectType.ClassJobMRD,
+          StrategyBoardObjectType.ClassJobCNJ,
+        ],
+        [
+          StrategyBoardObjectType.ClassJobPGL,
+          StrategyBoardObjectType.ClassJobLNC,
+          StrategyBoardObjectType.ClassJobROG,
+          StrategyBoardObjectType.ClassJobARC,
+          StrategyBoardObjectType.ClassJobTHM,
+          StrategyBoardObjectType.ClassJobACN,
+        ],
       ],
     ],
   },
@@ -325,9 +375,11 @@ export const objectLibraryGroups: ObjectLibraryGroup[] = [
     name: '敌人',
     objectTypes: [
       [
-        StrategyBoardObjectType.EnemySmall,
-        StrategyBoardObjectType.EnemyMedium,
-        StrategyBoardObjectType.EnemyLarge,
+        [
+          StrategyBoardObjectType.EnemySmall,
+          StrategyBoardObjectType.EnemyMedium,
+          StrategyBoardObjectType.EnemyLarge,
+        ],
       ],
     ],
   },
@@ -335,27 +387,37 @@ export const objectLibraryGroups: ObjectLibraryGroup[] = [
     name: '目标标记',
     objectTypes: [
       [
-        StrategyBoardObjectType.SignAttack1,
-        StrategyBoardObjectType.SignAttack2,
-        StrategyBoardObjectType.SignAttack3,
-        StrategyBoardObjectType.SignAttack4,
-        StrategyBoardObjectType.SignAttack5,
-        StrategyBoardObjectType.SignAttack6,
-        StrategyBoardObjectType.SignAttack7,
-        StrategyBoardObjectType.SignAttack8,
+        [
+          StrategyBoardObjectType.SignAttack1,
+          StrategyBoardObjectType.SignAttack2,
+          StrategyBoardObjectType.SignAttack3,
+          StrategyBoardObjectType.SignAttack4,
+        ],
+        [
+          StrategyBoardObjectType.SignAttack5,
+          StrategyBoardObjectType.SignAttack6,
+          StrategyBoardObjectType.SignAttack7,
+          StrategyBoardObjectType.SignAttack8,
+        ],
       ],
       [
-        StrategyBoardObjectType.SignBind1,
-        StrategyBoardObjectType.SignBind2,
-        StrategyBoardObjectType.SignBind3,
-        StrategyBoardObjectType.SignStop1,
-        StrategyBoardObjectType.SignStop2,
+        [
+          StrategyBoardObjectType.SignBind1,
+          StrategyBoardObjectType.SignBind2,
+          StrategyBoardObjectType.SignBind3,
+        ],
+        [
+          StrategyBoardObjectType.SignStop1,
+          StrategyBoardObjectType.SignStop2,
+        ],
       ],
       [
-        StrategyBoardObjectType.SignSquare,
-        StrategyBoardObjectType.SignCircle,
-        StrategyBoardObjectType.SignCross,
-        StrategyBoardObjectType.SignTriangle,
+        [
+          StrategyBoardObjectType.SignSquare,
+          StrategyBoardObjectType.SignCircle,
+          StrategyBoardObjectType.SignCross,
+          StrategyBoardObjectType.SignTriangle,
+        ],
       ],
     ],
   },
@@ -363,14 +425,18 @@ export const objectLibraryGroups: ObjectLibraryGroup[] = [
     name: '场景标记',
     objectTypes: [
       [
-        StrategyBoardObjectType.WaymarkA,
-        StrategyBoardObjectType.WaymarkB,
-        StrategyBoardObjectType.WaymarkC,
-        StrategyBoardObjectType.WaymarkD,
-        StrategyBoardObjectType.Waymark1,
-        StrategyBoardObjectType.Waymark2,
-        StrategyBoardObjectType.Waymark3,
-        StrategyBoardObjectType.Waymark4,
+        [
+          StrategyBoardObjectType.WaymarkA,
+          StrategyBoardObjectType.WaymarkB,
+          StrategyBoardObjectType.WaymarkC,
+          StrategyBoardObjectType.WaymarkD,
+        ],
+        [
+          StrategyBoardObjectType.Waymark1,
+          StrategyBoardObjectType.Waymark2,
+          StrategyBoardObjectType.Waymark3,
+          StrategyBoardObjectType.Waymark4,
+        ],
       ],
     ],
   },
@@ -378,10 +444,12 @@ export const objectLibraryGroups: ObjectLibraryGroup[] = [
     name: '场地',
     objectTypes: [
       [
-        StrategyBoardObjectType.FieldCheckeredCircle,
-        StrategyBoardObjectType.FieldCheckeredSquare,
-        StrategyBoardObjectType.FieldGrayCircle,
-        StrategyBoardObjectType.FieldGraySquare,
+        [
+          StrategyBoardObjectType.FieldCheckeredCircle,
+          StrategyBoardObjectType.FieldCheckeredSquare,
+          StrategyBoardObjectType.FieldGrayCircle,
+          StrategyBoardObjectType.FieldGraySquare,
+        ],
       ],
     ],
   },
