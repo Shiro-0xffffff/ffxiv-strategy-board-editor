@@ -25,16 +25,17 @@ export interface StrategyBoardContextProps {
   toggleObjectSelected: (id: string) => void
   getObject: (id: string) => StrategyBoardObject | null
   addObject: (type: StrategyBoardObjectType, properties: StrategyBoardObjectProperties) => string
-  addObjects: (objectProperties: { type: StrategyBoardObjectType, properties: StrategyBoardObjectProperties }[]) => string[]
+  addObjects: (objectsProperties: { type: StrategyBoardObjectType, properties: StrategyBoardObjectProperties }[]) => string[]
   deleteObject: (id: string) => void
   deleteObjects: (ids: string[]) => void
   cutObjects: (ids: string[]) => void
   copyObjects: (ids: string[]) => void
   pasteObjects: () => void
   reorderObject: (id: string, newIndex: number) => void
+  setObjectPosition: (id: string, position: { x: number, y: number }) => void
+  setObjectsPosition: (objectsPosition: { id: string, position: { x: number, y: number } }[]) => void
   toggleObjectVisible: (id: string) => void
   toggleObjectLocked: (id: string) => void
-  setObjectPosition: (id: string, position: { x: number, y: number }) => void
   setObjectsProperties: (modifications: { id: string, modification: (object: StrategyBoardObject) => void }[]) => void
   importFromShareCode: (shareCode: string) => Promise<void>
   exportToShareCode: () => Promise<string>
@@ -87,9 +88,9 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     return scene.objects.find(object => object.id === id) ?? null
   }, [scene])
 
-  const addObjects = useCallback((objectProperties: { type: StrategyBoardObjectType, properties: StrategyBoardObjectProperties }[]): string[] => {
-    if (!objectProperties.length) return []
-    const objects = objectProperties.map(({ type, properties }) => ({ ...createObject(type), ...properties } as StrategyBoardObject))
+  const addObjects = useCallback((objectsProperties: { type: StrategyBoardObjectType, properties: StrategyBoardObjectProperties }[]): string[] => {
+    if (!objectsProperties.length) return []
+    const objects = objectsProperties.map(({ type, properties }) => ({ ...createObject(type), ...properties } as StrategyBoardObject))
     onSceneChange?.(produce(scene, scene => {
       objects.forEach(object => scene.objects.unshift(object))
     }))
@@ -148,6 +149,22 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     }))
   }, [scene, onSceneChange])
 
+  const setObjectsPosition = useCallback((objectsPosition: { id: string, position: { x: number, y: number } }[]): void => {
+    onSceneChange?.(produce(scene, scene => {
+      objectsPosition.forEach(({ id, position }) => {
+        const object = scene.objects.find(object => object.id === id)
+        if (!object) return
+        object.position = {
+          x: Math.round(Math.min(Math.max(position.x, -sceneWidth / 2), sceneWidth / 2)),
+          y: Math.round(Math.min(Math.max(position.y, -sceneHeight / 2), sceneHeight / 2)),
+        }
+      })
+    }))
+  }, [scene, onSceneChange])
+  const setObjectPosition = useCallback((id: string, position: { x: number, y: number }): void => {
+    setObjectsPosition([{ id, position }])
+  }, [setObjectsPosition])
+
   const modifyObject = useCallback((id: string, modification: (object: StrategyBoardObject) => void): void => {
     onSceneChange?.(produce(scene, scene => {
       const object = scene.objects.find(object => object.id === id)
@@ -163,14 +180,6 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
   const toggleObjectLocked = useCallback((id: string): void => {
     modifyObject(id, object => {
       object.locked = !object.locked
-    })
-  }, [modifyObject])
-  const setObjectPosition = useCallback((id: string, position: { x: number, y: number }): void => {
-    modifyObject(id, object => {
-      object.position = {
-        x: Math.round(Math.min(Math.max(position.x, -sceneWidth / 2), sceneWidth / 2)),
-        y: Math.round(Math.min(Math.max(position.y, -sceneHeight / 2), sceneHeight / 2)),
-      }
     })
   }, [modifyObject])
 
@@ -210,9 +219,10 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     deleteObject,
     deleteObjects,
     reorderObject,
+    setObjectPosition,
+    setObjectsPosition,
     toggleObjectVisible,
     toggleObjectLocked,
-    setObjectPosition,
     setObjectsProperties,
     importFromShareCode,
     exportToShareCode,

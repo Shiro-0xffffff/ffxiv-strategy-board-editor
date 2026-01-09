@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback } from 'react'
+import { useRef, useCallback } from 'react'
 import useImage from 'use-image'
 import Konva from 'konva'
 import { Stage, Layer, Group, Image } from 'react-konva'
@@ -86,14 +86,59 @@ export function StrategyBoardCanvasObjectPreview(props: StrategyBoardCanvasObjec
 function CanvasObject(props: { id: string, readOnly?: boolean }) {
   const { id, readOnly } = props
 
-  const { selectedObjectIds, selectObjects, toggleObjectSelected, getObject, setObjectPosition } = useStrategyBoard()
+  const { selectedObjectIds, selectObjects, toggleObjectSelected, getObject, setObjectsPosition } = useStrategyBoard()
   
   const object = getObject(id)!
   const { visible, locked, position } = object
   const selected = selectedObjectIds.includes(id)
 
+  const canvasObjectRef = useRef<Konva.Group>(null)
+  const canvasSelectionRef = useRef<Map<string, { canvasObject: Konva.Node, boundingBox?: Konva.Node, dragStartPosition: { x: number, y: number } }>>(null)
+
+  const startMovingSelectedCanvasObject = useCallback((selectedObjectIds: string[]): void => {
+    const stage = canvasObjectRef.current?.getStage()
+    if (!canvasObjectRef.current || !stage) return
+    const canvasSelection: typeof canvasSelectionRef.current = new Map()
+    selectedObjectIds.forEach(selectedObjectId => {
+      const canvasObject = selectedObjectId === id ? canvasObjectRef.current : stage.findOne(`.object-${selectedObjectId}`)
+      if (!canvasObject) return
+      const boundingBox = stage.findOne(`.object-${selectedObjectId}-bounding-box`)
+      const dragStartPosition = canvasObject.position()
+      canvasSelection.set(selectedObjectId, { canvasObject, boundingBox, dragStartPosition })
+    })
+    canvasSelectionRef.current = canvasSelection
+  }, [id])
+  const stopMovingSelectedCanvasObject = useCallback((): void => {
+    canvasSelectionRef.current = null
+  }, [])
+  const moveSelectedCanvasObject = useCallback((): { id: string, position: { x: number, y: number } }[] => {
+    const stage = canvasObjectRef.current?.getStage()
+    const canvasSelection = canvasSelectionRef.current
+    if (!canvasObjectRef.current || !stage || !canvasSelection) return []
+    const dragStartPosition = canvasSelection.get(id)?.dragStartPosition
+    const draggingOffset = dragStartPosition ? {
+      x: canvasObjectRef.current.x() - dragStartPosition.x,
+      y: canvasObjectRef.current.y() - dragStartPosition.y,
+    } : null
+    const objectsCanvasPositions: { id: string, position: { x: number, y: number } }[] = []
+    canvasSelection.forEach(({ canvasObject, boundingBox, dragStartPosition }, selectedObjectId) => {
+      const canvasPosition = selectedObjectId === id || !draggingOffset ? canvasObject.position() : {
+        x: dragStartPosition.x + draggingOffset.x,
+        y: dragStartPosition.y + draggingOffset.y,
+      }
+      const boundedCanvasPosition = {
+        x: Math.min(Math.max(canvasPosition.x, -canvasWidth / 2), canvasWidth / 2),
+        y: Math.min(Math.max(canvasPosition.y, -canvasHeight / 2), canvasHeight / 2),
+      }
+      canvasObject.position(boundedCanvasPosition)
+      boundingBox?.position(boundedCanvasPosition)
+      objectsCanvasPositions.push({ id: selectedObjectId, position: boundedCanvasPosition })
+    })
+    return objectsCanvasPositions
+  }, [id])
+
   // 按下选中图形
-  const handlePointerDown = useCallback((event: Konva.KonvaEventObject<PointerEvent>) => {
+  const handleClick = useCallback((event: Konva.KonvaEventObject<MouseEvent>): void => {
     event.cancelBubble = true
     if (readOnly) return
     if (event.evt.shiftKey || event.evt.ctrlKey) {
@@ -104,24 +149,35 @@ function CanvasObject(props: { id: string, readOnly?: boolean }) {
   }, [id, readOnly, selectObjects, toggleObjectSelected])
 
   // 拖动图形位置
-  const handleDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>) => {
-    const canvasPosition = {
-      x: Math.min(Math.max(event.target.x(), -canvasWidth / 2), canvasWidth / 2),
-      y: Math.min(Math.max(event.target.y(), -canvasHeight / 2), canvasHeight / 2),
+  const handleDragStart = useCallback((): void => {
+    if (selectedObjectIds.includes(id)) {
+      startMovingSelectedCanvasObject(selectedObjectIds)
+    } else {
+      selectObjects([id])
+      startMovingSelectedCanvasObject([id])
     }
-    event.target.position(canvasPosition)
-    event.target.getStage()?.findOne(`.object-${id}-bounding-box`)?.position(canvasPosition)
-    const position = canvasPositionToPosition(canvasPosition)
-    setObjectPosition(id, position)
-  }, [id, setObjectPosition])
+  }, [id, selectedObjectIds, selectObjects, startMovingSelectedCanvasObject])
+  const handleDragMove = useCallback((): void => {
+    moveSelectedCanvasObject()
+  }, [moveSelectedCanvasObject])
+  const handleDragEnd = useCallback((): void => {
+    const canvasPositions = moveSelectedCanvasObject()
+    stopMovingSelectedCanvasObject()
+    const positions = canvasPositions.map(({ id, position }) => ({ id, position: canvasPositionToPosition(position) }))
+    setObjectsPosition(positions)
+  }, [setObjectsPosition, moveSelectedCanvasObject, stopMovingSelectedCanvasObject])
 
   return (
     <Group
+      ref={canvasObjectRef}
+      name={`object-${id}`}
       {...positionToCanvasPosition(position)}
       visible={visible}
       draggable={!readOnly && !locked}
-      onPointerDown={handlePointerDown}
+      onClick={handleClick}
+      onDragStart={handleDragStart}
       onDragMove={handleDragMove}
+      onDragEnd={handleDragEnd}
     >
       <CanvasObjectContent object={object} selected={!readOnly && selected} />
     </Group>
@@ -160,15 +216,15 @@ export function StrategyBoardCanvas(props: StrategyBoardCanvasProps) {
   const [backgroundImage] = useImage(ffxivImageUrl(backgroundOption.image))
 
   // 在空白区域按下取消选中图形
-  const handleStagePointerDown = useCallback((event: Konva.KonvaEventObject<MouseEvent>) => {
+  const handleStageClick = useCallback((event: Konva.KonvaEventObject<MouseEvent>): void => {
     if (event.evt.shiftKey || event.evt.ctrlKey) return
     selectObjects([])
   }, [selectObjects])
 
   return (
     <div style={{ width: canvasWidth, height: canvasHeight }}>
-      <Stage width={canvasWidth} height={canvasHeight} onPointerDown={handleStagePointerDown}>
-        <Layer>
+      <Stage width={canvasWidth} height={canvasHeight} onClick={handleStageClick}>
+        <Layer listening={false}>
           <Image
             width={canvasWidth}
             height={canvasHeight}
@@ -177,7 +233,7 @@ export function StrategyBoardCanvas(props: StrategyBoardCanvasProps) {
             fill="#595959"
           />
         </Layer>
-        <Layer>
+        <Layer listening={!readOnly}>
           <Group x={canvasWidth / 2} y={canvasHeight / 2}>
             {scene.objects.slice().reverse().map(({ id }) => (
               <CanvasObject key={id} id={id} readOnly={readOnly} />
