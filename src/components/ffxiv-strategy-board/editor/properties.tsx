@@ -282,7 +282,10 @@ function ObjectPropertiesPanel() {
                 />
               </div>
               <ObjectPropertyField
-                availableFor={object => object.type !== StrategyBoardObjectType.Text}
+                availableFor={object => (
+                  object.type !== StrategyBoardObjectType.Text &&
+                  object.type !== StrategyBoardObjectType.MechanicCircleAoE
+                )}
                 getValueFromObject={object => object.rotation}
                 updateObjectWithValue={(object, value) => { object.rotation = value }}
                 renderField={({ value, onChange }) => (
@@ -290,7 +293,7 @@ function ObjectPropertiesPanel() {
                     name="角度"
                     min={-180}
                     max={180}
-                    step={10}
+                    step={15}
                     value={value}
                     onChange={onChange}
                   />

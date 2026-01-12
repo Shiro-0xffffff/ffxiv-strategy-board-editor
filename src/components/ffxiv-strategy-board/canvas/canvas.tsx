@@ -1,9 +1,9 @@
 'use client'
 
 import { useRef, useCallback } from 'react'
-import useImage from 'use-image'
 import Konva from 'konva'
 import { Stage, Layer, Group, Image } from 'react-konva'
+import useImage from 'use-image'
 import { StrategyBoardObject, StrategyBoardObjectType, createObject } from '@/lib/ffxiv-strategy-board'
 import { ffxivImageUrl } from '@/lib/utils'
 
@@ -18,7 +18,7 @@ import { ArcCanvasObject } from './arc'
 import { ImageCanvasObject } from './image'
 import { canvasWidth, canvasHeight, positionToCanvasPosition, canvasPositionToPosition } from './calc'
 
-function CanvasObjectContent(props: { object: StrategyBoardObject, selected?: boolean }) {
+function CanvasObjectContent(props: { object: StrategyBoardObject, selected?: boolean, onResize?: (size: number) => void, onRotate?: (rotation: number) => void }) {
   const { object, ...restProps } = props
 
   if (object.type === StrategyBoardObjectType.Text) {
@@ -86,12 +86,24 @@ export function StrategyBoardCanvasObjectPreview(props: StrategyBoardCanvasObjec
 function CanvasObject(props: { id: string, readOnly?: boolean }) {
   const { id, readOnly } = props
 
-  const { selectedObjectIds, selectObjects, toggleObjectSelected, getObject, setObjectsPosition } = useStrategyBoard()
+  const { selectedObjectIds, selectObjects, toggleObjectSelected, getObject, setObjectsPosition, resizeObject, rotateObject } = useStrategyBoard()
   
   const object = getObject(id)!
   const { visible, locked, position } = object
   const selected = selectedObjectIds.includes(id)
 
+  // 选中图形
+  const handleClick = useCallback((event: Konva.KonvaEventObject<MouseEvent>): void => {
+    event.cancelBubble = true
+    if (readOnly) return
+    if (event.evt.shiftKey || event.evt.ctrlKey) {
+      toggleObjectSelected(id)
+    } else {
+      selectObjects([id])
+    }
+  }, [id, readOnly, selectObjects, toggleObjectSelected])
+
+  // 移动图形
   const canvasObjectRef = useRef<Konva.Group>(null)
   const canvasSelectionRef = useRef<Map<string, { canvasObject: Konva.Node, boundingBox?: Konva.Node, dragStartPosition: { x: number, y: number } }>>(null)
 
@@ -137,18 +149,6 @@ function CanvasObject(props: { id: string, readOnly?: boolean }) {
     return objectsCanvasPositions
   }, [id])
 
-  // 按下选中图形
-  const handleClick = useCallback((event: Konva.KonvaEventObject<MouseEvent>): void => {
-    event.cancelBubble = true
-    if (readOnly) return
-    if (event.evt.shiftKey || event.evt.ctrlKey) {
-      toggleObjectSelected(id)
-    } else {
-      selectObjects([id])
-    }
-  }, [id, readOnly, selectObjects, toggleObjectSelected])
-
-  // 拖动图形位置
   const handleDragStart = useCallback((): void => {
     if (selectedObjectIds.includes(id)) {
       startMovingSelectedCanvasObject(selectedObjectIds)
@@ -167,6 +167,16 @@ function CanvasObject(props: { id: string, readOnly?: boolean }) {
     setObjectsPosition(positions)
   }, [setObjectsPosition, moveSelectedCanvasObject, stopMovingSelectedCanvasObject])
 
+  // 缩放图形
+  const handleCanvasObjectContentResize = useCallback((size: number): void => {
+    resizeObject(id, size)
+  }, [id, resizeObject])
+
+  // 旋转图形
+  const handleCanvasObjectContentRotate = useCallback((rotation: number): void => {
+    rotateObject(id, rotation)
+  }, [id, rotateObject])
+
   return (
     <Group
       ref={canvasObjectRef}
@@ -179,7 +189,12 @@ function CanvasObject(props: { id: string, readOnly?: boolean }) {
       onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
     >
-      <CanvasObjectContent object={object} selected={!readOnly && selected} />
+      <CanvasObjectContent
+        object={object}
+        selected={!readOnly && selected}
+        onResize={handleCanvasObjectContentResize}
+        onRotate={handleCanvasObjectContentRotate}
+      />
     </Group>
   )
 }
@@ -197,7 +212,6 @@ function CanvasObjectBoundingBox(props: { id: string }) {
       name={`object-${id}-bounding-box`}
       {...positionToCanvasPosition(position)}
       visible={visible}
-      listening={false}
     />
   )
 }

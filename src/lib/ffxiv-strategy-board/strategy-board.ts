@@ -237,7 +237,6 @@ export interface StrategyBoardRectangleObject extends StrategyBoardObjectBase {
 export interface StrategyBoardCircleObject extends StrategyBoardObjectBase {
   type: StrategyBoardObjectType.MechanicCircleAoE
   size: number
-  rotation: number
   transparency: number
 }
 
@@ -427,7 +426,6 @@ export function createObject(type: StrategyBoardObjectType): StrategyBoardObject
         ...objectBase,
         type,
         size: 50,
-        rotation: 0,
         transparency: 0,
       }
       return circleObject

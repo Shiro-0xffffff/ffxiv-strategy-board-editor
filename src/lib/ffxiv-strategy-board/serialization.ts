@@ -190,7 +190,8 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
               let rotation = 0
               if (
                 object.type !== StrategyBoardObjectType.Text &&
-                object.type !== StrategyBoardObjectType.Line
+                object.type !== StrategyBoardObjectType.Line &&
+                object.type !== StrategyBoardObjectType.MechanicCircleAoE
               ) {
                 rotation = normalizeRotation(object.rotation)
                 rotation = rotation < 0 ? rotation + 0xffff : rotation
@@ -612,7 +613,8 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
 
               if (
                 object.type !== StrategyBoardObjectType.Text &&
-                object.type !== StrategyBoardObjectType.Line
+                object.type !== StrategyBoardObjectType.Line &&
+                object.type !== StrategyBoardObjectType.MechanicCircleAoE
               ) {
                 object.rotation += rotation > 180 ? rotation - 0xffff : rotation
                 object.rotation = object.rotation > 180 ? object.rotation - 360 : object.rotation

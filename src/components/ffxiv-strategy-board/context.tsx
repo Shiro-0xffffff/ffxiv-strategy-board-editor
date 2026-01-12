@@ -32,10 +32,12 @@ export interface StrategyBoardContextProps {
   copyObjects: (ids: string[]) => void
   pasteObjects: () => void
   reorderObject: (id: string, newIndex: number) => void
-  setObjectPosition: (id: string, position: { x: number, y: number }) => void
-  setObjectsPosition: (objectsPosition: { id: string, position: { x: number, y: number } }[]) => void
   toggleObjectVisible: (id: string) => void
   toggleObjectLocked: (id: string) => void
+  setObjectPosition: (id: string, position: { x: number, y: number }) => void
+  setObjectsPosition: (objectsPosition: { id: string, position: { x: number, y: number } }[]) => void
+  resizeObject: (id: string, size: number) => void
+  rotateObject: (id: string, rotation: number) => void
   setObjectsProperties: (modifications: { id: string, modification: (object: StrategyBoardObject) => void }[]) => void
   importFromShareCode: (shareCode: string) => Promise<void>
   exportToShareCode: () => Promise<string>
@@ -149,6 +151,24 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     }))
   }, [scene, onSceneChange])
 
+  const modifyObject = useCallback((id: string, modification: (object: StrategyBoardObject) => void): void => {
+    onSceneChange?.(produce(scene, scene => {
+      const object = scene.objects.find(object => object.id === id)
+      if (!object) return
+      modification(object)
+    }))
+  }, [scene, onSceneChange])
+  const toggleObjectVisible = useCallback((id: string): void => {
+    modifyObject(id, object => {
+      object.visible = !object.visible
+    })
+  }, [modifyObject])
+  const toggleObjectLocked = useCallback((id: string): void => {
+    modifyObject(id, object => {
+      object.locked = !object.locked
+    })
+  }, [modifyObject])
+
   const setObjectsPosition = useCallback((objectsPosition: { id: string, position: { x: number, y: number } }[]): void => {
     onSceneChange?.(produce(scene, scene => {
       objectsPosition.forEach(({ id, position }) => {
@@ -165,21 +185,40 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     setObjectsPosition([{ id, position }])
   }, [setObjectsPosition])
 
-  const modifyObject = useCallback((id: string, modification: (object: StrategyBoardObject) => void): void => {
-    onSceneChange?.(produce(scene, scene => {
-      const object = scene.objects.find(object => object.id === id)
-      if (!object) return
-      modification(object)
-    }))
-  }, [scene, onSceneChange])
-  const toggleObjectVisible = useCallback((id: string): void => {
+  const resizeObject = useCallback((id: string, size: number): void => {
     modifyObject(id, object => {
-      object.visible = !object.visible
+      switch (object.type) {
+        case StrategyBoardObjectType.Text:
+          break
+        case StrategyBoardObjectType.Line:
+          break
+        case StrategyBoardObjectType.Rectangle:
+          break
+        default:
+          object.size = Math.round(Math.min(Math.max(size, 0), 255))
+      }
     })
   }, [modifyObject])
-  const toggleObjectLocked = useCallback((id: string): void => {
+
+  const rotateObject = useCallback((id: string, rotation: number): void => {
     modifyObject(id, object => {
-      object.locked = !object.locked
+      switch (object.type) {
+        case StrategyBoardObjectType.Text:
+        case StrategyBoardObjectType.MechanicCircleAoE:
+          break
+        case StrategyBoardObjectType.Line:
+          break
+        default:
+          if (rotation > 180) {
+            object.rotation = Math.round((rotation + 180) % 360 - 180)
+            break
+          }
+          if (rotation < -180) {
+            object.rotation = Math.round((rotation - 180) % 360 + 180)
+            break
+          }
+          object.rotation = Math.round(rotation)
+      }
     })
   }, [modifyObject])
 
@@ -219,10 +258,12 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     deleteObject,
     deleteObjects,
     reorderObject,
-    setObjectPosition,
-    setObjectsPosition,
     toggleObjectVisible,
     toggleObjectLocked,
+    setObjectPosition,
+    setObjectsPosition,
+    resizeObject,
+    rotateObject,
     setObjectsProperties,
     importFromShareCode,
     exportToShareCode,
