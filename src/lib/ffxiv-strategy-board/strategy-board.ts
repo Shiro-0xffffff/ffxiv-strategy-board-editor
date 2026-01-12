@@ -208,9 +208,11 @@ export interface StrategyBoardTextObject extends StrategyBoardObjectBase {
 
 export interface StrategyBoardLineObject extends StrategyBoardObjectBase {
   type: StrategyBoardObjectType.Line
-  length: number
+  endPointOffset: {
+    x: number
+    y: number
+  }
   lineWidth: number
-  rotation: number
   transparency: number
   color: {
     r: number
@@ -311,11 +313,12 @@ export function normalizeWidth(width: number): number {
 export function normalizeHeight(height: number): number {
   return Math.round(clampInt(height / 10, 0, sceneHeight * 2 / 10) * 10)
 }
-export function normalizeLineEndPoint(position: { x: number, y: number }, rotation: number): (endPoint: { x: number, y: number }) => { x: number, y: number } {
-  const topIntersectionX = position.x + (-sceneHeight / 2 - position.y) / Math.tan(rotation * Math.PI / 180)
-  const bottomIntersectionX = position.x + (sceneHeight / 2 - position.y) / Math.tan(rotation * Math.PI / 180)
-  const leftIntersectionY = position.y + (-sceneWidth / 2 - position.x) * Math.tan(rotation * Math.PI / 180)
-  const rightIntersectionY = position.y + (sceneWidth / 2 - position.x) * Math.tan(rotation * Math.PI / 180)
+export function normalizeLineEndPoint(position: { x: number, y: number }, endPointOffset: { x: number, y: number }): (endPoint: { x: number, y: number }) => { x: number, y: number } {
+  const xxx = endPointOffset.y / endPointOffset.x
+  const topIntersectionX = position.x + (-sceneHeight / 2 - position.y) / xxx
+  const bottomIntersectionX = position.x + (sceneHeight / 2 - position.y) / xxx
+  const leftIntersectionY = position.y + (-sceneWidth / 2 - position.x) * xxx
+  const rightIntersectionY = position.y + (sceneWidth / 2 - position.x) * xxx
   const xLowerBound = Math.max(Math.min(topIntersectionX, bottomIntersectionX), -sceneWidth / 2)
   const xUpperBound = Math.min(Math.max(topIntersectionX, bottomIntersectionX), sceneWidth / 2)
   const yLowerBound = Math.max(Math.min(leftIntersectionY, rightIntersectionY), -sceneHeight / 2)
@@ -389,9 +392,11 @@ export function createObject(type: StrategyBoardObjectType): StrategyBoardObject
       const lineObject: StrategyBoardLineObject = {
         ...objectBase,
         type,
-        length: 2560,
+        endPointOffset: {
+          x: 1280,
+          y: 0,
+        },
         lineWidth: 60,
-        rotation: 0,
         transparency: 0,
         color: {
           r: 255,

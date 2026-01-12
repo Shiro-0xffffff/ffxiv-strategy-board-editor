@@ -9,7 +9,6 @@ import { StrategyBoardCircleObject } from '@/lib/ffxiv-strategy-board'
 import { ffxivImageUrl } from '@/lib/utils'
 
 import { objectLibrary } from '../constants'
-import { lengthToCanvasLength } from './calc'
 
 const resizeHandleSize = 6
 
@@ -22,12 +21,13 @@ const resizeDirections = new Map<string, { x: -1 | 0 | 1, y: -1 | 0 | 1 }>([
 
 export interface CircleCanvasObjectProps {
   object: StrategyBoardCircleObject
+  zoomRatio?: number
   selected?: boolean
   onResize?: (size: number) => void
 }
 
 export function CircleCanvasObject(props: CircleCanvasObjectProps) {
-  const { object, selected, onResize } = props
+  const { object, zoomRatio = 1, selected, onResize } = props
   const { id, type, locked, size, transparency } = object
 
   const objectLibraryItem = objectLibrary.get(type)!
@@ -36,7 +36,7 @@ export function CircleCanvasObject(props: CircleCanvasObjectProps) {
 
   const [backgroundImage] = useImage(ffxivImageUrl(objectLibraryItem.image ?? ''))
 
-  const baseRadius = lengthToCanvasLength(objectLibraryItem.baseSize / 2)
+  const baseRadius = objectLibraryItem.baseSize * zoomRatio / 2
   const baseBoundingRadius = baseRadius * 256 / 265
   
   // 缩放

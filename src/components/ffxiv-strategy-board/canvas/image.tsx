@@ -9,7 +9,6 @@ import { StrategyBoardCommonObject, StrategyBoardMechanicLineStackObject, Strate
 import { ffxivImageUrl } from '@/lib/utils'
 
 import { objectLibrary } from '../constants'
-import { sizeToCanvasSize } from './calc'
 
 const resizeHandleSize = 6
 const rotateHandleSize = 8
@@ -28,13 +27,14 @@ const resizeDirections = new Map<string, { x: -1 | 0 | 1, y: -1 | 0 | 1 }>([
 
 export interface ImageCanvasObjectProps {
   object: StrategyBoardCommonObject | StrategyBoardMechanicLineStackObject | StrategyBoardMechanicLinearKnockbackObject
+  zoomRatio?: number
   selected?: boolean
   onResize?: (size: number) => void
   onRotate?: (rotation: number) => void
 }
 
 export function ImageCanvasObject(props: ImageCanvasObjectProps) {
-  const { object, selected, onResize, onRotate } = props
+  const { object, zoomRatio = 1, selected, onResize, onRotate } = props
   const { id, type, locked, size, flipped, rotation, transparency } = object
 
   const repeat: { x: number, y: number } | null = useMemo(() => {
@@ -53,10 +53,10 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
 
   const [backgroundImage] = useImage(ffxivImageUrl(objectLibraryItem.image ?? ''))
 
-  const imageBaseSize = sizeToCanvasSize({
-    width: objectLibraryItem.baseSize,
-    height: objectLibraryItem.baseSize,
-  })
+  const imageBaseSize = {
+    width: objectLibraryItem.baseSize * zoomRatio,
+    height: objectLibraryItem.baseSize * zoomRatio,
+  }
 
   // 缩放
   const boundingBoxFrameRef = useRef<Konva.Rect>(null)
@@ -205,6 +205,7 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
                 ))}
                 <Rect
                   ref={rotateHandleRef}
+                  x={0}
                   y={-imageBaseSize.height * (repeat ? repeat.y : 1) / 2 * size / 100 - rotateHandleOffset}
                   offsetX={rotateHandleSize / 2}
                   offsetY={rotateHandleSize / 2}
@@ -213,7 +214,7 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
                   stroke="#fff"
                   strokeWidth={2}
                   shadowBlur={4}
-                  cornerRadius={Infinity}
+                  cornerRadius={rotateHandleSize}
                   fill="#fff"
                   draggable
                   onDragMove={handleRotateHandleDragMove}

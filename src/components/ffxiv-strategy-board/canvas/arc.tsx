@@ -7,22 +7,22 @@ import { StrategyBoardArcObject } from '@/lib/ffxiv-strategy-board'
 import { ffxivImageUrl } from '@/lib/utils'
 
 import { objectLibrary } from '../constants'
-import { lengthToCanvasLength } from './calc'
 
 export interface ArcCanvasObjectProps {
   object: StrategyBoardArcObject
+  zoomRatio?: number
   selected?: boolean
 }
 
 export function ArcCanvasObject(props: ArcCanvasObjectProps) {
-  const { object, selected } = props
+  const { object, zoomRatio = 1, selected } = props
   const { id, type, size, flipped, rotation, transparency, arcAngle, innerRadius } = object
 
   const objectLibraryItem = objectLibrary.get(type)!
 
   const [backgroundImage] = useImage(ffxivImageUrl(objectLibraryItem.image ?? ''))
 
-  const radius = lengthToCanvasLength(objectLibraryItem.baseSize / 2 * size / 100)
+  const radius = objectLibraryItem.baseSize * zoomRatio / 2 * size / 100
   const boundingRadius = radius * 256 / 265
   const holeRadius = radius * innerRadius / 256
   const arcAngleInRad = arcAngle * Math.PI / 180

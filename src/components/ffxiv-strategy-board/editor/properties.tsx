@@ -284,6 +284,7 @@ function ObjectPropertiesPanel() {
               <ObjectPropertyField
                 availableFor={object => (
                   object.type !== StrategyBoardObjectType.Text &&
+                  object.type !== StrategyBoardObjectType.Line &&
                   object.type !== StrategyBoardObjectType.MechanicCircleAoE
                 )}
                 getValueFromObject={object => object.rotation}
@@ -356,13 +357,13 @@ function ObjectPropertiesPanel() {
                 <div className="grid grid-cols-2 gap-4">
                   <ObjectPropertyField
                     availableFor={object => object.type === StrategyBoardObjectType.Line}
-                    getValueFromObject={object => object.length}
-                    updateObjectWithValue={(object, value) => { object.length = value }}
+                    getValueFromObject={object => object.endPointOffset.x}
+                    updateObjectWithValue={(object, value) => { object.endPointOffset.x = value }}
                     renderField={({ value, onChange }) => (
                       <NumberInputField
-                        name="长度"
-                        min={0}
-                        max={Math.hypot(sceneWidth * 2, sceneHeight * 2)}
+                        name="端点 X"
+                        min={-sceneWidth}
+                        max={sceneWidth}
                         step={10}
                         value={value}
                         onChange={onChange}
@@ -371,13 +372,13 @@ function ObjectPropertiesPanel() {
                   />
                   <ObjectPropertyField
                     availableFor={object => object.type === StrategyBoardObjectType.Line}
-                    getValueFromObject={object => object.lineWidth}
-                    updateObjectWithValue={(object, value) => { object.lineWidth = value }}
+                    getValueFromObject={object => object.endPointOffset.y}
+                    updateObjectWithValue={(object, value) => { object.endPointOffset.y = value }}
                     renderField={({ value, onChange }) => (
                       <NumberInputField
-                        name="线条宽度"
-                        min={0}
-                        max={Math.hypot(sceneWidth * 2, sceneHeight * 2)}
+                        name="端点 Y"
+                        min={-sceneHeight}
+                        max={sceneHeight}
                         step={10}
                         value={value}
                         onChange={onChange}
@@ -385,6 +386,21 @@ function ObjectPropertiesPanel() {
                     )}
                   />
                 </div>
+                <ObjectPropertyField
+                  availableFor={object => object.type === StrategyBoardObjectType.Line}
+                  getValueFromObject={object => object.lineWidth}
+                  updateObjectWithValue={(object, value) => { object.lineWidth = value }}
+                  renderField={({ value, onChange }) => (
+                    <NumberInputField
+                      name="线条宽度"
+                      min={0}
+                      max={Math.hypot(sceneWidth * 2, sceneHeight * 2)}
+                      step={10}
+                      value={value}
+                      onChange={onChange}
+                    />
+                  )}
+                />
               </ObjectPropertyFieldGroup>
               <ObjectPropertyField
                 availableFor={object => object.type === StrategyBoardObjectType.MechanicDonutAoE}

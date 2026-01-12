@@ -169,9 +169,9 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
             scene.objects.forEach(object => {
               let position = { x: 0, y: 0 }
               if (object.type === StrategyBoardObjectType.Line) {
-                position = normalizeLineEndPoint(object.position, object.rotation)({
-                  x: object.position.x - object.length / 2 * Math.cos(object.rotation * Math.PI / 180),
-                  y: object.position.y - object.length / 2 * Math.sin(object.rotation * Math.PI / 180),
+                position = normalizeLineEndPoint(object.position, object.endPointOffset)({
+                  x: object.position.x - object.endPointOffset.x,
+                  y: object.position.y - object.endPointOffset.y,
                 })
               } else {
                 position = normalizePosition(object.position)
@@ -240,9 +240,9 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
               let param1 = 0
               switch (object.type) {
                 case StrategyBoardObjectType.Line:
-                  const position = normalizeLineEndPoint(object.position, object.rotation)({
-                    x: object.position.x + object.length / 2 * Math.cos(object.rotation * Math.PI / 180),
-                    y: object.position.y + object.length / 2 * Math.sin(object.rotation * Math.PI / 180),
+                  const position = normalizeLineEndPoint(object.position, object.endPointOffset)({
+                    x: object.position.x + object.endPointOffset.x,
+                    y: object.position.y + object.endPointOffset.y,
                   })
                   param1 = Math.round(position.x + sceneWidth / 2)
                   break
@@ -270,9 +270,9 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
               let param2 = 0
               switch (object.type) {
                 case StrategyBoardObjectType.Line:
-                  const position = normalizeLineEndPoint(object.position, object.rotation)({
-                    x: object.position.x + object.length / 2 * Math.cos(object.rotation * Math.PI / 180),
-                    y: object.position.y + object.length / 2 * Math.sin(object.rotation * Math.PI / 180),
+                  const position = normalizeLineEndPoint(object.position, object.endPointOffset)({
+                    x: object.position.x + object.endPointOffset.x,
+                    y: object.position.y + object.endPointOffset.y,
                   })
                   param2 = Math.round(position.y + sceneHeight / 2)
                   break
@@ -419,9 +419,6 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
   // 字节对齐，2字节
   offset += 2
 
-  // 线端点坐标缓存
-  const lineEndpoints = new Map<string, [{ x: number | null, y: number | null }, { x: number | null, y: number | null }]>()
-
   // 对区段按依次解析
   while (offset < data.length) {
 
@@ -470,11 +467,6 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
           const textContentData = data.slice(offset, offset + textContentLength)
           object.text = utf8Decoder.decode(textContentData).replace(/\0*$/, '')
           offset += textContentLength
-        }
-
-        // 对于线，需要先注册缓存来暂存端点坐标
-        if (object.type === StrategyBoardObjectType.Line) {
-          lineEndpoints.set(object.id, [{ x: null, y: null }, { x: null, y: null }])
         }
 
         // 添加图形
@@ -592,16 +584,8 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
               const object = scene.objects[index]
               if (!object) throw new Error('战术板图形位置区段存在无法识别的数据')
 
-              if (object.type === StrategyBoardObjectType.Line) {
-                const [endPoint1] = lineEndpoints.get(object.id) ?? []
-                if (endPoint1) {
-                  endPoint1.x = x - sceneWidth / 2
-                  endPoint1.y = y - sceneHeight / 2
-                }
-              } else {
-                object.position.x = Math.round(x - sceneWidth / 2)
-                object.position.y = Math.round(y - sceneHeight / 2)
-              }
+              object.position.x = Math.round(x - sceneWidth / 2)
+              object.position.y = Math.round(y - sceneHeight / 2)
             })
             break
 
@@ -668,8 +652,8 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
 
               switch (object.type) {
                 case StrategyBoardObjectType.Line:
-                  const [, endPoint2] = lineEndpoints.get(object.id) ?? []
-                  if (endPoint2) endPoint2.x = param1 - sceneWidth / 2
+                  object.endPointOffset.x = Math.round((param1 - sceneWidth / 2 - object.position.x) / 2)
+                  object.position.x = Math.round(object.position.x + object.endPointOffset.x)
                   break
                 case StrategyBoardObjectType.Rectangle:
                   object.size.width = Math.round(param1 * 10)
@@ -693,8 +677,8 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
 
               switch (object.type) {
                 case StrategyBoardObjectType.Line:
-                  const [, endPoint2] = lineEndpoints.get(object.id) ?? []
-                  if (endPoint2) endPoint2.y = param2 - sceneHeight / 2
+                  object.endPointOffset.y = Math.round((param2 - sceneHeight / 2 - object.position.y) / 2)
+                  object.position.y = Math.round(object.position.y + object.endPointOffset.y)
                   break
                 case StrategyBoardObjectType.Rectangle:
                   object.size.height = Math.round(param2 * 10)
@@ -734,20 +718,6 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
         throw new Error(`战术板数据中存在无法识别的区段类型: 0x${sectionType.toString(16).padStart(4, '0')}`)
     }
   }
-
-  // 根据线端点坐标算出线的位置、长度和角度
-  lineEndpoints.forEach(([{ x: x1, y: y1 }, { x: x2, y: y2 }], id) => {
-    const object = scene.objects.find(object => object.id === id)
-    if (!object || object.type !== StrategyBoardObjectType.Line || x1 === null || x2 === null || y1 === null || y2 === null) {
-      throw new Error('战术板中存在数据不完整的线')
-    }
-    object.position = {
-      x: Math.round((x1 + x2) / 2),
-      y: Math.round((y1 + y2) / 2),
-    }
-    object.length = Math.round(Math.hypot(x1 - x2, y1 - y2))
-    object.rotation = Math.round(Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI)
-  })
 
   return scene
 }

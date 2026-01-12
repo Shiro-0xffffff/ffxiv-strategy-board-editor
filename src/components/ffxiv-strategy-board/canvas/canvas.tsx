@@ -4,7 +4,7 @@ import { useRef, useCallback } from 'react'
 import Konva from 'konva'
 import { Stage, Layer, Group, Image } from 'react-konva'
 import useImage from 'use-image'
-import { StrategyBoardObject, StrategyBoardObjectType, createObject } from '@/lib/ffxiv-strategy-board'
+import { StrategyBoardObject, StrategyBoardObjectType, sceneWidth, sceneHeight, createObject } from '@/lib/ffxiv-strategy-board'
 import { ffxivImageUrl } from '@/lib/utils'
 
 import { backgroundOptions } from '../constants'
@@ -16,14 +16,19 @@ import { CircleCanvasObject } from './circle'
 import { ConeCanvasObject } from './cone'
 import { ArcCanvasObject } from './arc'
 import { ImageCanvasObject } from './image'
-import { canvasWidth, canvasHeight, positionToCanvasPosition, canvasPositionToPosition } from './calc'
 
-function CanvasObjectContent(props: {
-  object: StrategyBoardObject,
-  selected?: boolean,
-  onResize?: (size: number | { width: number, height: number }) => void,
-  onRotate?: (rotation: number) => void,
-}) {
+const zoomRatio = 0.2
+
+interface CanvasObjectContentProps {
+  object: StrategyBoardObject
+  zoomRatio?: number
+  selected?: boolean
+  onResize?: (size: number | { width: number, height: number }) => void
+  onRotate?: (rotation: number) => void
+  onEndPointMove?: (endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }) => void
+}
+
+function CanvasObjectContent(props: CanvasObjectContentProps) {
   const { object, ...restProps } = props
 
   if (object.type === StrategyBoardObjectType.Text) {
@@ -80,7 +85,7 @@ export function StrategyBoardCanvasObjectPreview(props: StrategyBoardCanvasObjec
       >
         <Layer>
           <Group x={previewCanvasSize / 2} y={previewCanvasSize / 2}>
-            <CanvasObjectContent object={object} />
+            <CanvasObjectContent object={object} zoomRatio={zoomRatio} />
           </Group>
         </Layer>
       </Stage>
@@ -91,7 +96,7 @@ export function StrategyBoardCanvasObjectPreview(props: StrategyBoardCanvasObjec
 function CanvasObject(props: { id: string, readOnly?: boolean }) {
   const { id, readOnly } = props
 
-  const { selectedObjectIds, selectObjects, toggleObjectSelected, getObject, setObjectsPosition, resizeObject, rotateObject } = useStrategyBoard()
+  const { selectedObjectIds, selectObjects, toggleObjectSelected, getObject, setObjectsPosition, resizeObject, rotateObject, moveEndPoints } = useStrategyBoard()
   
   const object = getObject(id)!
   const { visible, locked, position } = object
@@ -144,8 +149,8 @@ function CanvasObject(props: { id: string, readOnly?: boolean }) {
         y: dragStartPosition.y + draggingOffset.y,
       }
       const boundedCanvasPosition = {
-        x: Math.min(Math.max(canvasPosition.x, -canvasWidth / 2), canvasWidth / 2),
-        y: Math.min(Math.max(canvasPosition.y, -canvasHeight / 2), canvasHeight / 2),
+        x: Math.min(Math.max(canvasPosition.x, -sceneWidth * zoomRatio / 2), sceneWidth * zoomRatio / 2),
+        y: Math.min(Math.max(canvasPosition.y, -sceneHeight * zoomRatio / 2), sceneHeight * zoomRatio / 2),
       }
       canvasObject.position(boundedCanvasPosition)
       boundingBox?.position(boundedCanvasPosition)
@@ -168,7 +173,7 @@ function CanvasObject(props: { id: string, readOnly?: boolean }) {
   const handleDragEnd = useCallback((): void => {
     const canvasPositions = moveSelectedCanvasObject()
     stopMovingSelectedCanvasObject()
-    const positions = canvasPositions.map(({ id, position }) => ({ id, position: canvasPositionToPosition(position) }))
+    const positions = canvasPositions.map(({ id, position }) => ({ id, position: { x: position.x / zoomRatio, y: position.y / zoomRatio } }))
     setObjectsPosition(positions)
   }, [setObjectsPosition, moveSelectedCanvasObject, stopMovingSelectedCanvasObject])
 
@@ -182,11 +187,17 @@ function CanvasObject(props: { id: string, readOnly?: boolean }) {
     rotateObject(id, rotation)
   }, [id, rotateObject])
 
+  // 旋转图形
+  const handleCanvasObjectContentEndPointMove = useCallback((endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }): void => {
+    moveEndPoints(id, endPoint1, endPoint2)
+  }, [id, moveEndPoints])
+
   return (
     <Group
       ref={canvasObjectRef}
       name={`object-${id}`}
-      {...positionToCanvasPosition(position)}
+      x={position.x * zoomRatio}
+      y={position.y * zoomRatio}
       visible={visible}
       draggable={!readOnly && !locked}
       onClick={handleClick}
@@ -196,9 +207,11 @@ function CanvasObject(props: { id: string, readOnly?: boolean }) {
     >
       <CanvasObjectContent
         object={object}
+        zoomRatio={zoomRatio}
         selected={!readOnly && selected}
         onResize={handleCanvasObjectContentResize}
         onRotate={handleCanvasObjectContentRotate}
+        onEndPointMove={handleCanvasObjectContentEndPointMove}
       />
     </Group>
   )
@@ -215,7 +228,8 @@ function CanvasObjectBoundingBox(props: { id: string }) {
   return (
     <Group
       name={`object-${id}-bounding-box`}
-      {...positionToCanvasPosition(position)}
+      x={position.x * zoomRatio}
+      y={position.y * zoomRatio}
       visible={visible}
     />
   )
@@ -241,19 +255,19 @@ export function StrategyBoardCanvas(props: StrategyBoardCanvasProps) {
   }, [selectObjects])
 
   return (
-    <div style={{ width: canvasWidth, height: canvasHeight }}>
-      <Stage width={canvasWidth} height={canvasHeight} onClick={handleStageClick}>
+    <div style={{ width: sceneWidth * zoomRatio, height: sceneHeight * zoomRatio }}>
+      <Stage width={sceneWidth * zoomRatio} height={sceneHeight * zoomRatio} onClick={handleStageClick}>
         <Layer listening={false}>
           <Image
-            width={canvasWidth}
-            height={canvasHeight}
+            width={sceneWidth * zoomRatio}
+            height={sceneHeight * zoomRatio}
             image={backgroundImage}
             alt={backgroundOption.name}
             fill="#595959"
           />
         </Layer>
         <Layer listening={!readOnly}>
-          <Group x={canvasWidth / 2} y={canvasHeight / 2}>
+          <Group x={sceneWidth * zoomRatio / 2} y={sceneHeight * zoomRatio / 2}>
             {scene.objects.slice().reverse().map(({ id }) => (
               <CanvasObject key={id} id={id} readOnly={readOnly} />
             ))}
@@ -261,7 +275,7 @@ export function StrategyBoardCanvas(props: StrategyBoardCanvasProps) {
         </Layer>
         {!readOnly && (
           <Layer>
-            <Group x={canvasWidth / 2} y={canvasHeight / 2}>
+            <Group x={sceneWidth * zoomRatio / 2} y={sceneHeight * zoomRatio / 2}>
               {scene.objects.slice().reverse().map(({ id }) => (
                 <CanvasObjectBoundingBox key={id} id={id} />
               ))}

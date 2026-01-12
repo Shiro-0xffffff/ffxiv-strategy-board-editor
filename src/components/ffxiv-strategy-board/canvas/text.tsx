@@ -4,24 +4,25 @@ import { Group, Text } from 'react-konva'
 import { StrategyBoardTextObject } from '@/lib/ffxiv-strategy-board'
 
 import { objectLibrary } from '../constants'
-import { canvasWidth, lengthToCanvasLength, sizeToCanvasSize, colorToCanvasColor } from './calc'
+import { colorToCanvasColor } from './calc'
 
 export interface TextCanvasObjectProps {
   object: StrategyBoardTextObject
+  zoomRatio?: number
   readOnly?: boolean
 }
 
 export function TextCanvasObject(props: TextCanvasObjectProps) {
-  const { object } = props
+  const { object, zoomRatio = 1 } = props
   const { type, text, color } = object
 
   const objectLibraryItem = objectLibrary.get(type)!
 
   const textContainerSize = {
-    ...sizeToCanvasSize({ width: 0, height: objectLibraryItem.baseSize }),
-    width: canvasWidth,
+    width: 4000 * zoomRatio,
+    height: objectLibraryItem.baseSize * zoomRatio
   }
-  const canvasFontSize = lengthToCanvasLength(160)
+  const canvasFontSize = 160 * zoomRatio
   const canvasColor = colorToCanvasColor(color)
 
   return (

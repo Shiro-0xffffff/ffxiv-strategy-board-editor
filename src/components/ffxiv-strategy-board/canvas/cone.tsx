@@ -7,22 +7,22 @@ import { StrategyBoardConeObject } from '@/lib/ffxiv-strategy-board'
 import { ffxivImageUrl } from '@/lib/utils'
 
 import { objectLibrary } from '../constants'
-import { lengthToCanvasLength } from './calc'
 
 export interface ConeCanvasObjectProps {
   object: StrategyBoardConeObject
+  zoomRatio?: number
   selected?: boolean
 }
 
 export function ConeCanvasObject(props: ConeCanvasObjectProps) {
-  const { object, selected } = props
+  const { object, zoomRatio = 1, selected } = props
   const { id, type, size, flipped, rotation, transparency, arcAngle } = object
 
   const objectLibraryItem = objectLibrary.get(type)!
 
   const [backgroundImage] = useImage(ffxivImageUrl(objectLibraryItem.image ?? ''))
 
-  const radius = lengthToCanvasLength(objectLibraryItem.baseSize / 2 * size / 100)
+  const radius = objectLibraryItem.baseSize * zoomRatio / 2 * size / 100
   const boundingRadius = radius * 256 / 265
   const arcAngleInRad = arcAngle * Math.PI / 180
   const arcEndPointOffsetX = Math.sin(arcAngleInRad) * radius

@@ -40,6 +40,7 @@ export interface StrategyBoardContextProps {
   setObjectsPosition: (objectsPosition: { id: string, position: { x: number, y: number } }[]) => void
   resizeObject: (id: string, size: number | { width: number, height: number }) => void
   rotateObject: (id: string, rotation: number) => void
+  moveEndPoints: (id: string, endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }) => void
   setObjectsProperties: (modifications: { id: string, modification: (object: StrategyBoardObject) => void }[]) => void
   importFromShareCode: (shareCode: string) => Promise<void>
   exportToShareCode: () => Promise<string>
@@ -188,7 +189,6 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     modifyObject(id, object => {
       switch (object.type) {
         case StrategyBoardObjectType.Text:
-          break
         case StrategyBoardObjectType.Line:
           break
         case StrategyBoardObjectType.Rectangle:
@@ -207,9 +207,8 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     modifyObject(id, object => {
       switch (object.type) {
         case StrategyBoardObjectType.Text:
-        case StrategyBoardObjectType.MechanicCircleAoE:
-          break
         case StrategyBoardObjectType.Line:
+        case StrategyBoardObjectType.MechanicCircleAoE:
           break
         default:
           if (rotation > 180) {
@@ -222,6 +221,16 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
           }
           object.rotation = Math.round(rotation)
       }
+    })
+  }, [modifyObject])
+
+  const moveEndPoints = useCallback((id: string, endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }): void => {
+    modifyObject(id, object => {
+      if (object.type !== StrategyBoardObjectType.Line) return
+      object.position.x = Math.round(object.position.x + (endPoint1.x + endPoint2.x) / 2)
+      object.position.y = Math.round(object.position.y + (endPoint1.y + endPoint2.y) / 2)
+      object.endPointOffset.x = Math.round((endPoint2.x - endPoint1.x) / 2)
+      object.endPointOffset.y = Math.round((endPoint2.y - endPoint1.y) / 2)
     })
   }, [modifyObject])
 
@@ -267,6 +276,7 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     setObjectsPosition,
     resizeObject,
     rotateObject,
+    moveEndPoints,
     setObjectsProperties,
     importFromShareCode,
     exportToShareCode,
