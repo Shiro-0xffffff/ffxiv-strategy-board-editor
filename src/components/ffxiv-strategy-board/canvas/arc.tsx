@@ -72,6 +72,7 @@ export function ArcCanvasObject(props: ArcCanvasObjectProps) {
               strokeWidth={2}
               shadowBlur={4}
               rotation={-90}
+              listening={false}
             />
           </Group>
         </Portal>

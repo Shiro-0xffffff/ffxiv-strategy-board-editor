@@ -1,6 +1,6 @@
 'use client'
 
-import { Rect } from 'react-konva'
+import { Group, Rect } from 'react-konva'
 import { Portal } from 'react-konva-utils'
 import { StrategyBoardLineObject } from '@/lib/ffxiv-strategy-board'
 
@@ -34,16 +34,20 @@ export function LineCanvasObject(props: LineCanvasObjectProps) {
       />
       {!!selected && (
         <Portal selector={`.object-${id}-bounding-box`}>
-          <Rect
-            offsetX={rectSize.width / 2}
-            offsetY={rectSize.height / 2}
-            width={rectSize.width}
-            height={rectSize.height}
-            stroke="#fff"
-            strokeWidth={2}
-            shadowBlur={4}
+          <Group
             rotation={rotation}
-          />
+          >
+            <Rect
+              offsetX={rectSize.width / 2}
+              offsetY={rectSize.height / 2}
+              width={rectSize.width}
+              height={rectSize.height}
+              stroke="#fff"
+              strokeWidth={2}
+              shadowBlur={4}
+              listening={false}
+            />
+          </Group>
         </Portal>
       )}
     </>

@@ -68,6 +68,7 @@ export function ConeCanvasObject(props: ConeCanvasObjectProps) {
               strokeWidth={2}
               shadowBlur={4}
               rotation={-90}
+              listening={false}
             />
           </Group>
         </Portal>
