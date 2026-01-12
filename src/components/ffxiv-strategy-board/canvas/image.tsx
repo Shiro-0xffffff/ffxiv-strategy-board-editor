@@ -53,7 +53,7 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
 
   const [backgroundImage] = useImage(ffxivImageUrl(objectLibraryItem.image ?? ''))
 
-  const imageSize = sizeToCanvasSize({
+  const imageBaseSize = sizeToCanvasSize({
     width: objectLibraryItem.baseSize,
     height: objectLibraryItem.baseSize,
   })
@@ -65,32 +65,34 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
   const resizeObject = useCallback((size: number): void => {
     resizeHandlesRef.current.forEach((resizeHandle, id) => {
       const direction = resizeDirections.get(id)!
-      resizeHandle.x(imageSize.width * (repeat ? repeat.x : 1) / 2 * size / 100 * direction.x)
-      resizeHandle.y(imageSize.height * (repeat ? repeat.y : 1) / 2 * size / 100 * direction.y)
+      resizeHandle.x(imageBaseSize.width * (repeat ? repeat.x : 1) / 2 * size / 100 * direction.x)
+      resizeHandle.y(imageBaseSize.height * (repeat ? repeat.y : 1) / 2 * size / 100 * direction.y)
     })
-    rotateHandleRef.current?.y(-imageSize.height * (repeat ? repeat.y : 1) / 2 * size / 100 - rotateHandleOffset)
-    rotateHandleConnectionLineRef.current?.y(-imageSize.height * (repeat ? repeat.y : 1) / 2 * size / 100 - rotateHandleOffset)
+    rotateHandleRef.current?.y(-imageBaseSize.height * (repeat ? repeat.y : 1) / 2 * size / 100 - rotateHandleOffset)
+    rotateHandleConnectionLineRef.current?.y(-imageBaseSize.height * (repeat ? repeat.y : 1) / 2 * size / 100 - rotateHandleOffset)
     boundingBoxFrameRef.current?.scaleX(size / 100)
     boundingBoxFrameRef.current?.scaleY(size / 100)
     objectRef.current?.scaleX(size / 100)
     objectRef.current?.scaleY(size / 100)
-  }, [imageSize.width, imageSize.height, repeat])
+  }, [imageBaseSize.width, imageBaseSize.height, repeat])
+  
+  const getSizeFromResizeHandle = useCallback((resizeHandle: Konva.Node): number => {
+    const x = resizeHandle.x() / (repeat ? repeat.x : 1)
+    const y = resizeHandle.y() / (repeat ? repeat.y : 1)
+    const size = Math.max(Math.abs(x * 2 / imageBaseSize.width), Math.abs(y * 2 / imageBaseSize.height)) * 100
+    const normalizedSize = Math.round(Math.min(Math.max(size, 0), 255))
+    return normalizedSize
+  }, [imageBaseSize.width, imageBaseSize.height, repeat])
 
   const handleResizeHandleDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
-    const x = event.target.x() / (repeat ? repeat.x : 1)
-    const y = event.target.y() / (repeat ? repeat.y : 1)
-    const size = Math.max(Math.abs(x * 2 / imageSize.width), Math.abs(y * 2 / imageSize.height)) * 100
-    const normalizedSize = Math.round(Math.min(Math.max(size, 0), 255))
-    resizeObject(normalizedSize)
-  }, [resizeObject, imageSize.width, imageSize.height, repeat])
+    const size = getSizeFromResizeHandle(event.target)
+    resizeObject(size)
+  }, [getSizeFromResizeHandle, resizeObject])
   const handleResizeHandleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
-    const x = event.target.x() / (repeat ? repeat.x : 1)
-    const y = event.target.y() / (repeat ? repeat.y : 1)
-    const size = Math.max(Math.abs(x * 2 / imageSize.width), Math.abs(y * 2 / imageSize.height)) * 100
-    const normalizedSize = Math.round(Math.min(Math.max(size, 0), 255))
-    resizeObject(normalizedSize)
-    onResize?.(normalizedSize)
-  }, [resizeObject, imageSize.width, imageSize.height, repeat, onResize])
+    const size = getSizeFromResizeHandle(event.target)
+    resizeObject(size)
+    onResize?.(size)
+  }, [getSizeFromResizeHandle, resizeObject, onResize])
 
   // 旋转
   const boundingBoxRef = useRef<Konva.Group>(null)
@@ -99,22 +101,26 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
 
   const rotateObject = useCallback((rotation: number): void => {
     rotateHandleRef.current?.x(0)
-    rotateHandleRef.current?.y(-imageSize.height * (repeat ? repeat.y : 1) / 2 * size / 100 - rotateHandleOffset)
+    rotateHandleRef.current?.y(-imageBaseSize.height * (repeat ? repeat.y : 1) / 2 * size / 100 - rotateHandleOffset)
     boundingBoxRef.current?.rotation(rotation)
     objectRef.current?.rotation(rotation)
-  }, [imageSize.height, repeat, size])
+  }, [imageBaseSize.height, repeat, size])
+  
+  const getRotationFromRotateHandle = useCallback((rotateHandle: Konva.Node): number => {
+    const rotation = (boundingBoxRef.current?.rotation() ?? 0) + Math.atan2(rotateHandle.x(), -rotateHandle.y()) * 180 / Math.PI
+    const normalizedRotation = Math.round(rotation % 360)
+    return normalizedRotation
+  }, [])
 
   const handleRotateHandleDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
-    const rotation = (boundingBoxRef.current?.rotation() ?? 0) + Math.atan2(event.target.x(), -event.target.y()) * 180 / Math.PI
-    const normalizedRotation = Math.round(rotation % 360)
-    rotateObject(normalizedRotation)
-  }, [rotateObject])
+    const rotation = getRotationFromRotateHandle(event.target)
+    rotateObject(rotation)
+  }, [getRotationFromRotateHandle, rotateObject])
   const handleRotateHandleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
-    const rotation = (boundingBoxRef.current?.rotation() ?? 0) + Math.atan2(event.target.x(), -event.target.y()) * 180 / Math.PI
-    const normalizedRotation = Math.round(rotation % 360)
-    rotateObject(normalizedRotation)
-    onRotate?.(normalizedRotation)
-  }, [rotateObject, onRotate])
+    const rotation = getRotationFromRotateHandle(event.target)
+    rotateObject(rotation)
+    onRotate?.(rotation)
+  }, [getRotationFromRotateHandle, rotateObject, onRotate])
 
   return (
     <>
@@ -127,21 +133,21 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
       >
         {repeat ? (
           <Rect
-            offsetX={imageSize.width * repeat.x / 2}
-            offsetY={imageSize.height * repeat.y / 2}
-            width={imageSize.width * repeat.x}
-            height={imageSize.height * repeat.y}
+            offsetX={imageBaseSize.width * repeat.x / 2}
+            offsetY={imageBaseSize.height * repeat.y / 2}
+            width={imageBaseSize.width * repeat.x}
+            height={imageBaseSize.height * repeat.y}
             fillPatternImage={backgroundImage}
-            fillPatternScaleX={backgroundImage?.width ? imageSize.width / backgroundImage.width : 1}
-            fillPatternScaleY={backgroundImage?.height ? imageSize.height / backgroundImage.height : 1}
+            fillPatternScaleX={backgroundImage?.width ? imageBaseSize.width / backgroundImage.width : 1}
+            fillPatternScaleY={backgroundImage?.height ? imageBaseSize.height / backgroundImage.height : 1}
             scaleX={flipped ? -1 : 1}
           />
         ) : (
           <Image
-            offsetX={imageSize.width / 2}
-            offsetY={imageSize.height / 2}
-            width={imageSize.width}
-            height={imageSize.height}
+            offsetX={imageBaseSize.width / 2}
+            offsetY={imageBaseSize.height / 2}
+            width={imageBaseSize.width}
+            height={imageBaseSize.height}
             image={backgroundImage}
             alt={objectLibraryItem.abbr}
             scaleX={flipped ? -1 : 1}
@@ -156,10 +162,10 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
           >
             <Rect
               ref={boundingBoxFrameRef}
-              offsetX={imageSize.width * (repeat ? repeat.x : 1) / 2}
-              offsetY={imageSize.height * (repeat ? repeat.y : 1) / 2}
-              width={imageSize.width * (repeat ? repeat.x : 1)}
-              height={imageSize.height * (repeat ? repeat.y : 1)}
+              offsetX={imageBaseSize.width * (repeat ? repeat.x : 1) / 2}
+              offsetY={imageBaseSize.height * (repeat ? repeat.y : 1) / 2}
+              width={imageBaseSize.width * (repeat ? repeat.x : 1)}
+              height={imageBaseSize.height * (repeat ? repeat.y : 1)}
               stroke="#fff"
               strokeWidth={2}
               shadowBlur={4}
@@ -172,7 +178,7 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
               <>
                 <Line
                   ref={rotateHandleConnectionLineRef}
-                  y={-imageSize.height * (repeat ? repeat.y : 1) / 2 * size / 100 - rotateHandleOffset}
+                  y={-imageBaseSize.height * (repeat ? repeat.y : 1) / 2 * size / 100 - rotateHandleOffset}
                   points={[0, 0, 0, rotateHandleOffset]}
                   stroke="#fff"
                   strokeWidth={2}
@@ -182,8 +188,8 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
                   <Rect
                     key={id}
                     ref={ref => { resizeHandlesRef.current.set(id, ref!) }}
-                    x={imageSize.width * (repeat ? repeat.x : 1) / 2 * size / 100 * direction.x}
-                    y={imageSize.height * (repeat ? repeat.y : 1) / 2 * size / 100 * direction.y}
+                    x={imageBaseSize.width * (repeat ? repeat.x : 1) / 2 * size / 100 * direction.x}
+                    y={imageBaseSize.height * (repeat ? repeat.y : 1) / 2 * size / 100 * direction.y}
                     offsetX={resizeHandleSize / 2}
                     offsetY={resizeHandleSize / 2}
                     width={resizeHandleSize}
@@ -199,7 +205,7 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
                 ))}
                 <Rect
                   ref={rotateHandleRef}
-                  y={-imageSize.height * (repeat ? repeat.y : 1) / 2 * size / 100 - rotateHandleOffset}
+                  y={-imageBaseSize.height * (repeat ? repeat.y : 1) / 2 * size / 100 - rotateHandleOffset}
                   offsetX={rotateHandleSize / 2}
                   offsetY={rotateHandleSize / 2}
                   width={rotateHandleSize}

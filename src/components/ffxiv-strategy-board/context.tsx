@@ -7,8 +7,10 @@ import {
   StrategyBoardBackground,
   StrategyBoardObject,
   StrategyBoardObjectType,
-  sceneWidth,
-  sceneHeight,
+  normalizePosition,
+  normalizeSize,
+  normalizeWidth,
+  normalizeHeight,
   createObject,
   sceneToShareCode,
   shareCodeToScene,
@@ -36,7 +38,7 @@ export interface StrategyBoardContextProps {
   toggleObjectLocked: (id: string) => void
   setObjectPosition: (id: string, position: { x: number, y: number }) => void
   setObjectsPosition: (objectsPosition: { id: string, position: { x: number, y: number } }[]) => void
-  resizeObject: (id: string, size: number) => void
+  resizeObject: (id: string, size: number | { width: number, height: number }) => void
   rotateObject: (id: string, rotation: number) => void
   setObjectsProperties: (modifications: { id: string, modification: (object: StrategyBoardObject) => void }[]) => void
   importFromShareCode: (shareCode: string) => Promise<void>
@@ -174,10 +176,7 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
       objectsPosition.forEach(({ id, position }) => {
         const object = scene.objects.find(object => object.id === id)
         if (!object) return
-        object.position = {
-          x: Math.round(Math.min(Math.max(position.x, -sceneWidth / 2), sceneWidth / 2)),
-          y: Math.round(Math.min(Math.max(position.y, -sceneHeight / 2), sceneHeight / 2)),
-        }
+        object.position = normalizePosition(position)
       })
     }))
   }, [scene, onSceneChange])
@@ -185,7 +184,7 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     setObjectsPosition([{ id, position }])
   }, [setObjectsPosition])
 
-  const resizeObject = useCallback((id: string, size: number): void => {
+  const resizeObject = useCallback((id: string, size: number | { width: number, height: number }): void => {
     modifyObject(id, object => {
       switch (object.type) {
         case StrategyBoardObjectType.Text:
@@ -193,9 +192,13 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
         case StrategyBoardObjectType.Line:
           break
         case StrategyBoardObjectType.Rectangle:
+          object.size = {
+            width: normalizeWidth((size as { width: number, height: number }).width),
+            height: normalizeHeight((size as { width: number, height: number }).height),
+          }
           break
         default:
-          object.size = Math.round(Math.min(Math.max(size, 0), 255))
+          object.size = normalizeSize(size as number)
       }
     })
   }, [modifyObject])

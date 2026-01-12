@@ -23,7 +23,7 @@ const resizeDirections = new Map<string, { x: -1 | 0 | 1, y: -1 | 0 | 1 }>([
 export interface CircleCanvasObjectProps {
   object: StrategyBoardCircleObject
   selected?: boolean
-  onResize?: (size: number) => VideoEncoderBitrateMode
+  onResize?: (size: number) => void
 }
 
 export function CircleCanvasObject(props: CircleCanvasObjectProps) {
@@ -36,8 +36,8 @@ export function CircleCanvasObject(props: CircleCanvasObjectProps) {
 
   const [backgroundImage] = useImage(ffxivImageUrl(objectLibraryItem.image ?? ''))
 
-  const radius = lengthToCanvasLength(objectLibraryItem.baseSize / 2)
-  const boundingRadius = radius * 256 / 265
+  const baseRadius = lengthToCanvasLength(objectLibraryItem.baseSize / 2)
+  const baseBoundingRadius = baseRadius * 256 / 265
   
   // 缩放
   const boundingBoxFrameRef = useRef<Konva.Circle>(null)
@@ -46,26 +46,30 @@ export function CircleCanvasObject(props: CircleCanvasObjectProps) {
   const resizeObject = useCallback((size: number): void => {
     resizeHandlesRef.current.forEach((resizeHandle, id) => {
       const direction = resizeDirections.get(id)!
-      resizeHandle.x(boundingRadius * size / 100 * direction.x)
-      resizeHandle.y(boundingRadius * size / 100 * direction.y)
+      resizeHandle.x(baseBoundingRadius * size / 100 * direction.x)
+      resizeHandle.y(baseBoundingRadius * size / 100 * direction.y)
     })
     boundingBoxFrameRef.current?.scaleX(size / 100)
     boundingBoxFrameRef.current?.scaleY(size / 100)
     objectRef.current?.scaleX(size / 100)
     objectRef.current?.scaleY(size / 100)
-  }, [boundingRadius])
+  }, [baseBoundingRadius])
+    
+  const getSizeFromResizeHandle = useCallback((resizeHandle: Konva.Node): number => {
+    const size = Math.hypot(resizeHandle.x() / baseBoundingRadius, resizeHandle.y() / baseBoundingRadius) * 100
+    const normalizedSize = Math.round(Math.min(Math.max(size, 0), 255))
+    return normalizedSize
+  }, [baseBoundingRadius])
 
   const handleResizeHandleDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
-    const size = Math.hypot(event.target.x() / boundingRadius, event.target.y() / boundingRadius) * 100
-    const normalizedSize = Math.round(Math.min(Math.max(size, 0), 255))
-    resizeObject(normalizedSize)
-  }, [resizeObject, boundingRadius])
+    const size = getSizeFromResizeHandle(event.target)
+    resizeObject(size)
+  }, [getSizeFromResizeHandle, resizeObject])
   const handleResizeHandleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
-    const size = Math.hypot(event.target.x() / boundingRadius, event.target.y() / boundingRadius) * 100
-    const normalizedSize = Math.round(Math.min(Math.max(size, 0), 255))
-    resizeObject(normalizedSize)
-    onResize?.(normalizedSize)
-  }, [resizeObject, boundingRadius, onResize])
+    const size = getSizeFromResizeHandle(event.target)
+    resizeObject(size)
+    onResize?.(size)
+  }, [getSizeFromResizeHandle, resizeObject, onResize])
 
   return (
     <>
@@ -74,17 +78,17 @@ export function CircleCanvasObject(props: CircleCanvasObjectProps) {
         clipFunc={ctx => {
           ctx.beginPath()
           ctx.moveTo(0, 0)
-          ctx.arc(0, 0, boundingRadius, 0, Math.PI * 2)
+          ctx.arc(0, 0, baseBoundingRadius, 0, Math.PI * 2)
         }}
         opacity={1 - transparency / 100}
         scaleX={size / 100}
         scaleY={size / 100}
       >
         <Image
-          offsetX={radius}
-          offsetY={radius}
-          width={radius * 2}
-          height={radius * 2}
+          offsetX={baseRadius}
+          offsetY={baseRadius}
+          width={baseRadius * 2}
+          height={baseRadius * 2}
           image={backgroundImage}
           alt={objectLibraryItem.abbr}
         />
@@ -94,7 +98,7 @@ export function CircleCanvasObject(props: CircleCanvasObjectProps) {
           <Group>
             <Circle
               ref={boundingBoxFrameRef}
-              radius={boundingRadius}
+              radius={baseBoundingRadius}
               stroke="#fff"
               strokeWidth={2}
               shadowBlur={4}
@@ -109,8 +113,8 @@ export function CircleCanvasObject(props: CircleCanvasObjectProps) {
                   <Rect
                     key={id}
                     ref={ref => { resizeHandlesRef.current.set(id, ref!) }}
-                    x={boundingRadius * size / 100 * direction.x}
-                    y={boundingRadius * size / 100 * direction.y}
+                    x={baseBoundingRadius * size / 100 * direction.x}
+                    y={baseBoundingRadius * size / 100 * direction.y}
                     offsetX={resizeHandleSize / 2}
                     offsetY={resizeHandleSize / 2}
                     width={resizeHandleSize}

@@ -247,7 +247,7 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
                   param1 = Math.round(position.x + sceneWidth / 2)
                   break
                 case StrategyBoardObjectType.Rectangle:
-                  param1 = normalizeWidth(object.size.width)
+                  param1 = Math.round(normalizeWidth(object.size.width) / 10)
                   break
                 case StrategyBoardObjectType.MechanicConeAoE:
                 case StrategyBoardObjectType.MechanicDonutAoE:
@@ -277,7 +277,7 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
                   param2 = Math.round(position.y + sceneHeight / 2)
                   break
                 case StrategyBoardObjectType.Rectangle:
-                  param2 = normalizeHeight(object.size.height)
+                  param2 = Math.round(normalizeHeight(object.size.height) / 10)
                   break
                 case StrategyBoardObjectType.MechanicDonutAoE:
                   param2 = normalizeInnerRadius(object.innerRadius)
@@ -299,7 +299,7 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
               let param3 = 0
               switch (object.type) {
                 case StrategyBoardObjectType.Line:
-                  param3 = normalizeLineWidth(object.lineWidth)
+                  param3 = Math.round(normalizeLineWidth(object.lineWidth) / 10)
                   break
               }
               items.push(param3)

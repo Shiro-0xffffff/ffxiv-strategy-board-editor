@@ -306,10 +306,10 @@ export function normalizeSize(size: number): number {
   return clampInt(size, 0, 255)
 }
 export function normalizeWidth(width: number): number {
-  return clampInt(width / 10, 0, sceneWidth * 2 / 10)
+  return Math.round(clampInt(width / 10, 0, sceneWidth * 2 / 10) * 10)
 }
 export function normalizeHeight(height: number): number {
-  return clampInt(height / 10, 0, sceneHeight * 2 / 10)
+  return Math.round(clampInt(height / 10, 0, sceneHeight * 2 / 10) * 10)
 }
 export function normalizeLineEndPoint(position: { x: number, y: number }, rotation: number): (endPoint: { x: number, y: number }) => { x: number, y: number } {
   const topIntersectionX = position.x + (-sceneHeight / 2 - position.y) / Math.tan(rotation * Math.PI / 180)
@@ -326,7 +326,7 @@ export function normalizeLineEndPoint(position: { x: number, y: number }, rotati
   })
 }
 export function normalizeLineWidth(lineWidth: number): number {
-  return clampInt(lineWidth / 10, 0, Math.hypot(sceneWidth * 2, sceneHeight * 2) / 10)
+  return Math.round(clampInt(lineWidth / 10, 0, Math.hypot(sceneWidth * 2, sceneHeight * 2) / 10) * 10)
 }
 export function normalizeInnerRadius(innerRadius: number): number {
   return clampInt(innerRadius, 0, 255)

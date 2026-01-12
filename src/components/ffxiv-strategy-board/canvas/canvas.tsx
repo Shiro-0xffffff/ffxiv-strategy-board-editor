@@ -18,7 +18,12 @@ import { ArcCanvasObject } from './arc'
 import { ImageCanvasObject } from './image'
 import { canvasWidth, canvasHeight, positionToCanvasPosition, canvasPositionToPosition } from './calc'
 
-function CanvasObjectContent(props: { object: StrategyBoardObject, selected?: boolean, onResize?: (size: number) => void, onRotate?: (rotation: number) => void }) {
+function CanvasObjectContent(props: {
+  object: StrategyBoardObject,
+  selected?: boolean,
+  onResize?: (size: number | { width: number, height: number }) => void,
+  onRotate?: (rotation: number) => void,
+}) {
   const { object, ...restProps } = props
 
   if (object.type === StrategyBoardObjectType.Text) {
@@ -168,7 +173,7 @@ function CanvasObject(props: { id: string, readOnly?: boolean }) {
   }, [setObjectsPosition, moveSelectedCanvasObject, stopMovingSelectedCanvasObject])
 
   // 缩放图形
-  const handleCanvasObjectContentResize = useCallback((size: number): void => {
+  const handleCanvasObjectContentResize = useCallback((size: number | { width: number, height: number }): void => {
     resizeObject(id, size)
   }, [id, resizeObject])
 
