@@ -62,14 +62,28 @@ function Layer(props: { id: string }) {
         {object.type === StrategyBoardObjectType.Text ? object.text : objectLibraryItem.name}
       </div>
       <div className="flex gap-1">
-        <Button className="cursor-pointer" variant="ghost" size="icon-sm" onClick={handleToggleLockedButtonClick}>
+        <Button
+          className={cn('cursor-pointer', {
+            'text-muted-foreground/30 hover:text-foreground': !object.locked,
+          })}
+          variant="ghost"
+          size="icon-sm"
+          onClick={handleToggleLockedButtonClick}
+        >
           {object.locked ? (
             <Lock />
           ) : (
             <Unlock />
           )}
         </Button>
-        <Button className="cursor-pointer" variant="ghost" size="icon-sm" onClick={handleToggleVisibleButtonClick}>
+        <Button
+          className={cn('cursor-pointer', {
+            'text-muted-foreground/30 hover:text-foreground': !object.visible,
+          })}
+          variant="ghost"
+          size="icon-sm"
+          onClick={handleToggleVisibleButtonClick}
+        >
           {object.visible ? (
             <Eye />
           ) : (
