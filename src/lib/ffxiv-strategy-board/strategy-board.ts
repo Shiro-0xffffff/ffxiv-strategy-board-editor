@@ -199,11 +199,7 @@ export interface StrategyBoardCommonObject extends StrategyBoardObjectBase {
 export interface StrategyBoardTextObject extends StrategyBoardObjectBase {
   type: StrategyBoardObjectType.Text
   text: string
-  color: {
-    r: number
-    g: number
-    b: number
-  }
+  color: string
 }
 
 export interface StrategyBoardLineObject extends StrategyBoardObjectBase {
@@ -214,11 +210,7 @@ export interface StrategyBoardLineObject extends StrategyBoardObjectBase {
   }
   lineWidth: number
   transparency: number
-  color: {
-    r: number
-    g: number
-    b: number
-  }
+  color: string
 }
 
 export interface StrategyBoardRectangleObject extends StrategyBoardObjectBase {
@@ -229,11 +221,7 @@ export interface StrategyBoardRectangleObject extends StrategyBoardObjectBase {
   }
   rotation: number
   transparency: number
-  color: {
-    r: number
-    g: number
-    b: number
-  }
+  color: string
 }
 
 export interface StrategyBoardCircleObject extends StrategyBoardObjectBase {
@@ -345,12 +333,8 @@ export function normalizeDisplayCount(displayCount: number): number {
 export function normalizeText(text: string): string {
   return truncateString(text, 30)
 }
-export function normalizeColor(color: { r: number, g: number, b: number }): { r: number, g: number, b: number } {
-  return {
-    r: clampInt(color.r, 0, 255),
-    g: clampInt(color.g, 0, 255),
-    b: clampInt(color.b, 0, 255),
-  }
+export function normalizeColor(color: string): string {
+  return color.match(/^#[0-9a-fA-F]{6}$/) ? color.toLowerCase() : '#ffffff'
 }
 export function normalizeTransparency(transparency: number): number {
   return clampInt(transparency, 0, 100)
@@ -379,11 +363,7 @@ export function createObject(type: StrategyBoardObjectType): StrategyBoardObject
         ...objectBase,
         type,
         text: '文本',
-        color: {
-          r: 255,
-          g: 255,
-          b: 255,
-        },
+        color: '#ffffff',
       }
       return textObject
 
@@ -398,11 +378,7 @@ export function createObject(type: StrategyBoardObjectType): StrategyBoardObject
         },
         lineWidth: 60,
         transparency: 0,
-        color: {
-          r: 255,
-          g: 128,
-          b: 0,
-        },
+        color: '#ff7f00',
       }
       return lineObject
 
@@ -417,11 +393,7 @@ export function createObject(type: StrategyBoardObjectType): StrategyBoardObject
         },
         rotation: 0,
         transparency: 0,
-        color: {
-          r: 255,
-          g: 128,
-          b: 0,
-        },
+        color: '#ff7f00',
       }
       return RectangleObject
 

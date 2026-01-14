@@ -219,7 +219,7 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
           case 0x0008:
             scene.objects.forEach(object => {
               let transparency = 0
-              let color = { r: 255, g: 255, b: 255 }
+              let r = 255, g = 255, b = 255
               if (object.type !== StrategyBoardObjectType.Text) {
                 transparency = normalizeTransparency(object.transparency)
               }
@@ -228,9 +228,10 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
                 object.type === StrategyBoardObjectType.Line ||
                 object.type === StrategyBoardObjectType.Rectangle
               ) {
-                color = normalizeColor(object.color)
+                const color = normalizeColor(object.color)
+                ;[r, g, b] = color.match(/[^#]{2}/g)!.map(channel => parseInt(channel, 16))
               }
-              items.push([color.r, color.g, color.b, transparency])
+              items.push([r, g, b, transparency])
             })
             break
 
@@ -637,9 +638,7 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
                 object.type === StrategyBoardObjectType.Line ||
                 object.type === StrategyBoardObjectType.Rectangle
               ) {
-                object.color.r = r
-                object.color.g = g
-                object.color.b = b
+                object.color = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
               }
             })
             break

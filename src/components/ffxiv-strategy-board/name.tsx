@@ -19,9 +19,6 @@ export function StrategyBoardName(props: StrategyBoardNameProps) {
   const handleNameInputChange = useCallback<ChangeEventHandler<HTMLInputElement>>(event => {
     setNameDraft(event.target.value)
   }, [])
-  const handleNameInputFocus = useCallback<FocusEventHandler<HTMLInputElement>>(() => {
-    setNameDraft(scene.name)
-  }, [scene.name])
   const handleNameInputBlur = useCallback<FocusEventHandler<HTMLInputElement>>(() => {
     if (nameDraft) setName(nameDraft)
     setNameDraft(null)
@@ -36,7 +33,6 @@ export function StrategyBoardName(props: StrategyBoardNameProps) {
       spellCheck={false}
       readOnly={readOnly}
       onChange={handleNameInputChange}
-      onFocus={handleNameInputFocus}
       onBlur={handleNameInputBlur}
     />
   )

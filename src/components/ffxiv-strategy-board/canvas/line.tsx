@@ -6,8 +6,6 @@ import { Group, Rect } from 'react-konva'
 import { Portal } from 'react-konva-utils'
 import { StrategyBoardLineObject } from '@/lib/ffxiv-strategy-board'
 
-import { colorToCanvasColor } from './calc'
-
 const endPointHandleSize = 8
 
 export interface LineCanvasObjectProps {
@@ -25,7 +23,6 @@ export function LineCanvasObject(props: LineCanvasObjectProps) {
 
   const length = Math.hypot(endPointOffset.x, endPointOffset.y) * zoomRatio * 2
   const rotation = Math.atan2(endPointOffset.y, endPointOffset.x) * 180 / Math.PI
-  const rectColor = colorToCanvasColor(color)
 
   // 移动端点
   const boundingBoxRef = useRef<Konva.Group>(null)
@@ -100,7 +97,7 @@ export function LineCanvasObject(props: LineCanvasObjectProps) {
         offsetY={lineWidth * zoomRatio / 2}
         width={length}
         height={lineWidth * zoomRatio}
-        fill={rectColor}
+        fill={color}
         opacity={1 - transparency / 100}
         rotation={rotation}
       />

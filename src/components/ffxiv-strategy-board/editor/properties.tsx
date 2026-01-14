@@ -12,6 +12,8 @@ import { StrategyBoardBackground, StrategyBoardObject, StrategyBoardObjectType, 
 import { backgroundOptions } from '../constants'
 import { useStrategyBoard } from '../context'
 
+import { ColorPicker } from './color-picker'
+
 function InputField(props: { name: string, description?: string, maxBytes?: number, value: string | null, onChange?: (value: string) => void }) {
   const { name, description, maxBytes = Infinity, value, onChange } = props
 
@@ -25,10 +27,6 @@ function InputField(props: { name: string, description?: string, maxBytes?: numb
     const value = truncateString(draft, maxBytes)
     onChange?.(value)
   }, [onChange, maxBytes])
-  const handleInputFocus = useCallback<FocusEventHandler<HTMLInputElement>>(() => {
-    const draft = String(value ?? '')
-    setDraft(draft)
-  }, [value])
   const handleInputBlur = useCallback<FocusEventHandler<HTMLInputElement>>(() => {
     setDraft(null)
   }, [])
@@ -43,7 +41,6 @@ function InputField(props: { name: string, description?: string, maxBytes?: numb
         id={id}
         value={draft ?? value ?? ''}
         onChange={handleInputChange}
-        onFocus={handleInputFocus}
         onBlur={handleInputBlur}
       />
     </Field>
@@ -63,10 +60,6 @@ function NumberInputField(props: { name: string, description?: string, min?: num
     const value = Math.round(Math.min(Math.max(Number(draft), min), max))
     if (Number.isInteger(value)) onChange?.(value)
   }, [onChange, min, max])
-  const handleInputFocus = useCallback<FocusEventHandler<HTMLInputElement>>(() => {
-    const draft = String(value ?? '')
-    setDraft(draft)
-  }, [value])
   const handleInputBlur = useCallback<FocusEventHandler<HTMLInputElement>>(() => {
     setDraft(null)
   }, [])
@@ -85,7 +78,6 @@ function NumberInputField(props: { name: string, description?: string, min?: num
         step={step}
         value={draft ?? value ?? ''}
         onChange={handleInputChange}
-        onFocus={handleInputFocus}
         onBlur={handleInputBlur}
       />
     </Field>
@@ -129,13 +121,12 @@ function SelectField<T>(props: { name: string, description?: string, options: { 
   )
 }
 
-function ColorSelectField(props: { name: string, description?: string, value: { r: number, g: number, b: number } | null, onChange?: (value: { r: number, g: number, b: number }) => void }) {
+function ColorSelectField(props: { name: string, description?: string, value: string | null, onChange?: (value: string) => void }) {
   const { name, description, value, onChange } = props
 
   const id = useId()
 
-  const handleInputChange = useCallback<ChangeEventHandler<HTMLInputElement>>(event => {
-    const value: { r: number, g: number, b: number } = JSON.parse(event.target.value)
+  const handleColorPickerChange = useCallback((value: string): void => {
     onChange?.(value)
   }, [onChange])
 
@@ -145,10 +136,10 @@ function ColorSelectField(props: { name: string, description?: string, value: { 
       {!!description && (
         <FieldDescription>{description}</FieldDescription>
       )}
-      <Input
+      <ColorPicker
         id={id}
-        value={JSON.stringify(value)}
-        onChange={handleInputChange}
+        value={value}
+        onChange={handleColorPickerChange}
       />
     </Field>
   )

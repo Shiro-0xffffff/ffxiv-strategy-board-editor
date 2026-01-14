@@ -6,8 +6,6 @@ import { Group, Line, Rect } from 'react-konva'
 import { Portal } from 'react-konva-utils'
 import { StrategyBoardRectangleObject } from '@/lib/ffxiv-strategy-board'
 
-import { colorToCanvasColor } from './calc'
-
 const resizeHandleSize = 6
 const rotateHandleSize = 8
 const rotateHandleOffset = 24
@@ -36,8 +34,6 @@ export function RectangleCanvasObject(props: RectangleCanvasObjectProps) {
   const { id, locked, size, rotation, transparency, color } = object
 
   const objectRef = useRef<Konva.Rect>(null)
-
-  const rectColor = colorToCanvasColor(color)
 
   // 缩放
   const boundingBoxFrameRef = useRef<Konva.Rect>(null)
@@ -119,7 +115,7 @@ export function RectangleCanvasObject(props: RectangleCanvasObjectProps) {
         offsetY={size.height * zoomRatio / 2}
         width={size.width * zoomRatio}
         height={size.height * zoomRatio}
-        fill={rectColor}
+        fill={color}
         opacity={1 - transparency / 100}
         rotation={rotation}
       />
