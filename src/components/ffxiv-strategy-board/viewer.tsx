@@ -11,7 +11,7 @@ export function StrategyBoardViewer() {
       <Card className="mx-auto max-w-fit">
         <CardContent>
           <ScrollArea className="">
-            <StrategyBoardCanvas readOnly />
+            <StrategyBoardCanvas preview />
             <ScrollBar orientation="horizontal" />
           </ScrollArea>
         </CardContent>

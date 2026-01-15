@@ -8,7 +8,7 @@ import { useStrategyBoard } from '../context'
 const defaultZoomRatio = 0.2
 
 export interface StrategyBoardCanvasContextProps {
-  readOnly: boolean
+  preview: boolean
   zoomRatio: number
   isObjectSelected: (id: string) => boolean
   setObjectPosition: (id: string, position: { x: number, y: number }) => void
@@ -27,20 +27,20 @@ export function useStrategyBoardCanvas(): StrategyBoardCanvasContextProps {
 }
 
 export interface StrategyBoardCanvasProviderProps {
-  readOnly?: boolean
+  preview?: boolean
   children?: ReactNode
 }
 
 export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderProps) {
-  const { readOnly = false, children } = props
+  const { preview = false, children } = props
 
   const { selectedObjectIds, modifyObject, modifyObjects } = useStrategyBoard()
 
   const [zoomRatio] = useState<number>(defaultZoomRatio)
 
   const isObjectSelected = useCallback((id: string): boolean => {
-    return !readOnly && selectedObjectIds.includes(id)
-  }, [readOnly, selectedObjectIds])
+    return !preview && selectedObjectIds.includes(id)
+  }, [preview, selectedObjectIds])
 
   const setObjectsPosition = useCallback((objectsPosition: { id: string, position: { x: number, y: number } }[]): void => {
     modifyObjects(objectsPosition.map(({ id, position }) => ({ id, modification: object => {
@@ -101,7 +101,7 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
   }, [modifyObject])
 
   const contextValue: StrategyBoardCanvasContextProps = {
-    readOnly,
+    preview,
     zoomRatio,
     isObjectSelected,
     setObjectPosition,

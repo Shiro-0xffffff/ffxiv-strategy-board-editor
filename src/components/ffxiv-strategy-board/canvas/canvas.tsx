@@ -71,7 +71,7 @@ export function StrategyBoardCanvasObjectPreview(props: StrategyBoardCanvasObjec
   const object = createObject(objectType)
   
   return (
-    <StrategyBoardCanvasProvider readOnly>
+    <StrategyBoardCanvasProvider preview>
       <div className="size-0">
         <Stage
           width={previewCanvasSize}
@@ -93,21 +93,21 @@ function CanvasObject(props: { id: string }) {
   const { id } = props
 
   const { selectedObjectIds, selectObjects, toggleObjectSelected, getObject } = useStrategyBoard()
-  const { readOnly, zoomRatio, setObjectsPosition } = useStrategyBoardCanvas()
+  const { preview, zoomRatio, setObjectsPosition } = useStrategyBoardCanvas()
   
   const object = getObject(id)!
   const { visible, locked, position } = object
 
   // 选中图形
   const handleClick = useCallback((event: Konva.KonvaEventObject<MouseEvent>): void => {
+    if (preview) return
     event.cancelBubble = true
-    if (readOnly) return
     if (event.evt.shiftKey || event.evt.ctrlKey) {
       toggleObjectSelected(id)
     } else {
       selectObjects([id])
     }
-  }, [id, readOnly, selectObjects, toggleObjectSelected])
+  }, [id, preview, selectObjects, toggleObjectSelected])
 
   // 移动图形
   const canvasObjectRef = useRef<Konva.Group>(null)
@@ -180,15 +180,13 @@ function CanvasObject(props: { id: string }) {
       x={position.x * zoomRatio}
       y={position.y * zoomRatio}
       visible={visible}
-      draggable={!readOnly && !locked}
+      draggable={!preview && !locked}
       onClick={handleClick}
       onDragStart={handleDragStart}
       onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
     >
-      <CanvasObjectContent
-        object={object}
-      />
+      <CanvasObjectContent object={object} />
     </Group>
   )
 }
@@ -214,7 +212,7 @@ function CanvasObjectBoundingBox(props: { id: string }) {
 
 export function StrategyBoardCanvasScene() {
   const { scene, selectObjects } = useStrategyBoard()
-  const { readOnly, zoomRatio } = useStrategyBoardCanvas()
+  const { preview, zoomRatio } = useStrategyBoardCanvas()
 
   const backgroundOption = backgroundOptions.get(scene.background)!
 
@@ -238,14 +236,14 @@ export function StrategyBoardCanvasScene() {
             fill="#595959"
           />
         </Layer>
-        <Layer listening={!readOnly}>
+        <Layer listening={!preview}>
           <Group x={sceneWidth * zoomRatio / 2} y={sceneHeight * zoomRatio / 2}>
             {scene.objects.slice().reverse().map(({ id }) => (
               <CanvasObject key={id} id={id} />
             ))}
           </Group>
         </Layer>
-        {!readOnly && (
+        {!preview && (
           <Layer>
             <Group x={sceneWidth * zoomRatio / 2} y={sceneHeight * zoomRatio / 2}>
               {scene.objects.slice().reverse().map(({ id }) => (
@@ -260,14 +258,14 @@ export function StrategyBoardCanvasScene() {
 }
 
 export interface StrategyBoardCanvasProps {
-  readOnly?: boolean
+  preview?: boolean
 }
 
 export function StrategyBoardCanvas(props: StrategyBoardCanvasProps) {
-  const { readOnly } = props
+  const { preview } = props
 
   return (
-    <StrategyBoardCanvasProvider readOnly={readOnly}>
+    <StrategyBoardCanvasProvider preview={preview}>
       <StrategyBoardCanvasScene />
     </StrategyBoardCanvasProvider>
   )
