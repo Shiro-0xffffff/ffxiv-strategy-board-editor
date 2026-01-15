@@ -9,6 +9,7 @@ import { StrategyBoardCommonObject, StrategyBoardMechanicLineStackObject, Strate
 import { ffxivImageUrl } from '@/lib/utils'
 
 import { objectLibrary } from '../constants'
+import { useStrategyBoardCanvas } from './context'
 
 const resizeHandleSize = 6
 const rotateHandleSize = 8
@@ -27,15 +28,14 @@ const resizeDirections = new Map<string, { x: -1 | 0 | 1, y: -1 | 0 | 1 }>([
 
 export interface ImageCanvasObjectProps {
   object: StrategyBoardCommonObject | StrategyBoardMechanicLineStackObject | StrategyBoardMechanicLinearKnockbackObject
-  zoomRatio?: number
-  selected?: boolean
-  onResize?: (size: number) => void
-  onRotate?: (rotation: number) => void
 }
 
 export function ImageCanvasObject(props: ImageCanvasObjectProps) {
-  const { object, zoomRatio = 1, selected, onResize, onRotate } = props
+  const { object } = props
   const { id, type, locked, size, flipped, rotation, transparency } = object
+
+  const { zoomRatio, isObjectSelected, resizeObject, rotateObject } = useStrategyBoardCanvas()
+  const selected = isObjectSelected(id)
 
   const repeat: { x: number, y: number } | null = useMemo(() => {
     if (object.type === StrategyBoardObjectType.MechanicLineStack) {
@@ -62,7 +62,7 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
   const boundingBoxFrameRef = useRef<Konva.Rect>(null)
   const resizeHandlesRef = useRef(new Map<string, Konva.Rect>)
 
-  const resizeObject = useCallback((size: number): void => {
+  const resizeObjectTemporarily = useCallback((size: number): void => {
     resizeHandlesRef.current.forEach((resizeHandle, id) => {
       const direction = resizeDirections.get(id)!
       resizeHandle.x(imageBaseSize.width * (repeat ? repeat.x : 1) / 2 * size / 100 * direction.x)
@@ -86,20 +86,20 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
 
   const handleResizeHandleDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     const size = getSizeFromResizeHandle(event.target)
-    resizeObject(size)
-  }, [getSizeFromResizeHandle, resizeObject])
+    resizeObjectTemporarily(size)
+  }, [getSizeFromResizeHandle, resizeObjectTemporarily])
   const handleResizeHandleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     const size = getSizeFromResizeHandle(event.target)
-    resizeObject(size)
-    onResize?.(size)
-  }, [getSizeFromResizeHandle, resizeObject, onResize])
+    resizeObjectTemporarily(size)
+    resizeObject?.(id, size)
+  }, [getSizeFromResizeHandle, resizeObjectTemporarily, id, resizeObject])
 
   // 旋转
   const boundingBoxRef = useRef<Konva.Group>(null)
   const rotateHandleRef = useRef<Konva.Rect>(null)
   const rotateHandleConnectionLineRef = useRef<Konva.Line>(null)
 
-  const rotateObject = useCallback((rotation: number): void => {
+  const rotateObjectTemporarily = useCallback((rotation: number): void => {
     rotateHandleRef.current?.x(0)
     rotateHandleRef.current?.y(-imageBaseSize.height * (repeat ? repeat.y : 1) / 2 * size / 100 - rotateHandleOffset)
     boundingBoxRef.current?.rotation(rotation)
@@ -114,13 +114,13 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
 
   const handleRotateHandleDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     const rotation = getRotationFromRotateHandle(event.target)
-    rotateObject(rotation)
-  }, [getRotationFromRotateHandle, rotateObject])
+    rotateObjectTemporarily(rotation)
+  }, [getRotationFromRotateHandle, rotateObjectTemporarily])
   const handleRotateHandleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     const rotation = getRotationFromRotateHandle(event.target)
-    rotateObject(rotation)
-    onRotate?.(rotation)
-  }, [getRotationFromRotateHandle, rotateObject, onRotate])
+    rotateObjectTemporarily(rotation)
+    rotateObject?.(id, rotation)
+  }, [getRotationFromRotateHandle, rotateObjectTemporarily, id, rotateObject])
 
   return (
     <>

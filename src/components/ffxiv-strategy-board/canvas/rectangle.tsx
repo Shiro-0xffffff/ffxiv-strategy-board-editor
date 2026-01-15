@@ -6,6 +6,8 @@ import { Group, Line, Rect } from 'react-konva'
 import { Portal } from 'react-konva-utils'
 import { StrategyBoardRectangleObject } from '@/lib/ffxiv-strategy-board'
 
+import { useStrategyBoardCanvas } from './context'
+
 const resizeHandleSize = 6
 const rotateHandleSize = 8
 const rotateHandleOffset = 24
@@ -23,15 +25,14 @@ const resizeDirections = new Map<string, { x: -1 | 0 | 1, y: -1 | 0 | 1 }>([
 
 export interface RectangleCanvasObjectProps {
   object: StrategyBoardRectangleObject
-  zoomRatio?: number
-  selected?: boolean
-  onResize?: (size: { width: number, height: number }) => void
-  onRotate?: (rotation: number) => void
 }
 
 export function RectangleCanvasObject(props: RectangleCanvasObjectProps) {
-  const { object, zoomRatio = 1, selected, onResize, onRotate } = props
+  const { object } = props
   const { id, locked, size, rotation, transparency, color } = object
+
+  const { zoomRatio, isObjectSelected, resizeObject, rotateObject } = useStrategyBoardCanvas()
+  const selected = isObjectSelected(id)
 
   const objectRef = useRef<Konva.Rect>(null)
 
@@ -39,7 +40,7 @@ export function RectangleCanvasObject(props: RectangleCanvasObjectProps) {
   const boundingBoxFrameRef = useRef<Konva.Rect>(null)
   const resizeHandlesRef = useRef(new Map<string, Konva.Rect>)
 
-  const resizeObject = useCallback((size: { width: number, height: number }): void => {
+  const resizeObjectTemporarily = useCallback((size: { width: number, height: number }): void => {
     resizeHandlesRef.current.forEach((resizeHandle, id) => {
       const direction = resizeDirections.get(id)!
       resizeHandle.x(size.width * zoomRatio / 2 * direction.x)
@@ -71,20 +72,20 @@ export function RectangleCanvasObject(props: RectangleCanvasObjectProps) {
 
   const handleResizeHandleDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     const size = getSizeFromResizeHandle(event.target)
-    resizeObject(size)
-  }, [getSizeFromResizeHandle, resizeObject])
+    resizeObjectTemporarily(size)
+  }, [getSizeFromResizeHandle, resizeObjectTemporarily])
   const handleResizeHandleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     const size = getSizeFromResizeHandle(event.target)
-    resizeObject(size)
-    onResize?.(size)
-  }, [getSizeFromResizeHandle, resizeObject, onResize])
+    resizeObjectTemporarily(size)
+    resizeObject?.(id, size)
+  }, [getSizeFromResizeHandle, resizeObjectTemporarily, id, resizeObject])
 
   // 旋转
   const boundingBoxRef = useRef<Konva.Group>(null)
   const rotateHandleRef = useRef<Konva.Rect>(null)
   const rotateHandleConnectionLineRef = useRef<Konva.Line>(null)
 
-  const rotateObject = useCallback((rotation: number): void => {
+  const rotateObjectTemporarily = useCallback((rotation: number): void => {
     rotateHandleRef.current?.x(0)
     rotateHandleRef.current?.y(-size.height * zoomRatio / 2 - rotateHandleOffset)
     boundingBoxRef.current?.rotation(rotation)
@@ -99,13 +100,13 @@ export function RectangleCanvasObject(props: RectangleCanvasObjectProps) {
 
   const handleRotateHandleDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     const rotation = getRotationFromRotateHandle(event.target)
-    rotateObject(rotation)
-  }, [getRotationFromRotateHandle, rotateObject])
+    rotateObjectTemporarily(rotation)
+  }, [getRotationFromRotateHandle, rotateObjectTemporarily])
   const handleRotateHandleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     const rotation = getRotationFromRotateHandle(event.target)
-    rotateObject(rotation)
-    onRotate?.(rotation)
-  }, [getRotationFromRotateHandle, rotateObject, onRotate])
+    rotateObjectTemporarily(rotation)
+    rotateObject?.(id, rotation)
+  }, [getRotationFromRotateHandle, rotateObjectTemporarily, id, rotateObject])
 
   return (
     <>

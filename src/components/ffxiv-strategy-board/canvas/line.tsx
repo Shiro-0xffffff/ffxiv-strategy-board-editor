@@ -6,18 +6,20 @@ import { Group, Rect } from 'react-konva'
 import { Portal } from 'react-konva-utils'
 import { StrategyBoardLineObject } from '@/lib/ffxiv-strategy-board'
 
+import { useStrategyBoardCanvas } from './context'
+
 const endPointHandleSize = 8
 
 export interface LineCanvasObjectProps {
   object: StrategyBoardLineObject
-  zoomRatio?: number
-  selected?: boolean
-  onEndPointMove?: (endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }) => void
 }
 
 export function LineCanvasObject(props: LineCanvasObjectProps) {
-  const { object, zoomRatio = 1, selected, onEndPointMove } = props
+  const { object } = props
   const { id, locked, endPointOffset, lineWidth, transparency, color } = object
+
+  const { zoomRatio, isObjectSelected, moveEndPoints } = useStrategyBoardCanvas()
+  const selected = isObjectSelected(id)
 
   const objectRef = useRef<Konva.Rect>(null)
 
@@ -30,7 +32,7 @@ export function LineCanvasObject(props: LineCanvasObjectProps) {
   const endPoint1HandleRef = useRef<Konva.Rect>(null)
   const endPoint2HandleRef = useRef<Konva.Rect>(null)
 
-  const moveEndPoints = useCallback((endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }): void => {
+  const moveEndPointsTemporarily = useCallback((endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }): void => {
     const positionOffset = {
       x: (endPoint1.x + endPoint2.x) / 2 * zoomRatio,
       y: (endPoint1.y + endPoint2.y) / 2 * zoomRatio,
@@ -64,22 +66,22 @@ export function LineCanvasObject(props: LineCanvasObjectProps) {
 
   const handleEndPoint1HandleDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     const [endPoint1, endPoint2] = getEndPointsFromEndPointHandle(event.target, null)
-    moveEndPoints(endPoint1, endPoint2)
-  }, [getEndPointsFromEndPointHandle, moveEndPoints])
+    moveEndPointsTemporarily(endPoint1, endPoint2)
+  }, [getEndPointsFromEndPointHandle, moveEndPointsTemporarily])
   const handleEndPoint2HandleDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     const [endPoint1, endPoint2] = getEndPointsFromEndPointHandle(null, event.target)
-    moveEndPoints(endPoint1, endPoint2)
-  }, [getEndPointsFromEndPointHandle, moveEndPoints])
+    moveEndPointsTemporarily(endPoint1, endPoint2)
+  }, [getEndPointsFromEndPointHandle, moveEndPointsTemporarily])
   const handleEndPoint1HandleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     const [endPoint1, endPoint2] = getEndPointsFromEndPointHandle(event.target, null)
-    moveEndPoints(endPoint1, endPoint2)
-    onEndPointMove?.(endPoint1, endPoint2)
-  }, [getEndPointsFromEndPointHandle, moveEndPoints, onEndPointMove])
+    moveEndPointsTemporarily(endPoint1, endPoint2)
+    moveEndPoints?.(id, endPoint1, endPoint2)
+  }, [getEndPointsFromEndPointHandle, moveEndPointsTemporarily, id, moveEndPoints])
   const handleEndPoint2HandleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     const [endPoint1, endPoint2] = getEndPointsFromEndPointHandle(null, event.target)
-    moveEndPoints(endPoint1, endPoint2)
-    onEndPointMove?.(endPoint1, endPoint2)
-  }, [getEndPointsFromEndPointHandle, moveEndPoints, onEndPointMove])
+    moveEndPointsTemporarily(endPoint1, endPoint2)
+    moveEndPoints?.(id, endPoint1, endPoint2)
+  }, [getEndPointsFromEndPointHandle, moveEndPointsTemporarily, id, moveEndPoints])
 
   // TODO: 通过Ref直接修改图形属性后，prop无变化导致属性不会被更新，因此暂时手动重置，需要考虑更好的实现方式
   useLayoutEffect(() => {

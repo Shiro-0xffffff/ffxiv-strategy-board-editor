@@ -7,16 +7,18 @@ import { StrategyBoardConeObject } from '@/lib/ffxiv-strategy-board'
 import { ffxivImageUrl } from '@/lib/utils'
 
 import { objectLibrary } from '../constants'
+import { useStrategyBoardCanvas } from './context'
 
 export interface ConeCanvasObjectProps {
   object: StrategyBoardConeObject
-  zoomRatio?: number
-  selected?: boolean
 }
 
 export function ConeCanvasObject(props: ConeCanvasObjectProps) {
-  const { object, zoomRatio = 1, selected } = props
+  const { object } = props
   const { id, type, size, flipped, rotation, transparency, arcAngle } = object
+
+  const { zoomRatio, isObjectSelected } = useStrategyBoardCanvas()
+  const selected = isObjectSelected(id)
 
   const objectLibraryItem = objectLibrary.get(type)!
 

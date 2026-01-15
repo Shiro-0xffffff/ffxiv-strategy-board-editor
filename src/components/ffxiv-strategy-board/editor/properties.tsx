@@ -186,7 +186,7 @@ interface ObjectPropertyFieldProps<T, O extends StrategyBoardObject> {
 function ObjectPropertyField<T, O extends StrategyBoardObject>(props: ObjectPropertyFieldProps<T, O>) {
   const { availableFor = (object: StrategyBoardObject): object is O => true, getValueFromObject, updateObjectWithValue, renderField } = props
 
-  const { scene, selectedObjectIds, setObjectsProperties } = useStrategyBoard()
+  const { scene, selectedObjectIds, modifyObjects } = useStrategyBoard()
   
   const selectedObjects = selectedObjectIds.map(id => scene.objects.find(object => object.id === id)).filter(object => !!object)
   const objectsForField = selectedObjects.filter(availableFor)
@@ -197,7 +197,7 @@ function ObjectPropertyField<T, O extends StrategyBoardObject>(props: ObjectProp
 
   return renderField({
     value: objectsForField.every(object => getValueFromObject(object) === value) ? value : null,
-    onChange: value => setObjectsProperties(objectsForField.map(object => ({
+    onChange: value => modifyObjects(objectsForField.map(object => ({
       id: object.id,
       modification: object => {
         if (availableFor(object)) updateObjectWithValue(object, value)

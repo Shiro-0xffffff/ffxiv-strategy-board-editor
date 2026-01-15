@@ -7,10 +7,6 @@ import {
   StrategyBoardBackground,
   StrategyBoardObject,
   StrategyBoardObjectType,
-  normalizePosition,
-  normalizeSize,
-  normalizeWidth,
-  normalizeHeight,
   createObject,
   sceneToShareCode,
   shareCodeToScene,
@@ -34,14 +30,10 @@ export interface StrategyBoardContextProps {
   copyObjects: (ids: string[]) => void
   pasteObjects: () => void
   reorderObject: (id: string, newIndex: number) => void
+  modifyObject: (id: string, modification: (object: StrategyBoardObject) => void) => void
+  modifyObjects: (modifications: { id: string, modification: (object: StrategyBoardObject) => void }[]) => void
   toggleObjectVisible: (id: string) => void
   toggleObjectLocked: (id: string) => void
-  setObjectPosition: (id: string, position: { x: number, y: number }) => void
-  setObjectsPosition: (objectsPosition: { id: string, position: { x: number, y: number } }[]) => void
-  resizeObject: (id: string, size: number | { width: number, height: number }) => void
-  rotateObject: (id: string, rotation: number) => void
-  moveEndPoints: (id: string, endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }) => void
-  setObjectsProperties: (modifications: { id: string, modification: (object: StrategyBoardObject) => void }[]) => void
   importFromShareCode: (shareCode: string) => Promise<void>
   exportToShareCode: () => Promise<string>
 }
@@ -154,6 +146,15 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     }))
   }, [scene, onSceneChange])
 
+  const modifyObjects = useCallback((modifications: { id: string, modification: (object: StrategyBoardObject) => void }[]): void => {
+    onSceneChange?.(produce(scene, scene => {
+      modifications.forEach(({ id, modification }) => {
+        const object = scene.objects.find(object => object.id === id)
+        if (!object) return
+        modification(object)
+      })
+    }))
+  }, [scene, onSceneChange])
   const modifyObject = useCallback((id: string, modification: (object: StrategyBoardObject) => void): void => {
     onSceneChange?.(produce(scene, scene => {
       const object = scene.objects.find(object => object.id === id)
@@ -161,6 +162,7 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
       modification(object)
     }))
   }, [scene, onSceneChange])
+
   const toggleObjectVisible = useCallback((id: string): void => {
     modifyObject(id, object => {
       object.visible = !object.visible
@@ -171,78 +173,6 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
       object.locked = !object.locked
     })
   }, [modifyObject])
-
-  const setObjectsPosition = useCallback((objectsPosition: { id: string, position: { x: number, y: number } }[]): void => {
-    onSceneChange?.(produce(scene, scene => {
-      objectsPosition.forEach(({ id, position }) => {
-        const object = scene.objects.find(object => object.id === id)
-        if (!object) return
-        object.position = normalizePosition(position)
-      })
-    }))
-  }, [scene, onSceneChange])
-  const setObjectPosition = useCallback((id: string, position: { x: number, y: number }): void => {
-    setObjectsPosition([{ id, position }])
-  }, [setObjectsPosition])
-
-  const resizeObject = useCallback((id: string, size: number | { width: number, height: number }): void => {
-    modifyObject(id, object => {
-      switch (object.type) {
-        case StrategyBoardObjectType.Text:
-        case StrategyBoardObjectType.Line:
-          break
-        case StrategyBoardObjectType.Rectangle:
-          object.size = {
-            width: normalizeWidth((size as { width: number, height: number }).width),
-            height: normalizeHeight((size as { width: number, height: number }).height),
-          }
-          break
-        default:
-          object.size = normalizeSize(size as number)
-      }
-    })
-  }, [modifyObject])
-
-  const rotateObject = useCallback((id: string, rotation: number): void => {
-    modifyObject(id, object => {
-      switch (object.type) {
-        case StrategyBoardObjectType.Text:
-        case StrategyBoardObjectType.Line:
-        case StrategyBoardObjectType.MechanicCircleAoE:
-          break
-        default:
-          if (rotation > 180) {
-            object.rotation = Math.round((rotation + 180) % 360 - 180)
-            break
-          }
-          if (rotation < -180) {
-            object.rotation = Math.round((rotation - 180) % 360 + 180)
-            break
-          }
-          object.rotation = Math.round(rotation)
-      }
-    })
-  }, [modifyObject])
-
-  const moveEndPoints = useCallback((id: string, endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }): void => {
-    modifyObject(id, object => {
-      if (object.type !== StrategyBoardObjectType.Line) return
-      object.position.x = Math.round(object.position.x + (endPoint1.x + endPoint2.x) / 2)
-      object.position.y = Math.round(object.position.y + (endPoint1.y + endPoint2.y) / 2)
-      object.endPointOffset.x = Math.round((endPoint2.x - endPoint1.x) / 2)
-      object.endPointOffset.y = Math.round((endPoint2.y - endPoint1.y) / 2)
-    })
-  }, [modifyObject])
-
-  const setObjectsProperties = useCallback((modifications: { id: string, modification: (object: StrategyBoardObject) => void }[]): void => {
-    onSceneChange?.(produce(scene, scene => {
-      modifications.forEach(({ id, modification }) => {
-        const object = scene.objects.find(object => object.id === id)
-        if (!object) return
-        modification(object)
-      })
-    }))
-  }, [scene, onSceneChange])
 
   const importFromShareCode = useCallback(async (shareCode: string): Promise<void> => {
     const scene = await shareCodeToScene(shareCode)
@@ -270,14 +200,10 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     deleteObject,
     deleteObjects,
     reorderObject,
+    modifyObject,
+    modifyObjects,
     toggleObjectVisible,
     toggleObjectLocked,
-    setObjectPosition,
-    setObjectsPosition,
-    resizeObject,
-    rotateObject,
-    moveEndPoints,
-    setObjectsProperties,
     importFromShareCode,
     exportToShareCode,
   }

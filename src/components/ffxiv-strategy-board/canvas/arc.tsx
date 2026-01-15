@@ -7,16 +7,18 @@ import { StrategyBoardArcObject } from '@/lib/ffxiv-strategy-board'
 import { ffxivImageUrl } from '@/lib/utils'
 
 import { objectLibrary } from '../constants'
+import { useStrategyBoardCanvas } from './context'
 
 export interface ArcCanvasObjectProps {
   object: StrategyBoardArcObject
-  zoomRatio?: number
-  selected?: boolean
 }
 
 export function ArcCanvasObject(props: ArcCanvasObjectProps) {
-  const { object, zoomRatio = 1, selected } = props
+  const { object } = props
   const { id, type, size, flipped, rotation, transparency, arcAngle, innerRadius } = object
+
+  const { zoomRatio, isObjectSelected } = useStrategyBoardCanvas()
+  const selected = isObjectSelected(id)
 
   const objectLibraryItem = objectLibrary.get(type)!
 

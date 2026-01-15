@@ -9,6 +9,7 @@ import { StrategyBoardCircleObject } from '@/lib/ffxiv-strategy-board'
 import { ffxivImageUrl } from '@/lib/utils'
 
 import { objectLibrary } from '../constants'
+import { useStrategyBoardCanvas } from './context'
 
 const resizeHandleSize = 6
 
@@ -21,14 +22,14 @@ const resizeDirections = new Map<string, { x: -1 | 0 | 1, y: -1 | 0 | 1 }>([
 
 export interface CircleCanvasObjectProps {
   object: StrategyBoardCircleObject
-  zoomRatio?: number
-  selected?: boolean
-  onResize?: (size: number) => void
 }
 
 export function CircleCanvasObject(props: CircleCanvasObjectProps) {
-  const { object, zoomRatio = 1, selected, onResize } = props
+  const { object } = props
   const { id, type, locked, size, transparency } = object
+
+  const { zoomRatio, isObjectSelected, resizeObject } = useStrategyBoardCanvas()
+  const selected = isObjectSelected(id)
 
   const objectLibraryItem = objectLibrary.get(type)!
 
@@ -43,7 +44,7 @@ export function CircleCanvasObject(props: CircleCanvasObjectProps) {
   const boundingBoxFrameRef = useRef<Konva.Circle>(null)
   const resizeHandlesRef = useRef(new Map<string, Konva.Rect>)
 
-  const resizeObject = useCallback((size: number): void => {
+  const resizeObjectTemporarily = useCallback((size: number): void => {
     resizeHandlesRef.current.forEach((resizeHandle, id) => {
       const direction = resizeDirections.get(id)!
       resizeHandle.x(baseBoundingRadius * size / 100 * direction.x)
@@ -63,13 +64,13 @@ export function CircleCanvasObject(props: CircleCanvasObjectProps) {
 
   const handleResizeHandleDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     const size = getSizeFromResizeHandle(event.target)
-    resizeObject(size)
-  }, [getSizeFromResizeHandle, resizeObject])
+    resizeObjectTemporarily(size)
+  }, [getSizeFromResizeHandle, resizeObjectTemporarily])
   const handleResizeHandleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     const size = getSizeFromResizeHandle(event.target)
-    resizeObject(size)
-    onResize?.(size)
-  }, [getSizeFromResizeHandle, resizeObject, onResize])
+    resizeObjectTemporarily(size)
+    resizeObject?.(id, size)
+  }, [getSizeFromResizeHandle, resizeObjectTemporarily, id, resizeObject])
 
   return (
     <>

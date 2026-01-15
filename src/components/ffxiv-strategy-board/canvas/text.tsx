@@ -4,16 +4,18 @@ import { Group, Text } from 'react-konva'
 import { StrategyBoardTextObject } from '@/lib/ffxiv-strategy-board'
 
 import { objectLibrary } from '../constants'
+import { useStrategyBoardCanvas } from './context'
 
 export interface TextCanvasObjectProps {
   object: StrategyBoardTextObject
-  zoomRatio?: number
-  readOnly?: boolean
 }
 
 export function TextCanvasObject(props: TextCanvasObjectProps) {
-  const { object, zoomRatio = 1 } = props
-  const { type, text, color } = object
+  const { object } = props
+  const { id, type, text, color } = object
+
+  const { zoomRatio, isObjectSelected } = useStrategyBoardCanvas()
+  const selected = isObjectSelected(id)
 
   const objectLibraryItem = objectLibrary.get(type)!
 
