@@ -378,7 +378,7 @@ export function createObject(type: StrategyBoardObjectType): StrategyBoardObject
         },
         lineWidth: 60,
         transparency: 0,
-        color: '#ff7f00',
+        color: '#ff8000',
       }
       return lineObject
 
@@ -393,7 +393,7 @@ export function createObject(type: StrategyBoardObjectType): StrategyBoardObject
         },
         rotation: 0,
         transparency: 0,
-        color: '#ff7f00',
+        color: '#ff8000',
       }
       return RectangleObject
 
