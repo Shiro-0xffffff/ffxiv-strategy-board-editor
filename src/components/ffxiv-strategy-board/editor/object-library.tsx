@@ -21,7 +21,7 @@ function ObjectIcon(props: { objectType: StrategyBoardObjectType }) {
   return (
     <Tooltip delayDuration={700}>
       <TooltipTrigger asChild>
-        <div className="size-10 rounded-sm cursor-grab">
+        <div className="size-10 rounded-sm">
           <Image className="size-10" src={ffxivImageUrl(objectLibraryItem.icon)} alt={objectLibraryItem.abbr} width={80} height={80} />
         </div>
       </TooltipTrigger>
@@ -38,7 +38,7 @@ function DraggableObjectIcon(props: { objectType: StrategyBoardObjectType }) {
   const { setNodeRef, attributes, listeners } = useDraggable({ id: objectType, attributes: { tabIndex: -1 } })
 
   return (
-    <div ref={setNodeRef} {...attributes} {...listeners}>
+    <div ref={setNodeRef} className="cursor-grab" {...attributes} {...listeners}>
       <ObjectIcon objectType={objectType} />
     </div>
   )
@@ -138,6 +138,42 @@ export function ObjectLibraryPanel() {
                       <div key={index} className="flex flex-wrap gap-1">
                         {segments.map((objectType, index) => (
                           <DraggableObjectIcon key={index} objectType={objectType} />
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
+    </div>
+  )
+}
+
+export function ObjectLibraryPanelSkeleton() {
+  return (
+    <div className="size-full flex flex-col">
+      <div className="p-4 flex items-center justify-between">
+        <div className="font-semibold">图形库</div>
+      </div>
+      <ScrollArea className="flex-1 min-h-0 pb-4">
+        <div className="px-4">
+          {objectLibraryGroups.map((group, index) => (
+            <div key={index} className="">
+              {group.name !== '' && (
+                <div className="mt-2 py-2 flex items-center justify-between">
+                  <div className="text-sm">{group.name}</div>
+                </div>
+              )}
+              <div className="flex flex-col gap-1">
+                {group.objectTypes.map((row, index) => (
+                  <div key={index} className="flex flex-wrap gap-1">
+                    {row.map((segments, index) => (
+                      <div key={index} className="flex flex-wrap gap-1">
+                        {segments.map((objectType, index) => (
+                          <ObjectIcon key={index} objectType={objectType} />
                         ))}
                       </div>
                     ))}

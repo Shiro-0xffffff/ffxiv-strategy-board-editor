@@ -58,6 +58,19 @@ export function ImportButton() {
   )
 }
 
+export function ImportButtonSkeleton() {
+  return (
+    <>
+      <Button className="hidden sm:flex w-20 cursor-pointer" variant="outline">
+        <Download /> 导入
+      </Button>
+      <Button className="sm:hidden cursor-pointer" variant="outline" size="icon">
+        <Download />
+      </Button>
+    </>
+  )
+}
+
 export function ExportButton() {
   const { exportToShareCode } = useStrategyBoard()
 
@@ -101,6 +114,19 @@ export function ExportButton() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </>
+  )
+}
+
+export function ExportButtonSkeleton() {
+  return (
+    <>
+      <Button className="hidden sm:flex w-20 cursor-pointer" variant="outline">
+        <Upload /> 导出
+      </Button>
+      <Button className="sm:hidden cursor-pointer" variant="outline" size="icon">
+        <Upload />
+      </Button>
     </>
   )
 }
@@ -152,6 +178,19 @@ export function ShareButton() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </>
+  )
+}
+
+export function ShareButtonSkeleton() {
+  return (
+    <>
+      <Button className="hidden sm:flex w-20 cursor-pointer" variant="outline">
+        <Share2 /> 分享
+      </Button>
+      <Button className="sm:hidden cursor-pointer" variant="outline" size="icon">
+        <Share2 />
+      </Button>
     </>
   )
 }

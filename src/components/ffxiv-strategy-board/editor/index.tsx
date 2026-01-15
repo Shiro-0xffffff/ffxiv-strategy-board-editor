@@ -1,1 +1,1 @@
-export { StrategyBoardEditor } from './editor'
+export * from './editor'

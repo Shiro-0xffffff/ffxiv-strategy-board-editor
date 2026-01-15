@@ -4,6 +4,7 @@ import { MouseEventHandler, useState, useRef, useEffect, useCallback, useId } fr
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Skeleton } from '@/components/ui/skeleton'
 import { PointerSensor, DragStartEvent, DragEndEvent, DndContext, DragOverlay, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { restrictToVerticalAxis, restrictToFirstScrollableAncestor } from '@dnd-kit/modifiers'
@@ -169,6 +170,40 @@ export function LayersPanel() {
               </DragOverlay>
             </SortableContext>
           </DndContext>
+        </div>
+      </ScrollArea>
+    </div>
+  )
+}
+
+export function LayersPanelSkeleton() {
+  return (
+    <div className="size-full flex flex-col">
+      <div className="p-4 flex items-center justify-between">
+        <div className="font-semibold">图层</div>
+      </div>
+      <ScrollArea className="flex-1 min-h-0 pb-4">
+        <div className="px-2 flex flex-col gap-0.5">
+          <div className="rounded p-2 flex items-center gap-2">
+            <Skeleton className="size-10" />
+            <Skeleton className="mr-auto flex-1 max-w-30 h-4" />
+            <Skeleton className="w-15 h-6" />
+          </div>
+          <div className="rounded p-2 flex items-center gap-2">
+            <Skeleton className="size-10" />
+            <Skeleton className="mr-auto flex-1 max-w-20 h-4" />
+            <Skeleton className="w-15 h-6" />
+          </div>
+          <div className="rounded p-2 flex items-center gap-2">
+            <Skeleton className="size-10" />
+            <Skeleton className="mr-auto flex-1 max-w-40 h-4" />
+            <Skeleton className="w-15 h-6" />
+          </div>
+          <div className="rounded p-2 flex items-center gap-2">
+            <Skeleton className="size-10" />
+            <Skeleton className="mr-auto flex-1 max-w-35 h-4" />
+            <Skeleton className="w-15 h-6" />
+          </div>
         </div>
       </ScrollArea>
     </div>

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectLabel, SelectItem } from '@/components/ui/select'
 import { FieldGroup, FieldSet, Field, FieldLabel, FieldDescription } from '@/components/ui/field'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Trash2 } from 'lucide-react'
 import { StrategyBoardBackground, StrategyBoardObject, StrategyBoardObjectType, sceneWidth, sceneHeight, truncateString } from '@/lib/ffxiv-strategy-board'
 
@@ -537,5 +538,29 @@ export function PropertiesPanel() {
     <ObjectPropertiesPanel />
   ) : (
     <ScenePropertiesPanel />
+  )
+}
+
+export function PropertiesPanelSkeleton() {
+  return (
+    <div className="size-full flex flex-col">
+      <div className="p-4 flex items-center justify-between">
+        <div className="font-semibold">战术板属性</div>
+      </div>
+      <ScrollArea className="flex-1 min-h-0 pb-4">
+        <div className="px-4 pb-4">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
+              <Skeleton className="my-0.5 w-12 h-4" />
+              <Skeleton className="w-full h-8" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Skeleton className="my-0.5 w-20 h-4" />
+              <Skeleton className="w-full h-8" />
+            </div>
+          </div>
+        </div>
+      </ScrollArea>
+    </div>
   )
 }

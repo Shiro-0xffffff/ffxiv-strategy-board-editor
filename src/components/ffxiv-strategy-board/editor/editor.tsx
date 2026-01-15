@@ -6,9 +6,9 @@ import { useHotkeys } from 'react-hotkeys-hook'
 import { useStrategyBoard } from '../context'
 import { StrategyBoardCanvas } from '../canvas'
 
-import { ObjectLibraryDraggingContainer, ObjectLibraryDraggingTargetCanvas, ObjectLibraryPanel } from './object-library'
-import { PropertiesPanel } from './properties'
-import { LayersPanel } from './layers'
+import { ObjectLibraryDraggingContainer, ObjectLibraryDraggingTargetCanvas, ObjectLibraryPanel, ObjectLibraryPanelSkeleton } from './object-library'
+import { PropertiesPanel, PropertiesPanelSkeleton } from './properties'
+import { LayersPanel, LayersPanelSkeleton } from './layers'
 
 function CanvasArea() {
   const { scene, selectedObjectIds, selectObjects, cutObjects, copyObjects, pasteObjects, deleteObjects, undoAvailable, undo, redo } = useStrategyBoard()
@@ -77,6 +77,23 @@ function CanvasArea() {
   )
 }
 
+function CanvasAreaSkeleton() {
+  return (
+    <div className="size-full flex flex-col bg-muted/30 overflow-auto">
+      <div className="flex-1 min-w-max flex flex-col">
+        <div className="flex-1 px-8 py-8 3xl:px-4 flex items-center justify-center">
+        </div>
+        <div className="min-w-0 min-h-0 p-4">
+          <div className="text-center text-balance text-xs text-muted-foreground/15">
+            <p>FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.</p>
+            <p>FINAL FANTASY XI © 2002 - 2020 SQUARE ENIX CO., LTD. All Rights Reserved.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function StrategyBoardEditor() {
   return (
     <ObjectLibraryDraggingContainer>
@@ -98,5 +115,27 @@ export function StrategyBoardEditor() {
         </div>
       </div>
     </ObjectLibraryDraggingContainer>
+  )
+}
+
+export function StrategyBoardEditorSkeleton() {
+  return (
+    <div className="flex-1 min-h-0 flex overflow-hidden">
+      <div className="w-74 3xl:w-107 max-w-1/4 border-r flex flex-col bg-card">
+        <ObjectLibraryPanelSkeleton />
+      </div>
+      <div className="flex-1 min-w-0">
+        <CanvasAreaSkeleton />
+      </div>
+      <div className="w-80 3xl:w-100 max-w-1/4 border-l flex flex-col bg-card">
+        <div className="h-1/3">
+          <PropertiesPanelSkeleton />
+        </div>
+        <div className="border-b" />
+        <div className="flex-1 min-h-0">
+          <LayersPanelSkeleton />
+        </div>
+      </div>
+    </div>
   )
 }

@@ -4,7 +4,19 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { StrategyBoardProvider, StrategyBoardEditor, StrategyBoardName, ImportButton, ExportButton, ShareButton } from '@/components/ffxiv-strategy-board'
+import { Skeleton } from '@/components/ui/skeleton'
+import {
+  StrategyBoardProvider,
+  StrategyBoardName,
+  ImportButton,
+  ExportButton,
+  ShareButton,
+  ImportButtonSkeleton,
+  ExportButtonSkeleton,
+  ShareButtonSkeleton,
+  StrategyBoardEditor,
+  StrategyBoardEditorSkeleton,
+} from '@/components/ffxiv-strategy-board'
 import { House } from 'lucide-react'
 import { StrategyBoardScene, StrategyBoardBackground } from '@/lib/ffxiv-strategy-board'
 import { debounce } from 'es-toolkit'
@@ -25,6 +37,27 @@ function TopBar() {
         <ImportButton />
         <ExportButton />
         <ShareButton />
+      </div>
+    </header>
+  )
+}
+
+function TopBarSkeleton() {
+  return (
+    <header className="h-16 border-b px-4 flex items-center justify-between gap-2 bg-card">
+      <div className="flex-1 flex items-center gap-2">
+        <Button variant="ghost" size="icon" asChild>
+          <Link href="/">
+            <House className="size-5" />
+          </Link>
+        </Button>
+        <Separator orientation="vertical" />
+        <Skeleton className="mx-2 w-full max-w-80 h-6" />
+      </div>
+      <div className="flex items-center gap-2">
+        <ImportButtonSkeleton />
+        <ExportButtonSkeleton />
+        <ShareButtonSkeleton />
       </div>
     </header>
   )
@@ -57,11 +90,16 @@ export default function EditPage() {
 
   return (
     <div className="w-screen h-screen flex flex-col">
-      {!!scene && (
+      {scene ? (
         <StrategyBoardProvider scene={scene} onSceneChange={handleEditorSceneChange}>
           <TopBar />
           <StrategyBoardEditor />
         </StrategyBoardProvider>
+      ) : (
+        <>
+          <TopBarSkeleton />
+          <StrategyBoardEditorSkeleton />
+        </>
       )}
     </div>
   )
