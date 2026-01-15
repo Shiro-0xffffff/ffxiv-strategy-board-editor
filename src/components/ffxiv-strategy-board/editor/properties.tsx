@@ -47,8 +47,8 @@ function InputField(props: { name: string, description?: string, maxBytes?: numb
   )
 }
 
-function NumberInputField(props: { name: string, description?: string, min?: number, max?: number, step?: number, value: number | null, onChange?: (value: number) => void }) {
-  const { name, description, min = -Infinity, max = Infinity, step, value, onChange } = props
+function NumberInputField(props: { name: string, description?: string, min?: number, max?: number, step?: number, roundTo?: number, value: number | null, onChange?: (value: number) => void }) {
+  const { name, description, min = -Infinity, max = Infinity, step = 1, roundTo = 1, value, onChange } = props
 
   const [draft, setDraft] = useState<string | null>(null)
 
@@ -57,9 +57,9 @@ function NumberInputField(props: { name: string, description?: string, min?: num
   const handleInputChange = useCallback<ChangeEventHandler<HTMLInputElement>>(event => {
     const draft = event.target.value
     setDraft(draft)
-    const value = Math.round(Math.min(Math.max(Number(draft), min), max))
+    const value = Math.round(Math.min(Math.max(Number(draft), min), max) / roundTo) * roundTo
     if (Number.isInteger(value)) onChange?.(value)
-  }, [onChange, min, max])
+  }, [onChange, min, max, roundTo])
   const handleInputBlur = useCallback<FocusEventHandler<HTMLInputElement>>(() => {
     setDraft(null)
   }, [])
@@ -322,6 +322,7 @@ function ObjectPropertiesPanel() {
                         min={0}
                         max={Math.hypot(sceneWidth * 2, sceneHeight * 2)}
                         step={10}
+                        roundTo={10}
                         value={value}
                         onChange={onChange}
                       />
@@ -337,6 +338,7 @@ function ObjectPropertiesPanel() {
                         min={0}
                         max={Math.hypot(sceneWidth * 2, sceneHeight * 2)}
                         step={10}
+                        roundTo={10}
                         value={value}
                         onChange={onChange}
                       />
