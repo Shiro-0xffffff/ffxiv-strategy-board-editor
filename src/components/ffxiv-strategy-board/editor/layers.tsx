@@ -52,7 +52,7 @@ function Layer(props: { id: string }) {
   return (
     <div
       ref={ref}
-      className={cn('rounded p-2 flex items-center gap-2 cursor-pointer transition-colors', {
+      className={cn('rounded p-2 flex items-center gap-2 cursor-pointer select-none transition-colors', {
         'hover:bg-muted': !selected,
         'inset-ring-1 ring-primary bg-[color-mix(in_oklab,var(--primary)_20%,var(--card))]': selected,
       })}

@@ -21,7 +21,7 @@ function ObjectIcon(props: { objectType: StrategyBoardObjectType }) {
   return (
     <Tooltip delayDuration={700}>
       <TooltipTrigger asChild>
-        <div className="size-10 rounded-sm">
+        <div className="size-10 rounded-sm select-none">
           <Image className="size-10" src={ffxivImageUrl(objectLibraryItem.icon)} alt={objectLibraryItem.abbr} width={80} height={80} />
         </div>
       </TooltipTrigger>
