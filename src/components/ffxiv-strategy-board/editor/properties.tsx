@@ -3,7 +3,9 @@
 import { ReactNode, MouseEventHandler, ChangeEventHandler, FocusEventHandler, useState, useCallback, useId } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectLabel, SelectItem } from '@/components/ui/select'
+import { Slider } from '@/components/ui/slider'
 import { FieldGroup, FieldSet, Field, FieldLabel, FieldDescription } from '@/components/ui/field'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -81,6 +83,66 @@ function NumberInputField(props: { name: string, description?: string, min?: num
         onChange={handleInputChange}
         onBlur={handleInputBlur}
       />
+    </Field>
+  )
+}
+
+function SliderField(props: { name: string, description?: string, min?: number, max?: number, step?: number, roundTo?: number, value: number | null, onChange?: (value: number) => void }) {
+  const { name, description, min = -Infinity, max = Infinity, step = 1, roundTo = 1, value, onChange } = props
+
+  const [draft, setDraft] = useState<string | null>(null)
+  const [sliderDraft, setSliderDraft] = useState<number | null>(null)
+
+  const id = useId()
+
+  const handleSliderValueChange = useCallback(([value]: number[]): void => {
+    setSliderDraft(value)
+  }, [])
+  const handleSliderValueCommit = useCallback(([value]: number[]): void => {
+    setSliderDraft(null)
+    onChange?.(value)
+  }, [ onChange])
+
+  const handleInputChange = useCallback<ChangeEventHandler<HTMLInputElement>>(event => {
+    const draft = event.target.value
+    setDraft(draft)
+    const value = Math.round(Math.min(Math.max(Number(draft), min), max) / roundTo) * roundTo
+    if (Number.isInteger(value)) onChange?.(value)
+  }, [onChange, min, max, roundTo])
+  const handleInputBlur = useCallback<FocusEventHandler<HTMLInputElement>>(() => {
+    setDraft(null)
+  }, [])
+
+  return (
+    <Field>
+      <FieldLabel htmlFor={id}>{name}</FieldLabel>
+      {!!description && (
+        <FieldDescription>{description}</FieldDescription>
+      )}
+      <div className="flex flex-col md:flex-row gap-2">
+        <Slider
+          className="min-h-6"
+          min={min}
+          max={max}
+          step={step}
+          value={[sliderDraft ?? value ?? 0]}
+          onValueChange={handleSliderValueChange}
+          onValueCommit={handleSliderValueCommit}
+        />
+        <InputGroup className="md:w-30">
+          <InputGroupInput
+            id={id}
+            type="number"
+            min={min}
+            max={max}
+            step={step}
+            value={draft ?? value ?? ''}
+            onChange={handleInputChange}
+            onBlur={handleInputBlur}
+          />
+          <InputGroupAddon align="inline-end">%</InputGroupAddon>
+        </InputGroup>
+      </div>
     </Field>
   )
 }
@@ -243,7 +305,7 @@ function ObjectPropertiesPanel() {
         <div className="px-4 pb-4">
           <FieldGroup>
             <FieldSet>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 gap-4">
                 <ObjectPropertyField
                   getValueFromObject={object => object.position.x}
                   updateObjectWithValue={(object, value) => { object.position.x = value }}
@@ -312,7 +374,7 @@ function ObjectPropertiesPanel() {
                 )}
               />
               <ObjectPropertyFieldGroup availableFor={object => object.type === StrategyBoardObjectType.Rectangle}>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-2 gap-4">
                   <ObjectPropertyField
                     availableFor={object => object.type === StrategyBoardObjectType.Rectangle}
                     getValueFromObject={object => object.size.width}
@@ -348,7 +410,7 @@ function ObjectPropertiesPanel() {
                 </div>
               </ObjectPropertyFieldGroup>
               <ObjectPropertyFieldGroup availableFor={object => object.type === StrategyBoardObjectType.Line}>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-2 gap-4">
                   <ObjectPropertyField
                     availableFor={object => object.type === StrategyBoardObjectType.Line}
                     getValueFromObject={object => object.endPointOffset.x}
@@ -445,7 +507,7 @@ function ObjectPropertiesPanel() {
                 )}
               />
               <ObjectPropertyFieldGroup availableFor={object => object.type === StrategyBoardObjectType.MechanicLinearKnockback}>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-2 gap-4">
                   <ObjectPropertyField
                     availableFor={object => object.type === StrategyBoardObjectType.MechanicLinearKnockback}
                     getValueFromObject={object => object.displayCount.horizontal}
@@ -513,7 +575,7 @@ function ObjectPropertiesPanel() {
                 getValueFromObject={object => object.transparency}
                 updateObjectWithValue={(object, value) => { object.transparency = value }}
                 renderField={({ value, onChange }) => (
-                  <NumberInputField
+                  <SliderField
                     name="透明度"
                     min={0}
                     max={100}
