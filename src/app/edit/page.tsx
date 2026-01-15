@@ -31,7 +31,7 @@ function TopBar() {
 }
 
 export default function EditPage() {
-  const [scene, setScene] = useState<StrategyBoardScene>({ name: '', background: StrategyBoardBackground.None, objects: [] })
+  const [scene, setScene] = useState<StrategyBoardScene | null>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -57,10 +57,12 @@ export default function EditPage() {
 
   return (
     <div className="w-screen h-screen flex flex-col">
-      <StrategyBoardProvider scene={scene} onSceneChange={handleEditorSceneChange}>
-        <TopBar />
-        <StrategyBoardEditor />
-      </StrategyBoardProvider>
+      {!!scene && (
+        <StrategyBoardProvider scene={scene} onSceneChange={handleEditorSceneChange}>
+          <TopBar />
+          <StrategyBoardEditor />
+        </StrategyBoardProvider>
+      )}
     </div>
   )
 }

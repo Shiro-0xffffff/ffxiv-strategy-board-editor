@@ -1,6 +1,6 @@
 'use client'
 
-import { PointerEventHandler, useCallback } from 'react'
+import { PointerEventHandler, useEffect, useCallback } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 
 import { useStrategyBoard } from '../context'
@@ -11,7 +11,7 @@ import { PropertiesPanel } from './properties'
 import { LayersPanel } from './layers'
 
 function CanvasArea() {
-  const { scene, selectedObjectIds, selectObjects, cutObjects, copyObjects, pasteObjects, deleteObjects } = useStrategyBoard()
+  const { scene, selectedObjectIds, selectObjects, cutObjects, copyObjects, pasteObjects, deleteObjects, undoAvailable, undo, redo } = useStrategyBoard()
 
   useHotkeys('ctrl+a', () => {
     selectObjects(scene.objects.map(object => object.id))
@@ -30,6 +30,24 @@ function CanvasArea() {
   useHotkeys('ctrl+v', () => {
     pasteObjects()
   }, { preventDefault: true }, [pasteObjects])
+
+  useHotkeys('ctrl+z', () => {
+    undo()
+  }, { preventDefault: true }, [undo])
+  useHotkeys('ctrl+y, ctrl+shift+z', () => {
+    redo()
+  }, { preventDefault: true }, [redo])
+
+  const handleWindowBeforeUnload = useCallback((event: BeforeUnloadEvent): void => {
+    if (undoAvailable) event.preventDefault()
+  }, [undoAvailable])
+
+  useEffect(() => {
+    window.addEventListener('beforeunload', handleWindowBeforeUnload)
+    return () => {
+      window.removeEventListener('beforeunload', handleWindowBeforeUnload)
+    }
+  }, [handleWindowBeforeUnload])
 
   const handleBackgroundPointerDown = useCallback<PointerEventHandler<HTMLDivElement>>(() => {
     selectObjects([])

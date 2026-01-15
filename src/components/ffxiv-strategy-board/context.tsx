@@ -34,6 +34,10 @@ export interface StrategyBoardContextProps {
   modifyObjects: (modifications: { id: string, modification: (object: StrategyBoardObject) => void }[]) => void
   toggleObjectVisible: (id: string) => void
   toggleObjectLocked: (id: string) => void
+  undoAvailable: boolean
+  redoAvailable: boolean
+  undo: () => void
+  redo: () => void
   importFromShareCode: (shareCode: string) => Promise<void>
   exportToShareCode: () => Promise<string>
 }
@@ -55,18 +59,30 @@ export interface StrategyBoardProviderProps {
 export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
   const { scene, onSceneChange, children } = props
 
-  const setName = useCallback((name: string): void => {
-    onSceneChange?.(produce(scene, scene => {
-      scene.name = name
-    }))
-  }, [scene, onSceneChange])
-  const setBackground = useCallback((background: StrategyBoardBackground): void => {
-    onSceneChange?.(produce(scene, scene => {
-      scene.background = background
-    }))
-  }, [scene, onSceneChange])
+  const [history, setHistory] = useState<StrategyBoardScene[]>(() => [scene])
+  const [currentHistoryIndex, setCurrentHistoryIndex] = useState<number>(0)
 
-  const [selectedObjectIds, setSelectedObjectIds] = useState<string[]>([])
+  const modifyScene = useCallback((modification: (scene: StrategyBoardScene) => void): void => {
+    const updatedScene = produce(scene, scene => {
+      modification(scene)
+    })
+    setHistory(history => history.slice(0, currentHistoryIndex + 1).concat([updatedScene]))
+    setCurrentHistoryIndex(currentHistoryIndex => currentHistoryIndex + 1)
+    onSceneChange?.(updatedScene)
+  }, [scene, currentHistoryIndex, onSceneChange])
+
+  const setName = useCallback((name: string): void => {
+    modifyScene(scene => {
+      scene.name = name
+    })
+  }, [modifyScene])
+  const setBackground = useCallback((background: StrategyBoardBackground): void => {
+    modifyScene(scene => {
+      scene.background = background
+    })
+  }, [modifyScene])
+
+  const [selectedObjectIds, setSelectedObjectIds] = useState<string[]>(() => [])
 
   const selectObjects = useCallback((ids: string[]): void => {
     setSelectedObjectIds(ids)
@@ -88,33 +104,33 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
   const addObjects = useCallback((objectsProperties: { type: StrategyBoardObjectType, properties: StrategyBoardObjectProperties }[]): string[] => {
     if (!objectsProperties.length) return []
     const objects = objectsProperties.map(({ type, properties }) => ({ ...createObject(type), ...properties } as StrategyBoardObject))
-    onSceneChange?.(produce(scene, scene => {
+    modifyScene(scene => {
       objects.forEach(object => scene.objects.unshift(object))
-    }))
+    })
     const ids = objects.map(object => object.id)
     setSelectedObjectIds(ids)
     return ids
-  }, [scene, onSceneChange])
+  }, [modifyScene])
   const addObject = useCallback((type: StrategyBoardObjectType, properties: StrategyBoardObjectProperties): string => {
     const [id] = addObjects([{ type, properties }])
     return id
   }, [addObjects])
   const deleteObjects = useCallback((ids: string[]): void => {
     if (!ids.length) return
-    onSceneChange?.(produce(scene, scene => {
+    modifyScene(scene => {
       ids.forEach(id => {
         const index = scene.objects.findIndex(object => object.id === id)
         if (index < 0) return
         scene.objects.splice(index, 1)
       })
-    }))
+    })
     setSelectedObjectIds(selectedObjectIds => selectedObjectIds.filter(selectedObjectId => !ids.includes(selectedObjectId)))
-  }, [scene, onSceneChange])
+  }, [modifyScene])
   const deleteObject = useCallback((id: string): void => {
     deleteObjects([id])
   }, [deleteObjects])
 
-  const [copiedObjects, setCopiedObjects] = useState<Omit<StrategyBoardObject, 'id'>[]>([])
+  const [copiedObjects, setCopiedObjects] = useState<Omit<StrategyBoardObject, 'id'>[]>(() => [])
 
   const copyObjects = useCallback((ids: string[]): void => {
     if (!ids.length) return
@@ -138,30 +154,30 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
   }, [addObjects, copiedObjects])
 
   const reorderObject = useCallback((id: string, newIndex: number): void => {
-    onSceneChange?.(produce(scene, scene => {
+    modifyScene(scene => {
       const index = scene.objects.findIndex(object => object.id === id)
       if (index < 0 || index === newIndex) return
       const [object] = scene.objects.splice(index, 1)
       scene.objects.splice(newIndex, 0, object)
-    }))
-  }, [scene, onSceneChange])
+    })
+  }, [modifyScene])
 
   const modifyObjects = useCallback((modifications: { id: string, modification: (object: StrategyBoardObject) => void }[]): void => {
-    onSceneChange?.(produce(scene, scene => {
+    modifyScene(scene => {
       modifications.forEach(({ id, modification }) => {
         const object = scene.objects.find(object => object.id === id)
         if (!object) return
         modification(object)
       })
-    }))
-  }, [scene, onSceneChange])
+    })
+  }, [modifyScene])
   const modifyObject = useCallback((id: string, modification: (object: StrategyBoardObject) => void): void => {
-    onSceneChange?.(produce(scene, scene => {
+    modifyScene(scene => {
       const object = scene.objects.find(object => object.id === id)
       if (!object) return
       modification(object)
-    }))
-  }, [scene, onSceneChange])
+    })
+  }, [modifyScene])
 
   const toggleObjectVisible = useCallback((id: string): void => {
     modifyObject(id, object => {
@@ -174,8 +190,27 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     })
   }, [modifyObject])
 
+  const undoAvailable = currentHistoryIndex > 0
+  const redoAvailable = currentHistoryIndex < history.length - 1
+  const undo = useCallback((): void => {
+    if (!undoAvailable) return
+    setCurrentHistoryIndex(currentHistoryIndex - 1)
+    const scene = history[currentHistoryIndex - 1]
+    setSelectedObjectIds(selectedObjectIds => selectedObjectIds.filter(selectedObjectId => scene.objects.find(({ id }) => id === selectedObjectId)))
+    onSceneChange?.(scene)
+  }, [history, currentHistoryIndex, undoAvailable, onSceneChange])
+  const redo = useCallback((): void => {
+    if (!redoAvailable) return
+    setCurrentHistoryIndex(currentHistoryIndex + 1)
+    const scene = history[currentHistoryIndex + 1]
+    setSelectedObjectIds(selectedObjectIds => selectedObjectIds.filter(selectedObjectId => scene.objects.find(({ id }) => id === selectedObjectId)))
+    onSceneChange?.(scene)
+  }, [history, currentHistoryIndex, redoAvailable, onSceneChange])
+
   const importFromShareCode = useCallback(async (shareCode: string): Promise<void> => {
     const scene = await shareCodeToScene(shareCode)
+    setHistory([scene])
+    setCurrentHistoryIndex(0)
     setSelectedObjectIds([])
     onSceneChange?.(scene)
   }, [onSceneChange])
@@ -204,6 +239,10 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     modifyObjects,
     toggleObjectVisible,
     toggleObjectLocked,
+    undoAvailable,
+    redoAvailable,
+    undo,
+    redo,
     importFromShareCode,
     exportToShareCode,
   }
