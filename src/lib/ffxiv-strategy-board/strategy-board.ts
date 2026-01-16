@@ -301,20 +301,30 @@ export function normalizeWidth(width: number): number {
 export function normalizeHeight(height: number): number {
   return Math.round(clampInt(height / 10, 0, sceneHeight * 2 / 10) * 10)
 }
-export function normalizeLineEndPoint(position: { x: number, y: number }, endPointOffset: { x: number, y: number }): (endPoint: { x: number, y: number }) => { x: number, y: number } {
-  const xxx = endPointOffset.y / endPointOffset.x
-  const topIntersectionX = position.x + (-sceneHeight / 2 - position.y) / xxx
-  const bottomIntersectionX = position.x + (sceneHeight / 2 - position.y) / xxx
-  const leftIntersectionY = position.y + (-sceneWidth / 2 - position.x) * xxx
-  const rightIntersectionY = position.y + (sceneWidth / 2 - position.x) * xxx
+export function normalizeLineEndPoint(endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }): [{ x: number, y: number }, { x: number, y: number }] {
+  const center = {
+    x: (endPoint1.x + endPoint2.x) / 2,
+    y: (endPoint1.y + endPoint2.y) / 2,
+  }
+  const slope = (endPoint2.y - endPoint1.y) / (endPoint2.x - endPoint1.x)
+  const topIntersectionX = center.x + (-sceneHeight / 2 - center.y) / slope
+  const bottomIntersectionX = center.x + (sceneHeight / 2 - center.y) / slope
+  const leftIntersectionY = center.y + (-sceneWidth / 2 - center.x) * slope
+  const rightIntersectionY = center.y + (sceneWidth / 2 - center.x) * slope
   const xLowerBound = Math.max(Math.min(topIntersectionX, bottomIntersectionX), -sceneWidth / 2)
   const xUpperBound = Math.min(Math.max(topIntersectionX, bottomIntersectionX), sceneWidth / 2)
   const yLowerBound = Math.max(Math.min(leftIntersectionY, rightIntersectionY), -sceneHeight / 2)
   const yUpperBound = Math.min(Math.max(leftIntersectionY, rightIntersectionY), sceneHeight / 2)
-  return ({ x, y }) => ({
-    x: clampInt(x, xLowerBound, xUpperBound),
-    y: clampInt(y, yLowerBound, yUpperBound),
-  })
+  return [
+    {
+      x: clampInt(endPoint1.x, xLowerBound, xUpperBound),
+      y: clampInt(endPoint1.y, yLowerBound, yUpperBound),
+    },
+    {
+      x: clampInt(endPoint2.x, xLowerBound, xUpperBound),
+      y: clampInt(endPoint2.y, yLowerBound, yUpperBound),
+    },
+  ]
 }
 export function normalizeLineWidth(lineWidth: number): number {
   return Math.round(clampInt(lineWidth / 10, 0, Math.hypot(sceneWidth * 2, sceneHeight * 2) / 10) * 10)

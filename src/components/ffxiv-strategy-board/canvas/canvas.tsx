@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useLayoutEffect, useCallback } from 'react'
+import { useRef, useCallback } from 'react'
 import Konva from 'konva'
 import { Stage, Layer, Group, Image } from 'react-konva'
 import useImage from 'use-image'
@@ -98,23 +98,18 @@ function CanvasObject(props: { id: string }) {
   const object = getObject(id)!
   const { visible, locked, position } = object
 
-  const objectRef = useRef<Konva.Group>(null)
-  useLayoutEffect(() => {
-    objectRef.current?.position({ x: 0, y: 0 })
-  })
-
   return (
     <Group
+      data-id={id}
+      name={`object object-${id}`}
       x={position.x * zoomRatio}
       y={position.y * zoomRatio}
+      visible={visible}
     >
       <Group
-        ref={objectRef}
-        data-id={id}
-        name={`object object-${id}`}
+        name="object-drag-handle"
         x={0}
         y={0}
-        visible={visible}
         draggable={!preview && !locked}
       >
         <CanvasObjectContent object={object} />
@@ -132,25 +127,14 @@ function CanvasObjectBoundingBox(props: { id: string }) {
   const object = getObject(id)!
   const { visible, position } = object
 
-  const boundingBoxRef = useRef<Konva.Group>(null)
-  useLayoutEffect(() => {
-    boundingBoxRef.current?.position({ x: 0, y: 0 })
-  })
-
   return (
     <Group
+      data-id={id}
+      name={`object-bounding-box object-${id}-bounding-box`}
       x={position.x * zoomRatio}
       y={position.y * zoomRatio}
-    >
-      <Group
-        ref={boundingBoxRef}
-        data-id={id}
-        name={`object-bounding-box object-${id}-bounding-box`}
-        x={0}
-        y={0}
-        visible={visible}
-      />
-    </Group>
+      visible={visible}
+    />
   )
 }
 
@@ -183,27 +167,28 @@ export function StrategyBoardCanvasScene() {
   const stageRef = useRef<Konva.Stage>(null)
   const draggingObjectsRef = useRef<Konva.Node[]>(null)
 
-  const getPositionsFromDraggingObject = useCallback((draggingCanvasObject: Konva.Node): { id: string, position: { x: number, y: number } }[] => {
+  const getPositionsFromDraggingObject = useCallback((dragHandle: Konva.Node): { id: string, position: { x: number, y: number } }[] => {
     const stage = stageRef.current
     const draggingObjects = draggingObjectsRef.current
-    if (!stage || !draggingObjects) return []
+    const draggingObject = dragHandle.findAncestor('.object')
+    if (!stage || !draggingObjects || !draggingObject) return []
     const position = {
-      x: (draggingCanvasObject.x() + draggingCanvasObject.parent!.x()) / zoomRatio,
-      y: (draggingCanvasObject.y() + draggingCanvasObject.parent!.y()) / zoomRatio,
+      x: (draggingObject.x() + dragHandle.x()) / zoomRatio,
+      y: (draggingObject.y() + dragHandle.y()) / zoomRatio,
     }
     const normalizedPosition = {
       x: Math.round(Math.min(Math.max(position.x, -sceneWidth / 2), sceneWidth / 2)),
       y: Math.round(Math.min(Math.max(position.y, -sceneHeight / 2), sceneHeight / 2)),
     }
     const positionOffset = {
-      x: normalizedPosition.x - draggingCanvasObject.parent!.x() / zoomRatio,
-      y: normalizedPosition.y - draggingCanvasObject.parent!.y() / zoomRatio,
+      x: normalizedPosition.x - draggingObject.x() / zoomRatio,
+      y: normalizedPosition.y - draggingObject.y() / zoomRatio,
     }
     const positions = draggingObjects.map(canvasObject => {
       const id = canvasObject.getAttr('data-id') as string
       const position = {
-        x: canvasObject.parent!.x() / zoomRatio + positionOffset.x,
-        y: canvasObject.parent!.y() / zoomRatio + positionOffset.y,
+        x: canvasObject.x() / zoomRatio + positionOffset.x,
+        y: canvasObject.y() / zoomRatio + positionOffset.y,
       }
       const normalizedPosition = {
         x: Math.round(Math.min(Math.max(position.x, -sceneWidth / 2), sceneWidth / 2)),
@@ -220,12 +205,12 @@ export function StrategyBoardCanvasScene() {
     positions.forEach(({ id, position }) => {
       const canvasObject = stage.findOne(`.object-${id}`)
       if (!canvasObject) return
-      canvasObject.parent!.position({
+      canvasObject.position({
         x: position.x * zoomRatio,
         y: position.y * zoomRatio,
       })
-      const boundingBox = stageRef.current!.findOne(`.object-${id}-bounding-box`)
-      boundingBox?.parent?.position({
+      const boundingBox = stage.findOne(`.object-${id}-bounding-box`)
+      boundingBox?.position({
         x: position.x * zoomRatio,
         y: position.y * zoomRatio,
       })
@@ -233,22 +218,24 @@ export function StrategyBoardCanvasScene() {
   }, [zoomRatio])
 
   const handleDragStart = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
-    if (event.target instanceof Konva.Stage || !event.target.hasName('object')) return
-    const id = event.target.getAttr('data-id') as string
+    if (event.target instanceof Konva.Stage || !event.target.hasName('object-drag-handle')) return
+    const draggingObject = event.target.findAncestor('.object')
+    const id = draggingObject?.getAttr('data-id') as string
+    if (!draggingObject || !id) return
     if (selectedObjectIds.includes(id)) {
       draggingObjectsRef.current = selectedObjectIds.map(id => stageRef.current?.findOne(`.object-${id}`)).filter(object => !!object)
     } else {
       selectObjects([id])
-      draggingObjectsRef.current = [event.target]
+      draggingObjectsRef.current = [draggingObject]
     }
   }, [selectedObjectIds, selectObjects])
   const handleDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
-    if (event.target instanceof Konva.Stage || !event.target.hasName('object')) return
+    if (event.target instanceof Konva.Stage || !event.target.hasName('object-drag-handle')) return
     const positions = getPositionsFromDraggingObject(event.target)
     moveObjectsTemporarily(event.target, positions)
   }, [getPositionsFromDraggingObject, moveObjectsTemporarily])
   const handleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
-    if (event.target instanceof Konva.Stage || !event.target.hasName('object')) return
+    if (event.target instanceof Konva.Stage || !event.target.hasName('object-drag-handle')) return
     const positions = getPositionsFromDraggingObject(event.target)
     draggingObjectsRef.current = null
     moveObjectsTemporarily(event.target, positions)

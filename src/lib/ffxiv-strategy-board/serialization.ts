@@ -169,10 +169,15 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
             scene.objects.forEach(object => {
               let position = { x: 0, y: 0 }
               if (object.type === StrategyBoardObjectType.Line) {
-                position = normalizeLineEndPoint(object.position, object.endPointOffset)({
+                const endPoint1 = {
                   x: object.position.x - object.endPointOffset.x,
                   y: object.position.y - object.endPointOffset.y,
-                })
+                }
+                const endPoint2 = {
+                  x: object.position.x + object.endPointOffset.x,
+                  y: object.position.y + object.endPointOffset.y,
+                }
+                ;[position] = normalizeLineEndPoint(endPoint1, endPoint2)
               } else {
                 position = normalizePosition(object.position)
               }
@@ -241,10 +246,15 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
               let param1 = 0
               switch (object.type) {
                 case StrategyBoardObjectType.Line:
-                  const position = normalizeLineEndPoint(object.position, object.endPointOffset)({
+                  const endPoint1 = {
+                    x: object.position.x - object.endPointOffset.x,
+                    y: object.position.y - object.endPointOffset.y,
+                  }
+                  const endPoint2 = {
                     x: object.position.x + object.endPointOffset.x,
                     y: object.position.y + object.endPointOffset.y,
-                  })
+                  }
+                  const [, position] = normalizeLineEndPoint(endPoint1, endPoint2)
                   param1 = Math.round(position.x + sceneWidth / 2)
                   break
                 case StrategyBoardObjectType.Rectangle:
@@ -271,10 +281,15 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
               let param2 = 0
               switch (object.type) {
                 case StrategyBoardObjectType.Line:
-                  const position = normalizeLineEndPoint(object.position, object.endPointOffset)({
+                  const endPoint1 = {
+                    x: object.position.x - object.endPointOffset.x,
+                    y: object.position.y - object.endPointOffset.y,
+                  }
+                  const endPoint2 = {
                     x: object.position.x + object.endPointOffset.x,
                     y: object.position.y + object.endPointOffset.y,
-                  })
+                  }
+                  const [, position] = normalizeLineEndPoint(endPoint1, endPoint2)
                   param2 = Math.round(position.y + sceneHeight / 2)
                   break
                 case StrategyBoardObjectType.Rectangle:

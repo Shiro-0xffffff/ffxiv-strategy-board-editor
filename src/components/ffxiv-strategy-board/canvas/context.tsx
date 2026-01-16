@@ -1,7 +1,15 @@
 'use client'
 
 import { ReactNode, createContext, useState, useContext, useCallback } from 'react'
-import { StrategyBoardObjectType, normalizePosition, normalizeSize, normalizeWidth, normalizeHeight } from '@/lib/ffxiv-strategy-board'
+import {
+  StrategyBoardObjectType,
+  normalizePosition,
+  normalizeRotation,
+  normalizeSize,
+  normalizeWidth,
+  normalizeHeight,
+  normalizeLineEndPoint,
+} from '@/lib/ffxiv-strategy-board'
 
 import { useStrategyBoard } from '../context'
 
@@ -77,15 +85,7 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
         case StrategyBoardObjectType.MechanicCircleAoE:
           break
         default:
-          if (rotation > 180) {
-            object.rotation = Math.round((rotation + 180) % 360 - 180)
-            break
-          }
-          if (rotation < -180) {
-            object.rotation = Math.round((rotation - 180) % 360 + 180)
-            break
-          }
-          object.rotation = Math.round(rotation)
+          object.rotation = normalizeRotation(rotation)
       }
     })
   }, [modifyObject])
@@ -93,10 +93,17 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
   const moveEndPoints = useCallback((id: string, endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }): void => {
     modifyObject(id, object => {
       if (object.type !== StrategyBoardObjectType.Line) return
-      object.position.x = Math.round(object.position.x + (endPoint1.x + endPoint2.x) / 2)
-      object.position.y = Math.round(object.position.y + (endPoint1.y + endPoint2.y) / 2)
-      object.endPointOffset.x = Math.round((endPoint2.x - endPoint1.x) / 2)
-      object.endPointOffset.y = Math.round((endPoint2.y - endPoint1.y) / 2)
+      const [normalizedEndPoint1, normalizedEndPoint2] = normalizeLineEndPoint(endPoint1, endPoint2)
+      const position = {
+        x: Math.round((normalizedEndPoint1.x + normalizedEndPoint2.x) / 2),
+        y: Math.round((normalizedEndPoint1.y + normalizedEndPoint2.y) / 2),
+      }
+      const endPointOffset = {
+        x: Math.round((normalizedEndPoint2.x - normalizedEndPoint1.x) / 2),
+        y: Math.round((normalizedEndPoint2.y - normalizedEndPoint1.y) / 2),
+      }
+      object.position = position
+      object.endPointOffset = endPointOffset
     })
   }, [modifyObject])
 
