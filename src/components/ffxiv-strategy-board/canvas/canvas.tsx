@@ -1,6 +1,8 @@
 'use client'
 
-import { useRef, useCallback } from 'react'
+import { MouseEventHandler, useRef, useCallback } from 'react'
+import { ContextMenuContent, ContextMenuItem, ContextMenuShortcut, ContextMenuTrigger, ContextMenu, ContextMenuGroup, ContextMenuSeparator } from '@/components/ui/context-menu'
+import { Undo2, Redo2, Scissors, Copy, ClipboardPaste, Trash2, CopyCheck } from 'lucide-react'
 import Konva from 'konva'
 import { Stage, Layer, Group, Image } from 'react-konva'
 import useImage from 'use-image'
@@ -139,7 +141,20 @@ function CanvasObjectBoundingBox(props: { id: string }) {
 }
 
 export function StrategyBoardCanvasScene() {
-  const { scene, selectedObjectIds, selectObjects, toggleObjectSelected } = useStrategyBoard()
+  const {
+    scene,
+    selectedObjectIds,
+    selectObjects,
+    toggleObjectSelected,
+    deleteObjects,
+    cutObjects,
+    copyObjects,
+    pasteObjects,
+    undoAvailable,
+    undo,
+    redoAvailable,
+    redo,
+  } = useStrategyBoard()
   const { preview, zoomRatio, moveObjects } = useStrategyBoardCanvas()
 
   const backgroundOption = backgroundOptions.get(scene.background)!
@@ -150,18 +165,45 @@ export function StrategyBoardCanvasScene() {
   const handleClick = useCallback((event: Konva.KonvaEventObject<MouseEvent>): void => {
     if (preview) return
     const id = event.target.findAncestor('.object', true)?.getAttr('data-id') as string
-    if (event.evt.shiftKey || event.evt.ctrlKey) {
-      if (id) toggleObjectSelected(id)
-    } else {
-      selectObjects(id ? [id] : [])
+    switch (event.evt.button) {
+      case 0:
+        if (event.evt.shiftKey || event.evt.ctrlKey) {
+          if (id) toggleObjectSelected(id)
+        } else {
+          selectObjects(id ? [id] : [])
+        }
+        break
+      case 2:
+        if (id && !selectedObjectIds.includes(id)) selectObjects([id])
+        break
     }
-  }, [preview, selectObjects, toggleObjectSelected])
+  }, [preview, selectedObjectIds, selectObjects, toggleObjectSelected])
 
   // 右键菜单
-  const handleContextMenu = useCallback((event: Konva.KonvaEventObject<PointerEvent>): void => {
-    event.evt.preventDefault()
-    // TODO
-  }, [])
+  const handleContextMenuUndoClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
+    undo()
+  }, [undo])
+  const handleContextMenuRedoClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
+    redo()
+  }, [redo])
+
+  const handleContextMenuCutClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
+    cutObjects(selectedObjectIds)
+  }, [cutObjects, selectedObjectIds])
+  const handleContextMenuCopyClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
+    copyObjects(selectedObjectIds)
+  }, [copyObjects, selectedObjectIds])
+  const handleContextMenuPasteClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
+    pasteObjects()
+  }, [pasteObjects])
+
+  const handleContextMenuSelectAllClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
+    selectObjects(scene.objects.map(object => object.id))
+  }, [selectObjects, scene])
+
+  const handleContextMenuDeleteClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
+    deleteObjects(selectedObjectIds)
+  }, [deleteObjects, selectedObjectIds])
 
   // 移动图形
   const stageRef = useRef<Konva.Stage>(null)
@@ -243,44 +285,88 @@ export function StrategyBoardCanvasScene() {
   }, [getPositionsFromDraggingObject, moveObjectsTemporarily, moveObjects])
 
   return (
-    <div style={{ width: sceneWidth * zoomRatio, height: sceneHeight * zoomRatio }}>
-      <Stage
-        ref={stageRef}
-        width={sceneWidth * zoomRatio}
-        height={sceneHeight * zoomRatio}
-        onClick={handleClick}
-        onContextMenu={handleContextMenu}
-        onDragStart={handleDragStart}
-        onDragMove={handleDragMove}
-        onDragEnd={handleDragEnd}
-      >
-        <Layer listening={false}>
-          <Image
+    <ContextMenu modal={false}>
+      <ContextMenuTrigger>
+        <div style={{ width: sceneWidth * zoomRatio, height: sceneHeight * zoomRatio }}>
+          <Stage
+            ref={stageRef}
             width={sceneWidth * zoomRatio}
             height={sceneHeight * zoomRatio}
-            image={backgroundImage}
-            alt={backgroundOption.name}
-            fill="#595959"
-          />
-        </Layer>
-        <Layer listening={!preview}>
-          <Group x={sceneWidth * zoomRatio / 2} y={sceneHeight * zoomRatio / 2}>
-            {scene.objects.slice().reverse().map(({ id }) => (
-              <CanvasObject key={id} id={id} />
-            ))}
-          </Group>
-        </Layer>
-        {!preview && (
-          <Layer>
-            <Group x={sceneWidth * zoomRatio / 2} y={sceneHeight * zoomRatio / 2}>
-              {scene.objects.slice().reverse().map(({ id }) => (
-                <CanvasObjectBoundingBox key={id} id={id} />
-              ))}
-            </Group>
-          </Layer>
-        )}
-      </Stage>
-    </div>
+            onClick={handleClick}
+            onDragStart={handleDragStart}
+            onDragMove={handleDragMove}
+            onDragEnd={handleDragEnd}
+          >
+            <Layer listening={false}>
+              <Image
+                width={sceneWidth * zoomRatio}
+                height={sceneHeight * zoomRatio}
+                image={backgroundImage}
+                alt={backgroundOption.name}
+                fill="#595959"
+              />
+            </Layer>
+            <Layer listening={!preview}>
+              <Group x={sceneWidth * zoomRatio / 2} y={sceneHeight * zoomRatio / 2}>
+                {scene.objects.slice().reverse().map(({ id }) => (
+                  <CanvasObject key={id} id={id} />
+                ))}
+              </Group>
+            </Layer>
+            {!preview && (
+              <Layer>
+                <Group x={sceneWidth * zoomRatio / 2} y={sceneHeight * zoomRatio / 2}>
+                  {scene.objects.slice().reverse().map(({ id }) => (
+                    <CanvasObjectBoundingBox key={id} id={id} />
+                  ))}
+                </Group>
+              </Layer>
+            )}
+          </Stage>
+        </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuGroup>
+          <ContextMenuItem disabled={!undoAvailable} onClick={handleContextMenuUndoClick}>
+            <Undo2 /> 撤销
+            <ContextMenuShortcut>Ctrl+Z</ContextMenuShortcut>
+          </ContextMenuItem>
+          <ContextMenuItem disabled={!redoAvailable} onClick={handleContextMenuRedoClick}>
+            <Redo2 /> 重做
+            <ContextMenuShortcut>Ctrl+Y</ContextMenuShortcut>
+          </ContextMenuItem>
+        </ContextMenuGroup>
+        <ContextMenuSeparator />
+        <ContextMenuGroup>
+          <ContextMenuItem disabled={!selectedObjectIds.length} onClick={handleContextMenuCutClick}>
+            <Scissors /> 剪切
+            <ContextMenuShortcut>Ctrl+X</ContextMenuShortcut>
+          </ContextMenuItem>
+          <ContextMenuItem disabled={!selectedObjectIds.length} onClick={handleContextMenuCopyClick}>
+            <Copy /> 复制
+            <ContextMenuShortcut>Ctrl+C</ContextMenuShortcut>
+          </ContextMenuItem>
+          <ContextMenuItem onClick={handleContextMenuPasteClick}>
+            <ClipboardPaste /> 粘贴
+            <ContextMenuShortcut>Ctrl+V</ContextMenuShortcut>
+          </ContextMenuItem>
+        </ContextMenuGroup>
+        <ContextMenuSeparator />
+        <ContextMenuGroup>
+          <ContextMenuItem onClick={handleContextMenuSelectAllClick}>
+            <CopyCheck /> 全选
+            <ContextMenuShortcut>Ctrl+A</ContextMenuShortcut>
+          </ContextMenuItem>
+        </ContextMenuGroup>
+        <ContextMenuSeparator />
+        <ContextMenuGroup>
+          <ContextMenuItem variant="destructive" onClick={handleContextMenuDeleteClick}>
+            <Trash2 /> 删除
+            <ContextMenuShortcut>Del</ContextMenuShortcut>
+          </ContextMenuItem>
+        </ContextMenuGroup>
+      </ContextMenuContent>
+    </ContextMenu>
   )
 }
 

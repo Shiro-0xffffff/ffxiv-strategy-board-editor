@@ -11,7 +11,7 @@ import { PropertiesPanel, PropertiesPanelSkeleton } from './properties'
 import { LayersPanel, LayersPanelSkeleton } from './layers'
 
 function CanvasArea() {
-  const { scene, selectedObjectIds, selectObjects, cutObjects, copyObjects, pasteObjects, deleteObjects, undoAvailable, undo, redo } = useStrategyBoard()
+  const { scene, selectedObjectIds, selectObjects, deleteObjects, cutObjects, copyObjects, pasteObjects, undoAvailable, undo, redo } = useStrategyBoard()
 
   useHotkeys('ctrl+a', () => {
     selectObjects(scene.objects.map(object => object.id))

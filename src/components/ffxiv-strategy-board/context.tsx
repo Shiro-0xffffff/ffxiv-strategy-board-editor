@@ -35,8 +35,8 @@ export interface StrategyBoardContextProps {
   toggleObjectVisible: (id: string) => void
   toggleObjectLocked: (id: string) => void
   undoAvailable: boolean
-  redoAvailable: boolean
   undo: () => void
+  redoAvailable: boolean
   redo: () => void
   importFromShareCode: (shareCode: string) => Promise<void>
   exportToShareCode: () => Promise<string>
@@ -191,7 +191,6 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
   }, [modifyObject])
 
   const undoAvailable = currentHistoryIndex > 0
-  const redoAvailable = currentHistoryIndex < history.length - 1
   const undo = useCallback((): void => {
     if (!undoAvailable) return
     setCurrentHistoryIndex(currentHistoryIndex - 1)
@@ -199,6 +198,7 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     setSelectedObjectIds(selectedObjectIds => selectedObjectIds.filter(selectedObjectId => scene.objects.find(({ id }) => id === selectedObjectId)))
     onSceneChange?.(scene)
   }, [history, currentHistoryIndex, undoAvailable, onSceneChange])
+  const redoAvailable = currentHistoryIndex < history.length - 1
   const redo = useCallback((): void => {
     if (!redoAvailable) return
     setCurrentHistoryIndex(currentHistoryIndex + 1)
@@ -240,8 +240,8 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     toggleObjectVisible,
     toggleObjectLocked,
     undoAvailable,
-    redoAvailable,
     undo,
+    redoAvailable,
     redo,
     importFromShareCode,
     exportToShareCode,
