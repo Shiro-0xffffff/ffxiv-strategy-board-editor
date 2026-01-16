@@ -1,3 +1,5 @@
-export { StrategyBoardCanvas, StrategyBoardCanvasObjectPreview } from './canvas'
+export { StrategyBoardCanvasProvider } from './context'
+export type { StrategyBoardCanvasProviderProps } from './context'
 
-export type { StrategyBoardCanvasProps, StrategyBoardCanvasObjectPreviewProps } from './canvas'
+export * from './canvas'
+export * from './zoom-buttons'

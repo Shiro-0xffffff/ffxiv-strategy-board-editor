@@ -11,7 +11,7 @@ import { ffxivImageUrl } from '@/lib/utils'
 
 import { backgroundOptions } from '../constants'
 import { useStrategyBoard } from '../context'
-import { StrategyBoardCanvasProvider, useStrategyBoardCanvas } from './context'
+import { useStrategyBoardCanvas } from './context'
 import { TextCanvasObject } from './text'
 import { LineCanvasObject } from './line'
 import { RectangleCanvasObject } from './rectangle'
@@ -73,21 +73,19 @@ export function StrategyBoardCanvasObjectPreview(props: StrategyBoardCanvasObjec
   const object = createObject(objectType)
 
   return (
-    <StrategyBoardCanvasProvider preview>
-      <div className="size-0">
-        <Stage
-          width={previewCanvasSize}
-          height={previewCanvasSize}
-          style={{ margin: -previewCanvasSize / 2 }}
-        >
-          <Layer>
-            <Group x={previewCanvasSize / 2} y={previewCanvasSize / 2}>
-              <CanvasObjectContent object={object} />
-            </Group>
-          </Layer>
-        </Stage>
-      </div>
-    </StrategyBoardCanvasProvider>
+    <div className="size-0">
+      <Stage
+        width={previewCanvasSize}
+        height={previewCanvasSize}
+        style={{ margin: -previewCanvasSize / 2 }}
+      >
+        <Layer listening={false}>
+          <Group x={previewCanvasSize / 2} y={previewCanvasSize / 2}>
+            <CanvasObjectContent object={object} />
+          </Group>
+        </Layer>
+      </Stage>
+    </div>
   )
 }
 
@@ -140,7 +138,7 @@ function CanvasObjectBoundingBox(props: { id: string }) {
   )
 }
 
-export function StrategyBoardCanvasScene() {
+export function StrategyBoardCanvas() {
   const {
     scene,
     selectedObjectIds,
@@ -367,19 +365,5 @@ export function StrategyBoardCanvasScene() {
         </ContextMenuGroup>
       </ContextMenuContent>
     </ContextMenu>
-  )
-}
-
-export interface StrategyBoardCanvasProps {
-  preview?: boolean
-}
-
-export function StrategyBoardCanvas(props: StrategyBoardCanvasProps) {
-  const { preview } = props
-
-  return (
-    <StrategyBoardCanvasProvider preview={preview}>
-      <StrategyBoardCanvasScene />
-    </StrategyBoardCanvasProvider>
   )
 }

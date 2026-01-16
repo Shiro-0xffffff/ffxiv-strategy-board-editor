@@ -3,7 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 
-import { StrategyBoardCanvas } from './canvas'
+import { StrategyBoardCanvasProvider, StrategyBoardCanvas } from './canvas'
 
 export function StrategyBoardViewer() {
   return (
@@ -11,7 +11,9 @@ export function StrategyBoardViewer() {
       <Card className="mx-auto max-w-fit">
         <CardContent>
           <ScrollArea className="">
-            <StrategyBoardCanvas preview />
+            <StrategyBoardCanvasProvider preview>
+              <StrategyBoardCanvas />
+            </StrategyBoardCanvasProvider>
             <ScrollBar orientation="horizontal" />
           </ScrollArea>
         </CardContent>
