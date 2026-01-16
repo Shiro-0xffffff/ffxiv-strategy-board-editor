@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useCallback } from 'react'
+import { useRef, useLayoutEffect, useCallback } from 'react'
 import Konva from 'konva'
 import { Stage, Layer, Group, Image } from 'react-konva'
 import useImage from 'use-image'
@@ -92,101 +92,33 @@ export function StrategyBoardCanvasObjectPreview(props: StrategyBoardCanvasObjec
 function CanvasObject(props: { id: string }) {
   const { id } = props
 
-  const { selectedObjectIds, selectObjects, toggleObjectSelected, getObject } = useStrategyBoard()
-  const { preview, zoomRatio, setObjectsPosition } = useStrategyBoardCanvas()
+  const { getObject } = useStrategyBoard()
+  const { preview, zoomRatio } = useStrategyBoardCanvas()
   
   const object = getObject(id)!
   const { visible, locked, position } = object
 
-  // 选中图形
-  const handleClick = useCallback((event: Konva.KonvaEventObject<MouseEvent>): void => {
-    if (preview) return
-    event.cancelBubble = true
-    if (event.evt.shiftKey || event.evt.ctrlKey) {
-      toggleObjectSelected(id)
-    } else {
-      selectObjects([id])
-    }
-  }, [id, preview, selectObjects, toggleObjectSelected])
-
-  // 移动图形
-  const canvasObjectRef = useRef<Konva.Group>(null)
-  const canvasSelectionRef = useRef<Map<string, { canvasObject: Konva.Node, boundingBox?: Konva.Node, dragStartPosition: { x: number, y: number } }>>(null)
-
-  const startMovingSelectedCanvasObject = useCallback((selectedObjectIds: string[]): void => {
-    const stage = canvasObjectRef.current?.getStage()
-    if (!canvasObjectRef.current || !stage) return
-    const canvasSelection: typeof canvasSelectionRef.current = new Map()
-    selectedObjectIds.forEach(selectedObjectId => {
-      const canvasObject = selectedObjectId === id ? canvasObjectRef.current : stage.findOne(`.object-${selectedObjectId}`)
-      if (!canvasObject) return
-      const boundingBox = stage.findOne(`.object-${selectedObjectId}-bounding-box`)
-      const dragStartPosition = canvasObject.position()
-      canvasSelection.set(selectedObjectId, { canvasObject, boundingBox, dragStartPosition })
-    })
-    canvasSelectionRef.current = canvasSelection
-  }, [id])
-  const stopMovingSelectedCanvasObject = useCallback((): void => {
-    canvasSelectionRef.current = null
-  }, [])
-  const moveSelectedCanvasObject = useCallback((): { id: string, position: { x: number, y: number } }[] => {
-    const stage = canvasObjectRef.current?.getStage()
-    const canvasSelection = canvasSelectionRef.current
-    if (!canvasObjectRef.current || !stage || !canvasSelection) return []
-    const dragStartPosition = canvasSelection.get(id)?.dragStartPosition
-    const draggingOffset = dragStartPosition ? {
-      x: canvasObjectRef.current.x() - dragStartPosition.x,
-      y: canvasObjectRef.current.y() - dragStartPosition.y,
-    } : null
-    const objectsCanvasPositions: { id: string, position: { x: number, y: number } }[] = []
-    canvasSelection.forEach(({ canvasObject, boundingBox, dragStartPosition }, selectedObjectId) => {
-      const canvasPosition = selectedObjectId === id || !draggingOffset ? canvasObject.position() : {
-        x: dragStartPosition.x + draggingOffset.x,
-        y: dragStartPosition.y + draggingOffset.y,
-      }
-      const boundedCanvasPosition = {
-        x: Math.min(Math.max(canvasPosition.x, -sceneWidth * zoomRatio / 2), sceneWidth * zoomRatio / 2),
-        y: Math.min(Math.max(canvasPosition.y, -sceneHeight * zoomRatio / 2), sceneHeight * zoomRatio / 2),
-      }
-      canvasObject.position(boundedCanvasPosition)
-      boundingBox?.position(boundedCanvasPosition)
-      objectsCanvasPositions.push({ id: selectedObjectId, position: boundedCanvasPosition })
-    })
-    return objectsCanvasPositions
-  }, [zoomRatio, id])
-
-  const handleDragStart = useCallback((): void => {
-    if (selectedObjectIds.includes(id)) {
-      startMovingSelectedCanvasObject(selectedObjectIds)
-    } else {
-      selectObjects([id])
-      startMovingSelectedCanvasObject([id])
-    }
-  }, [id, selectedObjectIds, selectObjects, startMovingSelectedCanvasObject])
-  const handleDragMove = useCallback((): void => {
-    moveSelectedCanvasObject()
-  }, [moveSelectedCanvasObject])
-  const handleDragEnd = useCallback((): void => {
-    const canvasPositions = moveSelectedCanvasObject()
-    stopMovingSelectedCanvasObject()
-    const positions = canvasPositions.map(({ id, position }) => ({ id, position: { x: position.x / zoomRatio, y: position.y / zoomRatio } }))
-    setObjectsPosition(positions)
-  }, [zoomRatio, setObjectsPosition, moveSelectedCanvasObject, stopMovingSelectedCanvasObject])
+  const objectRef = useRef<Konva.Group>(null)
+  useLayoutEffect(() => {
+    objectRef.current?.position({ x: 0, y: 0 })
+  })
 
   return (
     <Group
-      ref={canvasObjectRef}
-      name={`object-${id}`}
       x={position.x * zoomRatio}
       y={position.y * zoomRatio}
-      visible={visible}
-      draggable={!preview && !locked}
-      onClick={handleClick}
-      onDragStart={handleDragStart}
-      onDragMove={handleDragMove}
-      onDragEnd={handleDragEnd}
     >
-      <CanvasObjectContent object={object} />
+      <Group
+        ref={objectRef}
+        data-id={id}
+        name={`object object-${id}`}
+        x={0}
+        y={0}
+        visible={visible}
+        draggable={!preview && !locked}
+      >
+        <CanvasObjectContent object={object} />
+      </Group>
     </Group>
   )
 }
@@ -200,33 +132,141 @@ function CanvasObjectBoundingBox(props: { id: string }) {
   const object = getObject(id)!
   const { visible, position } = object
 
+  const boundingBoxRef = useRef<Konva.Group>(null)
+  useLayoutEffect(() => {
+    boundingBoxRef.current?.position({ x: 0, y: 0 })
+  })
+
   return (
     <Group
-      name={`object-${id}-bounding-box`}
       x={position.x * zoomRatio}
       y={position.y * zoomRatio}
-      visible={visible}
-    />
+    >
+      <Group
+        ref={boundingBoxRef}
+        data-id={id}
+        name={`object-bounding-box object-${id}-bounding-box`}
+        x={0}
+        y={0}
+        visible={visible}
+      />
+    </Group>
   )
 }
 
 export function StrategyBoardCanvasScene() {
-  const { scene, selectObjects } = useStrategyBoard()
-  const { preview, zoomRatio } = useStrategyBoardCanvas()
+  const { scene, selectedObjectIds, selectObjects, toggleObjectSelected } = useStrategyBoard()
+  const { preview, zoomRatio, moveObjects } = useStrategyBoardCanvas()
 
   const backgroundOption = backgroundOptions.get(scene.background)!
 
   const [backgroundImage] = useImage(ffxivImageUrl(backgroundOption.image))
 
-  // 在空白区域按下取消选中图形
-  const handleStageClick = useCallback((event: Konva.KonvaEventObject<MouseEvent>): void => {
-    if (event.evt.shiftKey || event.evt.ctrlKey) return
-    selectObjects([])
-  }, [selectObjects])
+  // 选中图形
+  const handleClick = useCallback((event: Konva.KonvaEventObject<MouseEvent>): void => {
+    if (preview) return
+    const id = event.target.findAncestor('.object', true)?.getAttr('data-id') as string
+    if (event.evt.shiftKey || event.evt.ctrlKey) {
+      if (id) toggleObjectSelected(id)
+    } else {
+      selectObjects(id ? [id] : [])
+    }
+  }, [preview, selectObjects, toggleObjectSelected])
+
+  // 右键菜单
+  const handleContextMenu = useCallback((event: Konva.KonvaEventObject<PointerEvent>): void => {
+    event.evt.preventDefault()
+    // TODO
+  }, [])
+
+  // 移动图形
+  const stageRef = useRef<Konva.Stage>(null)
+  const draggingObjectsRef = useRef<Konva.Node[]>(null)
+
+  const getPositionsFromDraggingObject = useCallback((draggingCanvasObject: Konva.Node): { id: string, position: { x: number, y: number } }[] => {
+    const stage = stageRef.current
+    const draggingObjects = draggingObjectsRef.current
+    if (!stage || !draggingObjects) return []
+    const position = {
+      x: (draggingCanvasObject.x() + draggingCanvasObject.parent!.x()) / zoomRatio,
+      y: (draggingCanvasObject.y() + draggingCanvasObject.parent!.y()) / zoomRatio,
+    }
+    const normalizedPosition = {
+      x: Math.round(Math.min(Math.max(position.x, -sceneWidth / 2), sceneWidth / 2)),
+      y: Math.round(Math.min(Math.max(position.y, -sceneHeight / 2), sceneHeight / 2)),
+    }
+    const positionOffset = {
+      x: normalizedPosition.x - draggingCanvasObject.parent!.x() / zoomRatio,
+      y: normalizedPosition.y - draggingCanvasObject.parent!.y() / zoomRatio,
+    }
+    const positions = draggingObjects.map(canvasObject => {
+      const id = canvasObject.getAttr('data-id') as string
+      const position = {
+        x: canvasObject.parent!.x() / zoomRatio + positionOffset.x,
+        y: canvasObject.parent!.y() / zoomRatio + positionOffset.y,
+      }
+      const normalizedPosition = {
+        x: Math.round(Math.min(Math.max(position.x, -sceneWidth / 2), sceneWidth / 2)),
+        y: Math.round(Math.min(Math.max(position.y, -sceneHeight / 2), sceneHeight / 2)),
+      }
+      return { id, position: normalizedPosition }
+    })
+    return positions
+  }, [zoomRatio])
+  const moveObjectsTemporarily = useCallback((draggingCanvasObject: Konva.Node, positions: { id: string, position: { x: number, y: number } }[]): void => {
+    const stage = stageRef.current
+    if (!stage) return
+    draggingCanvasObject.position({ x: 0, y: 0 })
+    positions.forEach(({ id, position }) => {
+      const canvasObject = stage.findOne(`.object-${id}`)
+      if (!canvasObject) return
+      canvasObject.parent!.position({
+        x: position.x * zoomRatio,
+        y: position.y * zoomRatio,
+      })
+      const boundingBox = stageRef.current!.findOne(`.object-${id}-bounding-box`)
+      boundingBox?.parent?.position({
+        x: position.x * zoomRatio,
+        y: position.y * zoomRatio,
+      })
+    })
+  }, [zoomRatio])
+
+  const handleDragStart = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
+    if (event.target instanceof Konva.Stage || !event.target.hasName('object')) return
+    const id = event.target.getAttr('data-id') as string
+    if (selectedObjectIds.includes(id)) {
+      draggingObjectsRef.current = selectedObjectIds.map(id => stageRef.current?.findOne(`.object-${id}`)).filter(object => !!object)
+    } else {
+      selectObjects([id])
+      draggingObjectsRef.current = [event.target]
+    }
+  }, [selectedObjectIds, selectObjects])
+  const handleDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
+    if (event.target instanceof Konva.Stage || !event.target.hasName('object')) return
+    const positions = getPositionsFromDraggingObject(event.target)
+    moveObjectsTemporarily(event.target, positions)
+  }, [getPositionsFromDraggingObject, moveObjectsTemporarily])
+  const handleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
+    if (event.target instanceof Konva.Stage || !event.target.hasName('object')) return
+    const positions = getPositionsFromDraggingObject(event.target)
+    draggingObjectsRef.current = null
+    moveObjectsTemporarily(event.target, positions)
+    moveObjects(positions)
+  }, [getPositionsFromDraggingObject, moveObjectsTemporarily, moveObjects])
 
   return (
     <div style={{ width: sceneWidth * zoomRatio, height: sceneHeight * zoomRatio }}>
-      <Stage width={sceneWidth * zoomRatio} height={sceneHeight * zoomRatio} onClick={handleStageClick}>
+      <Stage
+        ref={stageRef}
+        width={sceneWidth * zoomRatio}
+        height={sceneHeight * zoomRatio}
+        onClick={handleClick}
+        onContextMenu={handleContextMenu}
+        onDragStart={handleDragStart}
+        onDragMove={handleDragMove}
+        onDragEnd={handleDragEnd}
+      >
         <Layer listening={false}>
           <Image
             width={sceneWidth * zoomRatio}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useLayoutEffect, useCallback } from 'react'
+import { useRef, useCallback } from 'react'
 import Konva from 'konva'
 import { Group, Rect } from 'react-konva'
 import { Portal } from 'react-konva-utils'
@@ -33,6 +33,10 @@ export function LineCanvasObject(props: LineCanvasObjectProps) {
   const endPoint2HandleRef = useRef<Konva.Rect>(null)
 
   const moveEndPointsTemporarily = useCallback((endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }): void => {
+    const endPointOffset = {
+      x: (endPoint2.x - endPoint1.x) / 2 * zoomRatio,
+      y: (endPoint2.y - endPoint1.y) / 2 * zoomRatio,
+    }
     const positionOffset = {
       x: (endPoint1.x + endPoint2.x) / 2 * zoomRatio,
       y: (endPoint1.y + endPoint2.y) / 2 * zoomRatio,
@@ -40,11 +44,15 @@ export function LineCanvasObject(props: LineCanvasObjectProps) {
     const length = Math.hypot(endPoint2.x - endPoint1.x, endPoint2.y - endPoint1.y) * zoomRatio
     const rotation = Math.atan2(endPoint2.y - endPoint1.y, endPoint2.x - endPoint1.x) * 180 / Math.PI
 
-    boundingBoxFrameRef.current?.position(positionOffset)
+    endPoint1HandleRef.current?.x(-endPointOffset.x)
+    endPoint1HandleRef.current?.y(-endPointOffset.y)
+    endPoint2HandleRef.current?.x(endPointOffset.x)
+    endPoint2HandleRef.current?.y(endPointOffset.y)
+    boundingBoxFrameRef.current?.findAncestor('.object-bounding-box')?.position(positionOffset)
     boundingBoxFrameRef.current?.offsetX(length / 2)
     boundingBoxFrameRef.current?.width(length)
     boundingBoxFrameRef.current?.rotation(rotation)
-    objectRef.current?.position(positionOffset)
+    objectRef.current?.findAncestor('.object')?.position(positionOffset)
     objectRef.current?.offsetX(length / 2)
     objectRef.current?.width(length)
     objectRef.current?.rotation(rotation)
@@ -53,13 +61,14 @@ export function LineCanvasObject(props: LineCanvasObjectProps) {
   const getEndPointsFromEndPointHandle = useCallback((endPoint1Handle: Konva.Node | null, endPoint2Handle: Konva.Node | null): [{ x: number, y: number }, { x: number, y: number }] => {
     const endPoint1 = endPoint1Handle?.position() ?? endPoint1HandleRef.current!.position()
     const endPoint2 = endPoint2Handle?.position() ?? endPoint2HandleRef.current!.position()
+    const positionOffset = boundingBoxFrameRef.current?.findAncestor('.object-bounding-box')?.position() ?? { x: 0, y: 0 }
     const normalizedEndPoint1 = {
-      x: Math.round(endPoint1.x / zoomRatio),
-      y: Math.round(endPoint1.y / zoomRatio),
+      x: Math.round((endPoint1.x + positionOffset.x) / zoomRatio),
+      y: Math.round((endPoint1.y + positionOffset.y) / zoomRatio),
     }
     const normalizedEndPoint2 = {
-      x: Math.round(endPoint2.x / zoomRatio),
-      y: Math.round(endPoint2.y / zoomRatio),
+      x: Math.round((endPoint2.x + positionOffset.x) / zoomRatio),
+      y: Math.round((endPoint2.y + positionOffset.y) / zoomRatio),
     }
     return [normalizedEndPoint1, normalizedEndPoint2]
   }, [zoomRatio])
@@ -83,18 +92,10 @@ export function LineCanvasObject(props: LineCanvasObjectProps) {
     moveEndPoints?.(id, endPoint1, endPoint2)
   }, [getEndPointsFromEndPointHandle, moveEndPointsTemporarily, id, moveEndPoints])
 
-  // TODO: 通过Ref直接修改图形属性后，prop无变化导致属性不会被更新，因此暂时手动重置，需要考虑更好的实现方式
-  useLayoutEffect(() => {
-    objectRef.current?.position({ x: 0, y: 0 })
-    boundingBoxFrameRef.current?.position({ x: 0, y: 0 })
-  })
-
   return (
     <>
       <Rect
         ref={objectRef}
-        x={0}
-        y={0}
         offsetX={length / 2}
         offsetY={lineWidth * zoomRatio / 2}
         width={length}
@@ -110,8 +111,6 @@ export function LineCanvasObject(props: LineCanvasObjectProps) {
           >
             <Rect
               ref={boundingBoxFrameRef}
-              x={0}
-              y={0}
               offsetX={length / 2}
               offsetY={lineWidth * zoomRatio / 2}
               width={length}

@@ -11,8 +11,8 @@ export interface StrategyBoardCanvasContextProps {
   preview: boolean
   zoomRatio: number
   isObjectSelected: (id: string) => boolean
-  setObjectPosition: (id: string, position: { x: number, y: number }) => void
-  setObjectsPosition: (objectsPosition: { id: string, position: { x: number, y: number } }[]) => void
+  moveObject: (id: string, position: { x: number, y: number }) => void
+  moveObjects: (positions: { id: string, position: { x: number, y: number } }[]) => void
   resizeObject: (id: string, size: number | { width: number, height: number }) => void
   rotateObject: (id: string, rotation: number) => void
   moveEndPoints: (id: string, endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }) => void
@@ -42,14 +42,14 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
     return !preview && selectedObjectIds.includes(id)
   }, [preview, selectedObjectIds])
 
-  const setObjectsPosition = useCallback((objectsPosition: { id: string, position: { x: number, y: number } }[]): void => {
-    modifyObjects(objectsPosition.map(({ id, position }) => ({ id, modification: object => {
+  const moveObjects = useCallback((positions: { id: string, position: { x: number, y: number } }[]): void => {
+    modifyObjects(positions.map(({ id, position }) => ({ id, modification: object => {
       object.position = normalizePosition(position)
     }})))
   }, [modifyObjects])
-  const setObjectPosition = useCallback((id: string, position: { x: number, y: number }): void => {
-    setObjectsPosition([{ id, position }])
-  }, [setObjectsPosition])
+  const moveObject = useCallback((id: string, position: { x: number, y: number }): void => {
+    moveObjects([{ id, position }])
+  }, [moveObjects])
 
   const resizeObject = useCallback((id: string, size: number | { width: number, height: number }): void => {
     modifyObject(id, object => {
@@ -104,8 +104,8 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
     preview,
     zoomRatio,
     isObjectSelected,
-    setObjectPosition,
-    setObjectsPosition,
+    moveObject,
+    moveObjects,
     resizeObject,
     rotateObject,
     moveEndPoints,
