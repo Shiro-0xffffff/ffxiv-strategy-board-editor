@@ -492,3 +492,7 @@ export interface StrategyBoardScene {
   background: StrategyBoardBackground
   objects: StrategyBoardObject[]
 }
+
+export function normalizeStrategyBoardName(name: string): string {
+  return name.slice(0, 20)
+}

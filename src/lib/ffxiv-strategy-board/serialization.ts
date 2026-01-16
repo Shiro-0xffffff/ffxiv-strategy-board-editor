@@ -5,6 +5,7 @@ import {
   StrategyBoardObject,
   sceneWidth,
   sceneHeight,
+  normalizeStrategyBoardName,
   normalizePosition,
   normalizeRotation,
   normalizeSize,
@@ -78,7 +79,7 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
       case 0x0001:
 
         // 战术板名称
-        const nameData = utf8Encoder.encode(scene.name)
+        const nameData = utf8Encoder.encode(normalizeStrategyBoardName(scene.name))
 
         // 名称数据长度，2字节，需要补0并对齐字节
         const nameLength = nameData.length + 4 - nameData.length % 4

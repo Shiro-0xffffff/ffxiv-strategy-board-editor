@@ -29,6 +29,7 @@ export function StrategyBoardName(props: StrategyBoardNameProps) {
   ) : (
     <Input
       className="flex-1 w-0 max-w-120 not-hover:not-focus:border-transparent px-2 text-lg/8 md:text-lg/8 font-semibold text-ellipsis dark:not-hover:not-focus:bg-transparent"
+      maxLength={20}
       value={nameDraft ?? scene.name}
       spellCheck={false}
       readOnly={readOnly}
