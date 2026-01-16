@@ -250,7 +250,7 @@ function ObjectPropertyField<T, O extends StrategyBoardObject>(props: ObjectProp
   const { availableFor = (object: StrategyBoardObject): object is O => true, getValueFromObject, updateObjectWithValue, renderField } = props
 
   const { scene, selectedObjectIds, modifyObjects } = useStrategyBoard()
-  
+
   const selectedObjects = selectedObjectIds.map(id => scene.objects.find(object => object.id === id)).filter(object => !!object)
   const objectsForField = selectedObjects.filter(availableFor)
 
@@ -278,9 +278,9 @@ function ObjectPropertyFieldGroup<O extends StrategyBoardObject>(props: ObjectPr
   const { availableFor = (object: StrategyBoardObject): object is O => true, children } = props
 
   const { scene, selectedObjectIds } = useStrategyBoard()
-  
+
   const selectedObjects = selectedObjectIds.map(id => scene.objects.find(object => object.id === id)).filter(object => !!object)
-  
+
   return selectedObjects.every(availableFor) ? children : null
 }
 

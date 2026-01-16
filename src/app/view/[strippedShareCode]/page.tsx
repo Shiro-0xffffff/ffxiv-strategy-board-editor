@@ -54,7 +54,7 @@ export default function ViewPage() {
   const { strippedShareCode } = useParams<{ strippedShareCode: string }>()
 
   const [scene, setScene] = useState<StrategyBoardScene>({ name: '', background: StrategyBoardBackground.None, objects: [] })
-  
+
   useEffect(() => {
     const shareCode = `[stgy:${strippedShareCode.replaceAll('_', '+')}]`
     shareCodeToScene(shareCode).then(scene => setScene(scene))

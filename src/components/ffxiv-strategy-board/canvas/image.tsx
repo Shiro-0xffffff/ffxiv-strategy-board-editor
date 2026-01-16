@@ -46,7 +46,7 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
     }
     return null
   }, [object])
-  
+
   const objectLibraryItem = objectLibrary.get(type)!
 
   const objectRef = useRef<Konva.Group>(null)
@@ -75,7 +75,7 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
     objectRef.current?.scaleX(size / 100)
     objectRef.current?.scaleY(size / 100)
   }, [imageBaseSize.width, imageBaseSize.height, repeat])
-  
+
   const getSizeFromResizeHandle = useCallback((resizeHandle: Konva.Node): number => {
     const x = resizeHandle.x() / (repeat ? repeat.x : 1)
     const y = resizeHandle.y() / (repeat ? repeat.y : 1)
@@ -105,7 +105,7 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
     boundingBoxRef.current?.rotation(rotation)
     objectRef.current?.rotation(rotation)
   }, [imageBaseSize.height, repeat, size])
-  
+
   const getRotationFromRotateHandle = useCallback((rotateHandle: Konva.Node): number => {
     const rotation = (boundingBoxRef.current?.rotation() ?? 0) + Math.atan2(rotateHandle.x(), -rotateHandle.y()) * 180 / Math.PI
     const normalizedRotation = Math.round(rotation % 360)

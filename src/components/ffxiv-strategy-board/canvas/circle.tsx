@@ -39,7 +39,7 @@ export function CircleCanvasObject(props: CircleCanvasObjectProps) {
 
   const baseRadius = objectLibraryItem.baseSize * zoomRatio / 2
   const baseBoundingRadius = baseRadius * 256 / 265
-  
+
   // 缩放
   const boundingBoxFrameRef = useRef<Konva.Circle>(null)
   const resizeHandlesRef = useRef(new Map<string, Konva.Rect>)
@@ -55,7 +55,7 @@ export function CircleCanvasObject(props: CircleCanvasObjectProps) {
     objectRef.current?.scaleX(size / 100)
     objectRef.current?.scaleY(size / 100)
   }, [baseBoundingRadius])
-    
+
   const getSizeFromResizeHandle = useCallback((resizeHandle: Konva.Node): number => {
     const size = Math.hypot(resizeHandle.x() / baseBoundingRadius, resizeHandle.y() / baseBoundingRadius) * 100
     const normalizedSize = Math.round(Math.min(Math.max(size, 0), 255))

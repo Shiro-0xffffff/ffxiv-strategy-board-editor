@@ -17,7 +17,7 @@ async function encodeShareCode(data: Uint8Array): Promise<string> {
   const packedDataView = new DataView(packedData.buffer)
   packedData.set(compressedData, 6)
   packedDataView.setUint16(4, dataLength, true)
-  
+
   // 加校验码
   const checksumContent = packedData.slice(4)
   const checksum = crc32(checksumContent)

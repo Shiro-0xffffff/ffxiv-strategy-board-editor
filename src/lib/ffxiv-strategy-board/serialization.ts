@@ -103,7 +103,7 @@ export function serializeScene(scene: StrategyBoardScene): Uint8Array {
         const type = object.type
         dataView.setUint16(offset, type, true)
         offset += 2
-        
+
         // 对于文字类型，需要额外写入文本内容
         if (type === StrategyBoardObjectType.Text) {
 

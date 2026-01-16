@@ -71,7 +71,7 @@ export function StrategyBoardCanvasObjectPreview(props: StrategyBoardCanvasObjec
 
   const previewCanvasSize = 512
   const object = createObject(objectType)
-  
+
   return (
     <StrategyBoardCanvasProvider preview>
       <div className="size-0">
@@ -96,7 +96,7 @@ function CanvasObject(props: { id: string }) {
 
   const { getObject } = useStrategyBoard()
   const { preview, zoomRatio } = useStrategyBoardCanvas()
-  
+
   const object = getObject(id)!
   const { visible, locked, position } = object
 
@@ -125,7 +125,7 @@ function CanvasObjectBoundingBox(props: { id: string }) {
 
   const { getObject } = useStrategyBoard()
   const { zoomRatio } = useStrategyBoardCanvas()
-  
+
   const object = getObject(id)!
   const { visible, position } = object
 
