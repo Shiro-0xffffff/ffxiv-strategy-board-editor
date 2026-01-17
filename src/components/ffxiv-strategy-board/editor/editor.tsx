@@ -13,7 +13,7 @@ import { LayersPanel, LayersPanelSkeleton } from './layers'
 function CanvasArea() {
   const { scene, selectedObjectIds, selectObjects, deleteObjects, cutObjects, copyObjects, pasteObjects, undoAvailable, undo, redo } = useStrategyBoard()
 
-  useHotkeys('ctrl+a', () => {
+  useHotkeys('mod+a', () => {
     selectObjects(scene.objects.map(object => object.id))
   }, { preventDefault: true }, [selectObjects, scene])
 
@@ -21,20 +21,20 @@ function CanvasArea() {
     deleteObjects(selectedObjectIds)
   }, { preventDefault: true }, [deleteObjects, selectedObjectIds])
 
-  useHotkeys('ctrl+x', () => {
+  useHotkeys('mod+x', () => {
     cutObjects(selectedObjectIds)
   }, { preventDefault: true }, [cutObjects, selectedObjectIds])
-  useHotkeys('ctrl+c', () => {
+  useHotkeys('mod+c', () => {
     copyObjects(selectedObjectIds)
   }, { preventDefault: true }, [copyObjects, selectedObjectIds])
-  useHotkeys('ctrl+v', () => {
+  useHotkeys('mod+v', () => {
     pasteObjects()
   }, { preventDefault: true }, [pasteObjects])
 
-  useHotkeys('ctrl+z', () => {
+  useHotkeys('mod+z', () => {
     undo()
   }, { preventDefault: true }, [undo])
-  useHotkeys('ctrl+y, ctrl+shift+z', () => {
+  useHotkeys('mod+y, mod+shift+z', () => {
     redo()
   }, { preventDefault: true }, [redo])
 

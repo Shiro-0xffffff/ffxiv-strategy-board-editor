@@ -7,7 +7,7 @@ import Konva from 'konva'
 import { Stage, Layer, Group, Image } from 'react-konva'
 import useImage from 'use-image'
 import { StrategyBoardObject, StrategyBoardObjectType, sceneWidth, sceneHeight, createObject } from '@/lib/ffxiv-strategy-board'
-import { ffxivImageUrl } from '@/lib/utils'
+import { isMac, ffxivImageUrl } from '@/lib/utils'
 
 import { backgroundOptions } from '../constants'
 import { useStrategyBoard } from '../context'
@@ -334,26 +334,26 @@ export function StrategyBoardCanvas() {
         <ContextMenuGroup>
           <ContextMenuItem disabled={!undoAvailable} onClick={handleContextMenuUndoClick}>
             <Undo2 /> 撤销
-            <ContextMenuShortcut>Ctrl+Z</ContextMenuShortcut>
+            <ContextMenuShortcut>{isMac() ? '⌘Z' : 'Ctrl+Z'}</ContextMenuShortcut>
           </ContextMenuItem>
           <ContextMenuItem disabled={!redoAvailable} onClick={handleContextMenuRedoClick}>
             <Redo2 /> 重做
-            <ContextMenuShortcut>Ctrl+Y</ContextMenuShortcut>
+            <ContextMenuShortcut>{isMac() ? '⇧⌘Z' : 'Ctrl+Y'}</ContextMenuShortcut>
           </ContextMenuItem>
         </ContextMenuGroup>
         <ContextMenuSeparator />
         <ContextMenuGroup>
           <ContextMenuItem disabled={!selectedObjectIds.length} onClick={handleContextMenuCutClick}>
             <Scissors /> 剪切
-            <ContextMenuShortcut>Ctrl+X</ContextMenuShortcut>
+            <ContextMenuShortcut>{isMac() ? '⌘X' : 'Ctrl+X'}</ContextMenuShortcut>
           </ContextMenuItem>
           <ContextMenuItem disabled={!selectedObjectIds.length} onClick={handleContextMenuCopyClick}>
             <Copy /> 复制
-            <ContextMenuShortcut>Ctrl+C</ContextMenuShortcut>
+            <ContextMenuShortcut>{isMac() ? '⌘C' : 'Ctrl+C'}</ContextMenuShortcut>
           </ContextMenuItem>
           <ContextMenuItem onClick={handleContextMenuPasteClick}>
             <ClipboardPaste /> 粘贴
-            <ContextMenuShortcut>Ctrl+V</ContextMenuShortcut>
+            <ContextMenuShortcut>{isMac() ? '⌘V' : 'Ctrl+V'}</ContextMenuShortcut>
           </ContextMenuItem>
         </ContextMenuGroup>
         <ContextMenuSeparator />
@@ -369,7 +369,7 @@ export function StrategyBoardCanvas() {
         <ContextMenuGroup>
           <ContextMenuItem onClick={handleContextMenuSelectAllClick}>
             <CopyCheck /> 全选
-            <ContextMenuShortcut>Ctrl+A</ContextMenuShortcut>
+            <ContextMenuShortcut>{isMac() ? '⌘A' : 'Ctrl+A'}</ContextMenuShortcut>
           </ContextMenuItem>
         </ContextMenuGroup>
         <ContextMenuSeparator />
