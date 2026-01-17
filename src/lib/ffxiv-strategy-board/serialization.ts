@@ -415,7 +415,7 @@ export function deserializeSceneData(data: Uint8Array): StrategyBoardScene {
   // 魔数，4字节
   const magic = dataView.getUint32(offset, true)
   offset += 4
-  if (magic !== 0x00000002) throw new Error('战术板数据格式不正确')
+  if (magic !== 0x00000002) console.warn(`战术板数据格式不正确：magic=${magic}`)
 
   // 内容长度，4字节
   const contentLength = dataView.getUint32(offset, true)
