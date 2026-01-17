@@ -8,7 +8,7 @@ import { Plus, Minus } from 'lucide-react'
 import { useStrategyBoardCanvas } from './context'
 
 export function StrategyBoardCanvasZoomButtons() {
-  const { zoomInAvailable, zoomIn, zoomOutAvailable, zoomOut } = useStrategyBoardCanvas()
+  const { isZoomInAvailable, zoomIn, isZoomOutAvailable, zoomOut } = useStrategyBoardCanvas()
 
   const handleZoomOutButtonClick = useCallback<MouseEventHandler<HTMLButtonElement>>(() => {
     zoomOut()
@@ -20,10 +20,10 @@ export function StrategyBoardCanvasZoomButtons() {
   return (
     <div className="flex w-fit rounded-lg bg-card">
       <ButtonGroup>
-        <Button className="cursor-pointer" variant="outline" size="icon" disabled={!zoomOutAvailable} onClick={handleZoomOutButtonClick}>
+        <Button className="cursor-pointer" variant="outline" size="icon" disabled={!isZoomOutAvailable} onClick={handleZoomOutButtonClick}>
           <Minus />
         </Button>
-        <Button className="cursor-pointer" variant="outline" size="icon" disabled={!zoomInAvailable} onClick={handleZoomInButtonClick}>
+        <Button className="cursor-pointer" variant="outline" size="icon" disabled={!isZoomInAvailable} onClick={handleZoomInButtonClick}>
           <Plus />
         </Button>
       </ButtonGroup>

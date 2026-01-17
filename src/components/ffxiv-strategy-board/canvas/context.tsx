@@ -19,9 +19,9 @@ const zoomLevels = [0.05, 0.08, 0.1, 0.12, 0.14, 0.16, 0.18, 0.2, 0.22, 0.25, 0.
 export interface StrategyBoardCanvasContextProps {
   preview: boolean
   zoomRatio: number
-  zoomInAvailable: boolean
+  isZoomInAvailable: boolean
   zoomIn: () => void
-  zoomOutAvailable: boolean
+  isZoomOutAvailable: boolean
   zoomOut: () => void
   isObjectSelected: (id: string) => boolean
   moveObject: (id: string, position: { x: number, y: number }) => void
@@ -55,13 +55,13 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
 
   const [zoomRatio, setZoomRatio] = useState<number>(defaultZoomRatio)
 
-  const zoomInAvailable = zoomLevels.some(zoomLevel => zoomLevel > zoomRatio)
+  const isZoomInAvailable = zoomLevels.some(zoomLevel => zoomLevel > zoomRatio)
   const zoomIn = useCallback((): void => {
     const zoomLevel = zoomLevels.find(zoomLevel => zoomLevel > zoomRatio)
     if (!zoomLevel) return
     setZoomRatio(zoomLevel)
   }, [zoomRatio])
-  const zoomOutAvailable = zoomLevels.some(zoomLevel => zoomLevel < zoomRatio)
+  const isZoomOutAvailable = zoomLevels.some(zoomLevel => zoomLevel < zoomRatio)
   const zoomOut = useCallback((): void => {
     const zoomLevel = zoomLevels.findLast(zoomLevel => zoomLevel < zoomRatio)
     if (!zoomLevel) return
@@ -171,9 +171,9 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
   const contextValue: StrategyBoardCanvasContextProps = {
     preview,
     zoomRatio,
-    zoomInAvailable,
+    isZoomInAvailable,
     zoomIn,
-    zoomOutAvailable,
+    isZoomOutAvailable,
     zoomOut,
     isObjectSelected,
     moveObject,

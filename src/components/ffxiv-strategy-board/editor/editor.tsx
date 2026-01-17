@@ -11,7 +11,7 @@ import { PropertiesPanel, PropertiesPanelSkeleton } from './properties'
 import { LayersPanel, LayersPanelSkeleton } from './layers'
 
 function CanvasArea() {
-  const { scene, selectedObjectIds, selectObjects, deleteObjects, cutObjects, copyObjects, pasteObjects, undoAvailable, undo, redo } = useStrategyBoard()
+  const { scene, selectedObjectIds, selectObjects, deleteObjects, cutObjects, copyObjects, pasteObjects, isUndoAvailable, undo, redo } = useStrategyBoard()
 
   useHotkeys('mod+a', () => {
     selectObjects(scene.objects.map(object => object.id))
@@ -39,8 +39,8 @@ function CanvasArea() {
   }, { preventDefault: true }, [redo])
 
   const handleWindowBeforeUnload = useCallback((event: BeforeUnloadEvent): void => {
-    if (undoAvailable) event.preventDefault()
-  }, [undoAvailable])
+    if (isUndoAvailable) event.preventDefault()
+  }, [isUndoAvailable])
 
   useEffect(() => {
     window.addEventListener('beforeunload', handleWindowBeforeUnload)

@@ -145,12 +145,13 @@ export function StrategyBoardCanvas() {
     selectObjects,
     toggleObjectSelected,
     deleteObjects,
+    isClipboardEmpty,
     cutObjects,
     copyObjects,
     pasteObjects,
-    undoAvailable,
+    isUndoAvailable,
     undo,
-    redoAvailable,
+    isRedoAvailable,
     redo,
   } = useStrategyBoard()
   const { preview, zoomRatio, moveObjects, flipObjectsHorizontally, flipObjectsVertically } = useStrategyBoardCanvas()
@@ -291,7 +292,7 @@ export function StrategyBoardCanvas() {
 
   return (
     <ContextMenu modal={false}>
-      <ContextMenuTrigger>
+      <ContextMenuTrigger disabled={preview}>
         <div style={{ width: sceneWidth * zoomRatio, height: sceneHeight * zoomRatio }}>
           <Stage
             ref={stageRef}
@@ -302,7 +303,7 @@ export function StrategyBoardCanvas() {
             onDragMove={handleDragMove}
             onDragEnd={handleDragEnd}
           >
-            <Layer listening={false}>
+            <Layer listening={!preview}>
               <Image
                 width={sceneWidth * zoomRatio}
                 height={sceneHeight * zoomRatio}
@@ -310,8 +311,6 @@ export function StrategyBoardCanvas() {
                 alt={backgroundOption.name}
                 fill="#595959"
               />
-            </Layer>
-            <Layer listening={!preview}>
               <Group x={sceneWidth * zoomRatio / 2} y={sceneHeight * zoomRatio / 2}>
                 {scene.objects.slice().reverse().map(({ id }) => (
                   <CanvasObject key={id} id={id} />
@@ -332,11 +331,11 @@ export function StrategyBoardCanvas() {
       </ContextMenuTrigger>
       <ContextMenuContent>
         <ContextMenuGroup>
-          <ContextMenuItem disabled={!undoAvailable} onClick={handleContextMenuUndoClick}>
+          <ContextMenuItem disabled={!isUndoAvailable} onClick={handleContextMenuUndoClick}>
             <Undo2 /> 撤销
             <ContextMenuShortcut>{isMac() ? '⌘Z' : 'Ctrl+Z'}</ContextMenuShortcut>
           </ContextMenuItem>
-          <ContextMenuItem disabled={!redoAvailable} onClick={handleContextMenuRedoClick}>
+          <ContextMenuItem disabled={!isRedoAvailable} onClick={handleContextMenuRedoClick}>
             <Redo2 /> 重做
             <ContextMenuShortcut>{isMac() ? '⇧⌘Z' : 'Ctrl+Y'}</ContextMenuShortcut>
           </ContextMenuItem>
@@ -351,17 +350,17 @@ export function StrategyBoardCanvas() {
             <Copy /> 复制
             <ContextMenuShortcut>{isMac() ? '⌘C' : 'Ctrl+C'}</ContextMenuShortcut>
           </ContextMenuItem>
-          <ContextMenuItem onClick={handleContextMenuPasteClick}>
+          <ContextMenuItem disabled={isClipboardEmpty} onClick={handleContextMenuPasteClick}>
             <ClipboardPaste /> 粘贴
             <ContextMenuShortcut>{isMac() ? '⌘V' : 'Ctrl+V'}</ContextMenuShortcut>
           </ContextMenuItem>
         </ContextMenuGroup>
         <ContextMenuSeparator />
         <ContextMenuGroup>
-          <ContextMenuItem onClick={handleContextMenuFlipHorizontallyClick}>
+          <ContextMenuItem disabled={!selectedObjectIds.length} onClick={handleContextMenuFlipHorizontallyClick}>
             <FlipHorizontal2 /> 水平翻转
           </ContextMenuItem>
-          <ContextMenuItem onClick={handleContextMenuFlipVerticallyClick}>
+          <ContextMenuItem disabled={!selectedObjectIds.length} onClick={handleContextMenuFlipVerticallyClick}>
             <FlipVertical2 /> 垂直翻转
           </ContextMenuItem>
         </ContextMenuGroup>

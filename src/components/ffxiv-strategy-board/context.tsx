@@ -26,6 +26,7 @@ export interface StrategyBoardContextProps {
   addObjects: (objectsProperties: { type: StrategyBoardObjectType, properties: StrategyBoardObjectProperties }[]) => string[]
   deleteObject: (id: string) => void
   deleteObjects: (ids: string[]) => void
+  isClipboardEmpty: boolean
   cutObjects: (ids: string[]) => void
   copyObjects: (ids: string[]) => void
   pasteObjects: () => void
@@ -34,9 +35,9 @@ export interface StrategyBoardContextProps {
   modifyObjects: (modifications: { id: string, modification: (object: StrategyBoardObject) => void }[]) => void
   toggleObjectVisible: (id: string) => void
   toggleObjectLocked: (id: string) => void
-  undoAvailable: boolean
+  isUndoAvailable: boolean
   undo: () => void
-  redoAvailable: boolean
+  isRedoAvailable: boolean
   redo: () => void
   importFromShareCode: (shareCode: string) => Promise<void>
   exportToShareCode: () => Promise<string>
@@ -131,6 +132,7 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
   }, [deleteObjects])
 
   const [copiedObjects, setCopiedObjects] = useState<Omit<StrategyBoardObject, 'id'>[]>(() => [])
+  const isClipboardEmpty = !copiedObjects.length
 
   const copyObjects = useCallback((ids: string[]): void => {
     if (!ids.length) return
@@ -188,22 +190,22 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     })
   }, [modifyObject])
 
-  const undoAvailable = currentHistoryIndex > 0
+  const isUndoAvailable = currentHistoryIndex > 0
   const undo = useCallback((): void => {
-    if (!undoAvailable) return
+    if (!isUndoAvailable) return
     setCurrentHistoryIndex(currentHistoryIndex - 1)
     const scene = history[currentHistoryIndex - 1]
     setSelectedObjectIds(selectedObjectIds => selectedObjectIds.filter(selectedObjectId => scene.objects.find(({ id }) => id === selectedObjectId)))
     onSceneChange?.(scene)
-  }, [history, currentHistoryIndex, undoAvailable, onSceneChange])
-  const redoAvailable = currentHistoryIndex < history.length - 1
+  }, [history, currentHistoryIndex, isUndoAvailable, onSceneChange])
+  const isRedoAvailable = currentHistoryIndex < history.length - 1
   const redo = useCallback((): void => {
-    if (!redoAvailable) return
+    if (!isRedoAvailable) return
     setCurrentHistoryIndex(currentHistoryIndex + 1)
     const scene = history[currentHistoryIndex + 1]
     setSelectedObjectIds(selectedObjectIds => selectedObjectIds.filter(selectedObjectId => scene.objects.find(({ id }) => id === selectedObjectId)))
     onSceneChange?.(scene)
-  }, [history, currentHistoryIndex, redoAvailable, onSceneChange])
+  }, [history, currentHistoryIndex, isRedoAvailable, onSceneChange])
 
   const importFromShareCode = useCallback(async (shareCode: string): Promise<void> => {
     const scene = await shareCodeToScene(shareCode)
@@ -227,6 +229,7 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     getObject,
     addObject,
     addObjects,
+    isClipboardEmpty,
     cutObjects,
     copyObjects,
     pasteObjects,
@@ -237,9 +240,9 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     modifyObjects,
     toggleObjectVisible,
     toggleObjectLocked,
-    undoAvailable,
+    isUndoAvailable,
     undo,
-    redoAvailable,
+    isRedoAvailable,
     redo,
     importFromShareCode,
     exportToShareCode,
