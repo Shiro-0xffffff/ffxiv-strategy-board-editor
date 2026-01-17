@@ -52,13 +52,16 @@ function CanvasArea() {
   const handleBackgroundPointerDown = useCallback<PointerEventHandler<HTMLDivElement>>(() => {
     selectObjects([])
   }, [selectObjects])
+  const handleCanvasContainerPointerDown = useCallback<PointerEventHandler<HTMLDivElement>>(event => {
+    event.stopPropagation()
+  }, [])
 
   return (
     <div className="relative size-full bg-muted/30">
       <div className="size-full flex flex-col overflow-auto">
         <div className="flex-1 min-w-max flex flex-col" onPointerDown={handleBackgroundPointerDown}>
           <div className="flex-1 px-8 py-8 3xl:px-4 flex items-center justify-center">
-            <div className="shadow-xl">
+            <div className="shadow-xl" onPointerDown={handleCanvasContainerPointerDown}>
               <ObjectLibraryDraggingTargetCanvas>
                 <StrategyBoardCanvas />
               </ObjectLibraryDraggingTargetCanvas>
