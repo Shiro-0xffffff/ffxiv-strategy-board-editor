@@ -12,6 +12,7 @@ import { objectLibrary } from '../constants'
 import { useStrategyBoardCanvas } from './context'
 
 const directionHandleSize = 8
+const arcAngleHandleSize = 8
 
 export interface ArcCanvasObjectProps {
   object: StrategyBoardArcObject
@@ -21,7 +22,7 @@ export function ArcCanvasObject(props: ArcCanvasObjectProps) {
   const { object } = props
   const { id, type, locked, size, flipped, rotation, transparency, arcAngle, innerRadius } = object
 
-  const { zoomRatio, isObjectSelected, adjustObjectDirection } = useStrategyBoardCanvas()
+  const { zoomRatio, isObjectSelected, adjustObjectDirection, adjustObjectArcAngle } = useStrategyBoardCanvas()
   const selected = isObjectSelected(id)
 
   const objectLibraryItem = objectLibrary.get(type)!
@@ -47,6 +48,8 @@ export function ArcCanvasObject(props: ArcCanvasObjectProps) {
     const adjustObjectDirectionTemporarily = useCallback((direction: { size: number, rotation: number }): void => {
       directionHandleRef.current?.x(0)
       directionHandleRef.current?.y(-baseBoundingCanvasRadius * direction.size / 100)
+      arcAngleHandle1Ref.current?.y(-baseBoundingCanvasRadius * direction.size / 100)
+      arcAngleHandle2Ref.current?.y(-baseBoundingCanvasRadius * direction.size / 100)
       boundingBoxFrameRef.current?.scaleX(direction.size / 100)
       boundingBoxFrameRef.current?.scaleY(direction.size / 100 * (flipped ? -1 : 1))
       boundingBoxRef.current?.rotation(direction.rotation)
@@ -72,6 +75,43 @@ export function ArcCanvasObject(props: ArcCanvasObjectProps) {
       adjustObjectDirectionTemporarily(direction)
       adjustObjectDirection(id, direction)
     }, [getDirectionFromDirectionHandle, adjustObjectDirectionTemporarily, id, adjustObjectDirection])
+
+    // 调整范围角度
+    const arcAngleHandle1Ref = useRef<Konva.Rect>(null)
+    const arcAngleHandle2Ref = useRef<Konva.Rect>(null)
+
+    const adjustObjectArcAngleTemporarily = useCallback((arcAngle: number): void => {
+      arcAngleHandle1Ref.current?.x(0)
+      arcAngleHandle1Ref.current?.y(-baseBoundingCanvasRadius * size / 100)
+      arcAngleHandle1Ref.current?.parent?.rotation(-arcAngle / 2 * (flipped ? -1 : 1))
+      arcAngleHandle2Ref.current?.x(0)
+      arcAngleHandle2Ref.current?.y(-baseBoundingCanvasRadius * size / 100)
+      arcAngleHandle2Ref.current?.parent?.rotation(arcAngle / 2 * (flipped ? -1 : 1))
+      boundingBoxFrameRef.current?.angle(arcAngle)
+      boundingBoxFrameRef.current?.rotation(-90 - arcAngle / 2 * (flipped ? -1 : 1))
+      objectRef.current?.clipFunc(ctx => {
+        ctx.beginPath()
+        ctx.moveTo(0, 0)
+        ctx.arc(0, 0, baseBoundingCanvasRadius, -Math.PI / 2 - arcAngle / 2 * Math.PI / 180, -Math.PI / 2 + arcAngle / 2 * Math.PI / 180)
+        ctx.arc(0, 0, baseHoleCanvasRadius, -Math.PI / 2 + arcAngle / 2 * Math.PI / 180, -Math.PI / 2 - arcAngle / 2 * Math.PI / 180, true)
+      })
+    }, [baseBoundingCanvasRadius, baseHoleCanvasRadius, size, flipped])
+
+    const getArcAngleFromArcAngleHandle = useCallback((arcAngleHandle: Konva.Node): number => {
+      const arcAngle = Math.abs((arcAngleHandle.parent?.rotation() ?? 0) + Math.atan2(arcAngleHandle.x(), -arcAngleHandle.y()) * 180 / Math.PI) * 2
+      const normalizedArcAngle = Math.round(Math.min(Math.max(arcAngle, 0), 360))
+      return normalizedArcAngle
+    }, [])
+
+    const handleArcAngleHandleDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
+      const arcAngle = getArcAngleFromArcAngleHandle(event.target)
+      adjustObjectArcAngleTemporarily(arcAngle)
+    }, [getArcAngleFromArcAngleHandle, adjustObjectArcAngleTemporarily])
+    const handleArcAngleHandleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
+      const arcAngle = getArcAngleFromArcAngleHandle(event.target)
+      adjustObjectArcAngleTemporarily(arcAngle)
+      adjustObjectArcAngle(id, arcAngle)
+    }, [getArcAngleFromArcAngleHandle, adjustObjectArcAngleTemporarily, id, adjustObjectArcAngle])
   
     return (
       <>
@@ -80,26 +120,30 @@ export function ArcCanvasObject(props: ArcCanvasObjectProps) {
           offsetY={centerCanvasOffset.y}
         >
           <Group
-            ref={objectRef}
-            clipFunc={ctx => {
-              ctx.beginPath()
-              ctx.moveTo(0, 0)
-              ctx.arc(0, 0, baseBoundingCanvasRadius, -Math.PI / 2, -Math.PI / 2 + arcAngle * Math.PI / 180)
-              ctx.arc(0, 0, baseHoleCanvasRadius, -Math.PI / 2 + arcAngle * Math.PI / 180, -Math.PI / 2, true)
-            }}
-            opacity={1 - transparency / 100}
-            scaleX={size / 100 * (flipped ? -1 : 1)}
-            scaleY={size / 100}
-            rotation={rotation}
+            rotation={arcAngle / 2 * (flipped ? -1 : 1)}
           >
-            <Image
-              offsetX={baseCanvasRadius}
-              offsetY={baseCanvasRadius}
-              width={baseCanvasRadius * 2}
-              height={baseCanvasRadius * 2}
-              image={backgroundImage}
-              alt={objectLibraryItem.abbr}
-            />
+            <Group
+              ref={objectRef}
+              clipFunc={ctx => {
+                ctx.beginPath()
+                ctx.moveTo(0, 0)
+                ctx.arc(0, 0, baseBoundingCanvasRadius, -Math.PI / 2 - arcAngle / 2 * Math.PI / 180, -Math.PI / 2 + arcAngle / 2 * Math.PI / 180)
+                ctx.arc(0, 0, baseHoleCanvasRadius, -Math.PI / 2 + arcAngle / 2 * Math.PI / 180, -Math.PI / 2 - arcAngle / 2 * Math.PI / 180, true)
+              }}
+              opacity={1 - transparency / 100}
+              scaleX={size / 100 * (flipped ? -1 : 1)}
+              scaleY={size / 100}
+              rotation={rotation}
+            >
+              <Image
+                offsetX={baseCanvasRadius}
+                offsetY={baseCanvasRadius}
+                width={baseCanvasRadius * 2}
+                height={baseCanvasRadius * 2}
+                image={backgroundImage}
+                alt={objectLibraryItem.abbr}
+              />
+            </Group>
           </Group>
         </Group>
         {!!selected && (
@@ -109,28 +153,28 @@ export function ArcCanvasObject(props: ArcCanvasObjectProps) {
               offsetY={centerCanvasOffset.y}
             >
               <Group
-                ref={boundingBoxRef}
-                rotation={rotation}
+                rotation={arcAngle / 2 * (flipped ? -1 : 1)}
               >
-                <Arc
-                  ref={boundingBoxFrameRef}
-                  innerRadius={baseHoleCanvasRadius}
-                  outerRadius={baseBoundingCanvasRadius}
-                  angle={arcAngle}
-                  stroke="#fff"
-                  strokeWidth={2}
-                  shadowBlur={4}
-                  scaleX={size / 100}
-                  scaleY={size / 100 * (flipped ? -1 : 1)}
-                  strokeScaleEnabled={false}
-                  rotation={-90}
-                  listening={false}
-                />
-                {!locked && (
-                  <>
-                    <Group
-                      rotation={arcAngle / 2 * (flipped ? -1 : 1)}
-                    >
+                <Group
+                  ref={boundingBoxRef}
+                  rotation={rotation}
+                >
+                  <Arc
+                    ref={boundingBoxFrameRef}
+                    innerRadius={baseHoleCanvasRadius}
+                    outerRadius={baseBoundingCanvasRadius}
+                    angle={arcAngle}
+                    stroke="#fff"
+                    strokeWidth={2}
+                    shadowBlur={4}
+                    scaleX={size / 100}
+                    scaleY={size / 100 * (flipped ? -1 : 1)}
+                    strokeScaleEnabled={false}
+                    rotation={-90 - arcAngle / 2 * (flipped ? -1 : 1)}
+                    listening={false}
+                  />
+                  {!locked && (
+                    <>
                       <Rect
                         ref={directionHandleRef}
                         x={0}
@@ -148,9 +192,51 @@ export function ArcCanvasObject(props: ArcCanvasObjectProps) {
                         onDragMove={handleDirectionHandleDragMove}
                         onDragEnd={handleDirectionHandleDragEnd}
                       />
-                    </Group>
-                  </>
-                )}
+                      <Group
+                        rotation={-arcAngle / 2 * (flipped ? -1 : 1)}
+                      >
+                        <Rect
+                          ref={arcAngleHandle1Ref}
+                          x={0}
+                          y={-baseBoundingCanvasRadius * size / 100}
+                          offsetX={arcAngleHandleSize / 2}
+                          offsetY={arcAngleHandleSize / 2}
+                          width={arcAngleHandleSize}
+                          height={arcAngleHandleSize}
+                          stroke="#fff"
+                          strokeWidth={2}
+                          shadowBlur={4}
+                          fill="#fff"
+                          rotation={45}
+                          draggable
+                          onDragMove={handleArcAngleHandleDragMove}
+                          onDragEnd={handleArcAngleHandleDragEnd}
+                        />
+                      </Group>
+                      <Group
+                        rotation={arcAngle / 2 * (flipped ? -1 : 1)}
+                      >
+                        <Rect
+                          ref={arcAngleHandle2Ref}
+                          x={0}
+                          y={-baseBoundingCanvasRadius * size / 100}
+                          offsetX={arcAngleHandleSize / 2}
+                          offsetY={arcAngleHandleSize / 2}
+                          width={arcAngleHandleSize}
+                          height={arcAngleHandleSize}
+                          stroke="#fff"
+                          strokeWidth={2}
+                          shadowBlur={4}
+                          fill="#fff"
+                          rotation={45}
+                          draggable
+                          onDragMove={handleArcAngleHandleDragMove}
+                          onDragEnd={handleArcAngleHandleDragEnd}
+                        />
+                      </Group>
+                    </>
+                  )}
+                </Group>
               </Group>
             </Group>
           </Portal>

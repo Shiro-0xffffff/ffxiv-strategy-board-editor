@@ -333,9 +333,7 @@ export function normalizeInnerRadius(innerRadius: number): number {
   return clampInt(innerRadius, 0, 255)
 }
 export function normalizeArcAngle(arcAngle: number): number {
-  if (arcAngle > 360) return Math.round(arcAngle % 360)
-  if (arcAngle < 0) return Math.round(arcAngle % 360 + 360)
-  return Math.round(arcAngle)
+  return clampInt(arcAngle, 0, 360)
 }
 export function normalizeDisplayCount(displayCount: number): number {
   return clampInt(displayCount, 1, 63)

@@ -8,6 +8,7 @@ import {
   normalizeSize,
   normalizeWidth,
   normalizeHeight,
+  normalizeArcAngle,
   normalizeLineEndPoint,
   getConeCenterOffset,
   getArcCenterOffset,
@@ -35,6 +36,7 @@ export interface StrategyBoardCanvasContextProps {
   resizeObject: (id: string, size: number | { width: number, height: number }) => void
   rotateObject: (id: string, rotation: number) => void
   adjustObjectDirection: (id: string, direction: { size: number, rotation: number }) => void
+  adjustObjectArcAngle: (id: string, arcAngle: number) => void
   moveEndPoints: (id: string, endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }) => void
 }
 
@@ -193,6 +195,35 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
     })
   }, [modifyObject])
 
+  const adjustObjectArcAngle = useCallback((id: string, arcAngle: number): void => {
+    modifyObject(id, object => {
+      switch (object.type) {
+        case StrategyBoardObjectType.MechanicConeAoE:
+          const updatedConeRotation = object.rotation + (object.arcAngle - arcAngle) / 2 * (object.flipped ? -1 : 1)
+          const coneCenterOffset = getConeCenterOffset(object.size, object.arcAngle, object.rotation, object.flipped)
+          const updatedConeCenterOffset = getConeCenterOffset(object.size, arcAngle, updatedConeRotation, object.flipped)
+          object.position = normalizePosition({
+            x: object.position.x - coneCenterOffset.x + updatedConeCenterOffset.x,
+            y: object.position.y - coneCenterOffset.y + updatedConeCenterOffset.y,
+          })
+          object.rotation = normalizeRotation(updatedConeRotation)
+          object.arcAngle = normalizeArcAngle(arcAngle)
+          break
+        case StrategyBoardObjectType.MechanicDonutAoE:
+          const updatedArcRotation = object.rotation + (object.arcAngle - arcAngle) / 2 * (object.flipped ? -1 : 1)
+          const arcCenterOffset = getArcCenterOffset(object.size, object.innerRadius, object.arcAngle, object.rotation, object.flipped)
+          const updatedArcCenterOffset = getArcCenterOffset(object.size, object.innerRadius, arcAngle, updatedArcRotation, object.flipped)
+          object.position = normalizePosition({
+            x: object.position.x - arcCenterOffset.x + updatedArcCenterOffset.x,
+            y: object.position.y - arcCenterOffset.y + updatedArcCenterOffset.y,
+          })
+          object.rotation = normalizeRotation(updatedArcRotation)
+          object.arcAngle = normalizeArcAngle(arcAngle)
+          break
+      }
+    })
+  }, [modifyObject])
+
   const moveEndPoints = useCallback((id: string, endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }): void => {
     modifyObject(id, object => {
       if (object.type !== StrategyBoardObjectType.Line) return
@@ -227,6 +258,7 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
     resizeObject,
     rotateObject,
     adjustObjectDirection,
+    adjustObjectArcAngle,
     moveEndPoints,
   }
 
