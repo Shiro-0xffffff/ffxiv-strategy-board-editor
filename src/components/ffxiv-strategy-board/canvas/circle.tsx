@@ -57,7 +57,7 @@ export function CircleCanvasObject(props: CircleCanvasObjectProps) {
   }, [baseBoundingCanvasRadius])
 
   const getSizeFromResizeHandle = useCallback((resizeHandle: Konva.Node): number => {
-    const size = Math.hypot(resizeHandle.x() / baseBoundingCanvasRadius, resizeHandle.y() / baseBoundingCanvasRadius) * 100
+    const size = Math.hypot(resizeHandle.x(), resizeHandle.y()) / baseBoundingCanvasRadius * 100
     const normalizedSize = Math.round(Math.min(Math.max(size, 0), 255))
     return normalizedSize
   }, [baseBoundingCanvasRadius])

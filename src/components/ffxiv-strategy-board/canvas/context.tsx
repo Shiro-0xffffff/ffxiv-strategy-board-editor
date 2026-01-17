@@ -9,6 +9,7 @@ import {
   normalizeWidth,
   normalizeHeight,
   normalizeArcAngle,
+  normalizeInnerRadius,
   normalizeLineEndPoint,
   getConeCenterOffset,
   getArcCenterOffset,
@@ -37,6 +38,7 @@ export interface StrategyBoardCanvasContextProps {
   rotateObject: (id: string, rotation: number) => void
   adjustObjectDirection: (id: string, direction: { size: number, rotation: number }) => void
   adjustObjectArcAngle: (id: string, arcAngle: number) => void
+  adjustObjectInnerRadius: (id: string, innerRadius: number) => void
   moveEndPoints: (id: string, endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }) => void
 }
 
@@ -224,6 +226,19 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
     })
   }, [modifyObject])
 
+  const adjustObjectInnerRadius = useCallback((id: string, innerRadius: number): void => {
+    modifyObject(id, object => {
+      if (object.type !== StrategyBoardObjectType.MechanicDonutAoE) return
+      const arcCenterOffset = getArcCenterOffset(object.size, object.innerRadius, object.arcAngle, object.rotation, object.flipped)
+      const updatedArcCenterOffset = getArcCenterOffset(object.size, innerRadius, object.arcAngle, object.rotation, object.flipped)
+      object.position = normalizePosition({
+        x: object.position.x - arcCenterOffset.x + updatedArcCenterOffset.x,
+        y: object.position.y - arcCenterOffset.y + updatedArcCenterOffset.y,
+      })
+      object.innerRadius = normalizeInnerRadius(innerRadius)
+    })
+  }, [modifyObject])
+
   const moveEndPoints = useCallback((id: string, endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }): void => {
     modifyObject(id, object => {
       if (object.type !== StrategyBoardObjectType.Line) return
@@ -259,6 +274,7 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
     rotateObject,
     adjustObjectDirection,
     adjustObjectArcAngle,
+    adjustObjectInnerRadius,
     moveEndPoints,
   }
 

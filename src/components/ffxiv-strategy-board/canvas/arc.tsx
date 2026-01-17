@@ -13,6 +13,7 @@ import { useStrategyBoardCanvas } from './context'
 
 const directionHandleSize = 8
 const arcAngleHandleSize = 8
+const innerRadiusHandleSize = 8
 
 export interface ArcCanvasObjectProps {
   object: StrategyBoardArcObject
@@ -22,7 +23,7 @@ export function ArcCanvasObject(props: ArcCanvasObjectProps) {
   const { object } = props
   const { id, type, locked, size, flipped, rotation, transparency, arcAngle, innerRadius } = object
 
-  const { zoomRatio, isObjectSelected, adjustObjectDirection, adjustObjectArcAngle } = useStrategyBoardCanvas()
+  const { zoomRatio, isObjectSelected, adjustObjectDirection, adjustObjectArcAngle, adjustObjectInnerRadius } = useStrategyBoardCanvas()
   const selected = isObjectSelected(id)
 
   const objectLibraryItem = objectLibrary.get(type)!
@@ -112,6 +113,37 @@ export function ArcCanvasObject(props: ArcCanvasObjectProps) {
       adjustObjectArcAngleTemporarily(arcAngle)
       adjustObjectArcAngle(id, arcAngle)
     }, [getArcAngleFromArcAngleHandle, adjustObjectArcAngleTemporarily, id, adjustObjectArcAngle])
+    
+    // 调整环形范围
+    const innerRadiusHandleRef = useRef<Konva.Rect>(null)
+  
+    const adjustObjectInnerRadiusTemporarily = useCallback((innerRadius: number): void => {
+      innerRadiusHandleRef.current?.x(0)
+      innerRadiusHandleRef.current?.y(-baseCanvasRadius * innerRadius / 256 * size / 100)
+      boundingBoxFrameRef.current?.innerRadius(baseCanvasRadius * innerRadius / 256)
+      objectRef.current?.clipFunc(ctx => {
+        ctx.beginPath()
+        ctx.moveTo(0, 0)
+        ctx.arc(0, 0, baseBoundingCanvasRadius, -Math.PI / 2 - arcAngle / 2 * Math.PI / 180, -Math.PI / 2 + arcAngle / 2 * Math.PI / 180)
+        ctx.arc(0, 0, baseCanvasRadius * innerRadius / 256, -Math.PI / 2 + arcAngle / 2 * Math.PI / 180, -Math.PI / 2 - arcAngle / 2 * Math.PI / 180, true)
+      })
+    }, [baseCanvasRadius, baseBoundingCanvasRadius, size, arcAngle])
+  
+    const getInnerRadiusFromInnerRadiusHandle = useCallback((innerRadiusHandle: Konva.Node): number => {
+      const innerRadius = Math.hypot(innerRadiusHandle.x(), innerRadiusHandle.y()) * 100 / size / baseCanvasRadius * 256
+      const normalizedInnerRadius = Math.round(Math.min(Math.max(innerRadius, 0), 255))
+      return normalizedInnerRadius
+    }, [baseCanvasRadius, size])
+  
+    const handleInnerRadiusHandleDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
+      const innerRadius = getInnerRadiusFromInnerRadiusHandle(event.target)
+      adjustObjectInnerRadiusTemporarily(innerRadius)
+    }, [getInnerRadiusFromInnerRadiusHandle, adjustObjectInnerRadiusTemporarily])
+    const handleInnerRadiusHandleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
+      const innerRadius = getInnerRadiusFromInnerRadiusHandle(event.target)
+      adjustObjectInnerRadiusTemporarily(innerRadius)
+      adjustObjectInnerRadius(id, innerRadius)
+    }, [getInnerRadiusFromInnerRadiusHandle, adjustObjectInnerRadiusTemporarily, id, adjustObjectInnerRadius])
   
     return (
       <>
@@ -234,6 +266,23 @@ export function ArcCanvasObject(props: ArcCanvasObjectProps) {
                           onDragEnd={handleArcAngleHandleDragEnd}
                         />
                       </Group>
+                      <Rect
+                        ref={innerRadiusHandleRef}
+                        x={0}
+                        y={-baseHoleCanvasRadius * size / 100}
+                        offsetX={innerRadiusHandleSize / 2}
+                        offsetY={innerRadiusHandleSize / 2}
+                        width={innerRadiusHandleSize}
+                        height={innerRadiusHandleSize}
+                        stroke="#fff"
+                        strokeWidth={2}
+                        shadowBlur={4}
+                        fill="#fff"
+                        rotation={45}
+                        draggable
+                        onDragMove={handleInnerRadiusHandleDragMove}
+                        onDragEnd={handleInnerRadiusHandleDragEnd}
+                      />
                     </>
                   )}
                 </Group>

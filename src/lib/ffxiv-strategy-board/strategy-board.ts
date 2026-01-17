@@ -329,11 +329,11 @@ export function normalizeLineEndPoint(endPoint1: { x: number, y: number }, endPo
 export function normalizeLineWidth(lineWidth: number): number {
   return Math.round(clampInt(lineWidth / 10, 0, Math.hypot(sceneWidth * 2, sceneHeight * 2) / 10) * 10)
 }
-export function normalizeInnerRadius(innerRadius: number): number {
-  return clampInt(innerRadius, 0, 255)
-}
 export function normalizeArcAngle(arcAngle: number): number {
   return clampInt(arcAngle, 0, 360)
+}
+export function normalizeInnerRadius(innerRadius: number): number {
+  return clampInt(innerRadius, 0, 255)
 }
 export function normalizeDisplayCount(displayCount: number): number {
   return clampInt(displayCount, 1, 63)
