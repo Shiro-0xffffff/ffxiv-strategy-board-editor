@@ -52,7 +52,7 @@ async function encodeShareCode(data: Uint8Array): Promise<string> {
 async function decodeShareCode(shareCode: string): Promise<Uint8Array> {
 
   // 从分享码提取信息
-  const matchResult = shareCode.match(/^\[stgy:a([a-zA-Z0-9+-])([a-zA-Z0-9+-]+)]$/)
+  const matchResult = shareCode.replace(/\s/g, '').match(/^\[stgy:a([a-zA-Z0-9+-])([a-zA-Z0-9+-]+)]$/)
   if (matchResult === null) throw new Error('分享码格式不正确')
   const [, mask, content] = matchResult
 
