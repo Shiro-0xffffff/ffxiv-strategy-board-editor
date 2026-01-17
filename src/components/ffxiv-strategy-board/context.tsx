@@ -134,13 +134,11 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
 
   const copyObjects = useCallback((ids: string[]): void => {
     if (!ids.length) return
-    const copiedObjects = ids.map(id => {
-      const object = scene.objects.find(object => object.id === id)
-      if (!object) return null
+    const copiedObjects = scene.objects.filter(object => ids.includes(object.id)).map(object => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { id: _id, ...copiedObject } = object
       return copiedObject
-    }).filter(copiedObject => !!copiedObject)
+    }).reverse()
     setCopiedObjects(copiedObjects)
   }, [scene])
   const cutObjects = useCallback((ids: string[]): void => {
