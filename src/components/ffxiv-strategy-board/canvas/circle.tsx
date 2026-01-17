@@ -5,7 +5,7 @@ import Konva from 'konva'
 import { Group, Rect, Circle, Image } from 'react-konva'
 import { Portal } from 'react-konva-utils'
 import useImage from 'use-image'
-import { StrategyBoardCircleObject } from '@/lib/ffxiv-strategy-board'
+import { StrategyBoardCircleObject, baseRadius } from '@/lib/ffxiv-strategy-board'
 import { ffxivImageUrl } from '@/lib/utils'
 
 import { objectLibrary } from '../constants'
@@ -37,8 +37,8 @@ export function CircleCanvasObject(props: CircleCanvasObjectProps) {
 
   const [backgroundImage] = useImage(ffxivImageUrl(objectLibraryItem.image ?? ''))
 
-  const baseRadius = objectLibraryItem.baseSize * zoomRatio / 2
-  const baseBoundingRadius = baseRadius * 256 / 265
+  const baseCanvasRadius = baseRadius * zoomRatio
+  const baseBoundingCanvasRadius = baseCanvasRadius * 256 / 265
 
   // 缩放
   const boundingBoxFrameRef = useRef<Konva.Circle>(null)
@@ -47,20 +47,20 @@ export function CircleCanvasObject(props: CircleCanvasObjectProps) {
   const resizeObjectTemporarily = useCallback((size: number): void => {
     resizeHandlesRef.current.forEach((resizeHandle, id) => {
       const direction = resizeDirections.get(id)!
-      resizeHandle.x(baseBoundingRadius * size / 100 * direction.x)
-      resizeHandle.y(baseBoundingRadius * size / 100 * direction.y)
+      resizeHandle.x(baseBoundingCanvasRadius * size / 100 * direction.x)
+      resizeHandle.y(baseBoundingCanvasRadius * size / 100 * direction.y)
     })
     boundingBoxFrameRef.current?.scaleX(size / 100)
     boundingBoxFrameRef.current?.scaleY(size / 100)
     objectRef.current?.scaleX(size / 100)
     objectRef.current?.scaleY(size / 100)
-  }, [baseBoundingRadius])
+  }, [baseBoundingCanvasRadius])
 
   const getSizeFromResizeHandle = useCallback((resizeHandle: Konva.Node): number => {
-    const size = Math.hypot(resizeHandle.x() / baseBoundingRadius, resizeHandle.y() / baseBoundingRadius) * 100
+    const size = Math.hypot(resizeHandle.x() / baseBoundingCanvasRadius, resizeHandle.y() / baseBoundingCanvasRadius) * 100
     const normalizedSize = Math.round(Math.min(Math.max(size, 0), 255))
     return normalizedSize
-  }, [baseBoundingRadius])
+  }, [baseBoundingCanvasRadius])
 
   const handleResizeHandleDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     const size = getSizeFromResizeHandle(event.target)
@@ -69,7 +69,7 @@ export function CircleCanvasObject(props: CircleCanvasObjectProps) {
   const handleResizeHandleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     const size = getSizeFromResizeHandle(event.target)
     resizeObjectTemporarily(size)
-    resizeObject?.(id, size)
+    resizeObject(id, size)
   }, [getSizeFromResizeHandle, resizeObjectTemporarily, id, resizeObject])
 
   return (
@@ -79,17 +79,17 @@ export function CircleCanvasObject(props: CircleCanvasObjectProps) {
         clipFunc={ctx => {
           ctx.beginPath()
           ctx.moveTo(0, 0)
-          ctx.arc(0, 0, baseBoundingRadius, 0, Math.PI * 2)
+          ctx.arc(0, 0, baseBoundingCanvasRadius, 0, Math.PI * 2)
         }}
         opacity={1 - transparency / 100}
         scaleX={size / 100}
         scaleY={size / 100}
       >
         <Image
-          offsetX={baseRadius}
-          offsetY={baseRadius}
-          width={baseRadius * 2}
-          height={baseRadius * 2}
+          offsetX={baseCanvasRadius}
+          offsetY={baseCanvasRadius}
+          width={baseCanvasRadius * 2}
+          height={baseCanvasRadius * 2}
           image={backgroundImage}
           alt={objectLibraryItem.abbr}
         />
@@ -99,7 +99,7 @@ export function CircleCanvasObject(props: CircleCanvasObjectProps) {
           <Group>
             <Circle
               ref={boundingBoxFrameRef}
-              radius={baseBoundingRadius}
+              radius={baseBoundingCanvasRadius}
               stroke="#fff"
               strokeWidth={2}
               shadowBlur={4}
@@ -114,8 +114,8 @@ export function CircleCanvasObject(props: CircleCanvasObjectProps) {
                   <Rect
                     key={id}
                     ref={ref => { resizeHandlesRef.current.set(id, ref!) }}
-                    x={baseBoundingRadius * size / 100 * direction.x}
-                    y={baseBoundingRadius * size / 100 * direction.y}
+                    x={baseBoundingCanvasRadius * size / 100 * direction.x}
+                    y={baseBoundingCanvasRadius * size / 100 * direction.y}
                     offsetX={resizeHandleSize / 2}
                     offsetY={resizeHandleSize / 2}
                     width={resizeHandleSize}

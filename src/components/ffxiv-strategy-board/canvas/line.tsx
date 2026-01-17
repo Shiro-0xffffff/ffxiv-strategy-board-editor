@@ -23,8 +23,13 @@ export function LineCanvasObject(props: LineCanvasObjectProps) {
 
   const objectRef = useRef<Konva.Rect>(null)
 
-  const length = Math.hypot(endPointOffset.x, endPointOffset.y) * zoomRatio * 2
+  const lineCanvasWidth = lineWidth * zoomRatio
+  const lineCanvasLength = Math.hypot(endPointOffset.x, endPointOffset.y) * zoomRatio * 2
   const rotation = Math.atan2(endPointOffset.y, endPointOffset.x) * 180 / Math.PI
+  const endPointCanvasOffset = {
+    x: endPointOffset.x * zoomRatio,
+    y: endPointOffset.y * zoomRatio,
+  }
 
   // 移动端点
   const boundingBoxRef = useRef<Konva.Group>(null)
@@ -33,28 +38,28 @@ export function LineCanvasObject(props: LineCanvasObjectProps) {
   const endPoint2HandleRef = useRef<Konva.Rect>(null)
 
   const moveEndPointsTemporarily = useCallback((endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }): void => {
-    const endPointOffset = {
+    const endPointCanvasOffset = {
       x: (endPoint2.x - endPoint1.x) / 2 * zoomRatio,
       y: (endPoint2.y - endPoint1.y) / 2 * zoomRatio,
     }
-    const positionOffset = {
+    const positionCanvasOffset = {
       x: (endPoint1.x + endPoint2.x) / 2 * zoomRatio,
       y: (endPoint1.y + endPoint2.y) / 2 * zoomRatio,
     }
-    const length = Math.hypot(endPoint2.x - endPoint1.x, endPoint2.y - endPoint1.y) * zoomRatio
+    const lineCanvasLength = Math.hypot(endPoint2.x - endPoint1.x, endPoint2.y - endPoint1.y) * zoomRatio
     const rotation = Math.atan2(endPoint2.y - endPoint1.y, endPoint2.x - endPoint1.x) * 180 / Math.PI
 
-    endPoint1HandleRef.current?.x(-endPointOffset.x)
-    endPoint1HandleRef.current?.y(-endPointOffset.y)
-    endPoint2HandleRef.current?.x(endPointOffset.x)
-    endPoint2HandleRef.current?.y(endPointOffset.y)
-    boundingBoxFrameRef.current?.findAncestor('.object-bounding-box')?.position(positionOffset)
-    boundingBoxFrameRef.current?.offsetX(length / 2)
-    boundingBoxFrameRef.current?.width(length)
+    endPoint1HandleRef.current?.x(-endPointCanvasOffset.x)
+    endPoint1HandleRef.current?.y(-endPointCanvasOffset.y)
+    endPoint2HandleRef.current?.x(endPointCanvasOffset.x)
+    endPoint2HandleRef.current?.y(endPointCanvasOffset.y)
+    boundingBoxFrameRef.current?.findAncestor('.object-bounding-box')?.position(positionCanvasOffset)
+    boundingBoxFrameRef.current?.offsetX(lineCanvasLength / 2)
+    boundingBoxFrameRef.current?.width(lineCanvasLength)
     boundingBoxFrameRef.current?.rotation(rotation)
-    objectRef.current?.findAncestor('.object')?.position(positionOffset)
-    objectRef.current?.offsetX(length / 2)
-    objectRef.current?.width(length)
+    objectRef.current?.findAncestor('.object')?.position(positionCanvasOffset)
+    objectRef.current?.offsetX(lineCanvasLength / 2)
+    objectRef.current?.width(lineCanvasLength)
     objectRef.current?.rotation(rotation)
   }, [zoomRatio])
 
@@ -84,22 +89,22 @@ export function LineCanvasObject(props: LineCanvasObjectProps) {
   const handleEndPoint1HandleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     const [endPoint1, endPoint2] = getEndPointsFromEndPointHandle(event.target, null)
     moveEndPointsTemporarily(endPoint1, endPoint2)
-    moveEndPoints?.(id, endPoint1, endPoint2)
+    moveEndPoints(id, endPoint1, endPoint2)
   }, [getEndPointsFromEndPointHandle, moveEndPointsTemporarily, id, moveEndPoints])
   const handleEndPoint2HandleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     const [endPoint1, endPoint2] = getEndPointsFromEndPointHandle(null, event.target)
     moveEndPointsTemporarily(endPoint1, endPoint2)
-    moveEndPoints?.(id, endPoint1, endPoint2)
+    moveEndPoints(id, endPoint1, endPoint2)
   }, [getEndPointsFromEndPointHandle, moveEndPointsTemporarily, id, moveEndPoints])
 
   return (
     <>
       <Rect
         ref={objectRef}
-        offsetX={length / 2}
-        offsetY={lineWidth * zoomRatio / 2}
-        width={length}
-        height={lineWidth * zoomRatio}
+        offsetX={lineCanvasLength / 2}
+        offsetY={lineCanvasWidth / 2}
+        width={lineCanvasLength}
+        height={lineCanvasWidth}
         fill={color}
         opacity={1 - transparency / 100}
         rotation={rotation}
@@ -111,10 +116,10 @@ export function LineCanvasObject(props: LineCanvasObjectProps) {
           >
             <Rect
               ref={boundingBoxFrameRef}
-              offsetX={length / 2}
-              offsetY={lineWidth * zoomRatio / 2}
-              width={length}
-              height={lineWidth * zoomRatio}
+              offsetX={lineCanvasLength / 2}
+              offsetY={lineCanvasWidth / 2}
+              width={lineCanvasLength}
+              height={lineCanvasWidth}
               stroke="#fff"
               strokeWidth={2}
               shadowBlur={4}
@@ -125,8 +130,8 @@ export function LineCanvasObject(props: LineCanvasObjectProps) {
               <>
                 <Rect
                   ref={endPoint1HandleRef}
-                  x={-endPointOffset.x * zoomRatio}
-                  y={-endPointOffset.y * zoomRatio}
+                  x={-endPointCanvasOffset.x}
+                  y={-endPointCanvasOffset.y}
                   offsetX={endPointHandleSize / 2}
                   offsetY={endPointHandleSize / 2}
                   width={endPointHandleSize}
@@ -142,8 +147,8 @@ export function LineCanvasObject(props: LineCanvasObjectProps) {
                 />
                 <Rect
                   ref={endPoint2HandleRef}
-                  x={endPointOffset.x * zoomRatio}
-                  y={endPointOffset.y * zoomRatio}
+                  x={endPointCanvasOffset.x}
+                  y={endPointCanvasOffset.y}
                   offsetX={endPointHandleSize / 2}
                   offsetY={endPointHandleSize / 2}
                   width={endPointHandleSize}

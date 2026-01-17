@@ -25,18 +25,18 @@ export function TextCanvasObject(props: TextCanvasObjectProps) {
 
   const textRef = useRef<Konva.Text>(null)
 
-  const [textWidth, setTextWidth] = useState<number>(0)
+  const [textCanvasWidth, setTextCanvasWidth] = useState<number>(0)
   useLayoutEffect(() => {
     const textSize = textRef.current?.measureSize(text)
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (textSize) setTextWidth(textSize.width)
+    if (textSize) setTextCanvasWidth(textSize.width)
   }, [text])
 
-  const textContainerSize = {
-    width: textWidth + horizontalPadding * 2,
+  const textContainerCanvasSize = {
+    width: textCanvasWidth + horizontalPadding * 2,
     height: baseHeight * zoomRatio
   }
-  const fontSize = baseFontSize * zoomRatio
+  const canvasFontSize = baseFontSize * zoomRatio
 
   return (
     <>
@@ -46,12 +46,12 @@ export function TextCanvasObject(props: TextCanvasObjectProps) {
           <Text
             key={index}
             ref={textRef}
-            offsetX={textContainerSize.width / 2}
-            offsetY={textContainerSize.height / 2}
-            width={textContainerSize.width}
-            height={textContainerSize.height}
+            offsetX={textContainerCanvasSize.width / 2}
+            offsetY={textContainerCanvasSize.height / 2}
+            width={textContainerCanvasSize.width}
+            height={textContainerCanvasSize.height}
             text={text}
-            fontSize={fontSize}
+            fontSize={canvasFontSize}
             align="center"
             verticalAlign="middle"
             shadowColor="#000"
@@ -63,10 +63,10 @@ export function TextCanvasObject(props: TextCanvasObjectProps) {
       {!!selected && (
         <Portal selector={`.object-${id}-bounding-box`}>
           <Rect
-            offsetX={textContainerSize.width / 2}
-            offsetY={textContainerSize.height / 2}
-            width={textContainerSize.width}
-            height={textContainerSize.height}
+            offsetX={textContainerCanvasSize.width / 2}
+            offsetY={textContainerCanvasSize.height / 2}
+            width={textContainerCanvasSize.width}
+            height={textContainerCanvasSize.height}
             stroke="#fff"
             strokeWidth={2}
             shadowBlur={4}

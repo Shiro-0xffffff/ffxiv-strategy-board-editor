@@ -350,6 +350,43 @@ export function normalizeTransparency(transparency: number): number {
   return clampInt(transparency, 0, 100)
 }
 
+export const baseRadius = 2560
+
+export function getConeCenterOffset(size: number, arcAngle: number, rotation: number, flipped?: boolean): { x: number, y: number } {
+  const arcAngleInRad = arcAngle * Math.PI / 180
+  const centerOffsetRatio = {
+    x: (arcAngle < 90 ? Math.sin(arcAngleInRad) / 2 : arcAngle < 180 ? 1 / 2 : arcAngle < 270 ? (Math.sin(arcAngleInRad) + 1) / 2 : 0) * (flipped ? -1 : 1),
+    y: arcAngle < 90 ? -1 / 2 : arcAngle < 180 ? (-Math.cos(arcAngleInRad) - 1) / 2 : 0,
+  }
+  const rotationInRad = rotation * Math.PI / 180
+  const rotatedCenterOffsetRatio = {
+    x: centerOffsetRatio.x * Math.cos(rotationInRad) - centerOffsetRatio.y * Math.sin(rotationInRad),
+    y: centerOffsetRatio.x * Math.sin(rotationInRad) + centerOffsetRatio.y * Math.cos(rotationInRad),
+  }
+  const centerOffset = {
+    x: baseRadius * rotatedCenterOffsetRatio.x * size / 100,
+    y: baseRadius * rotatedCenterOffsetRatio.y * size / 100,
+  }
+  return centerOffset
+}
+export function getArcCenterOffset(size: number, innerRadius: number, arcAngle: number, rotation: number, flipped?: boolean): { x: number, y: number } {
+  const arcAngleInRad = arcAngle * Math.PI / 180
+  const centerOffsetRatio = {
+    x: (arcAngle < 90 ? Math.sin(arcAngleInRad) / 2 : arcAngle < 180 ? 1 / 2 : arcAngle < 270 ? (Math.sin(arcAngleInRad) + 1) / 2 : 0) * (flipped ? -1 : 1),
+    y: arcAngle < 90 ? (-Math.cos(arcAngleInRad) * (innerRadius / 256) - 1) / 2 : arcAngle < 180 ? (-Math.cos(arcAngleInRad) - 1) / 2 : 0,
+  }
+  const rotationInRad = rotation * Math.PI / 180
+  const rotatedCenterOffsetRatio = {
+    x: centerOffsetRatio.x * Math.cos(rotationInRad) - centerOffsetRatio.y * Math.sin(rotationInRad),
+    y: centerOffsetRatio.x * Math.sin(rotationInRad) + centerOffsetRatio.y * Math.cos(rotationInRad),
+  }
+  const centerOffset = {
+    x: baseRadius * rotatedCenterOffsetRatio.x * size / 100,
+    y: baseRadius * rotatedCenterOffsetRatio.y * size / 100,
+  }
+  return centerOffset
+}
+
 export function createObject(type: StrategyBoardObjectType): StrategyBoardObject {
 
   // 图形基本信息

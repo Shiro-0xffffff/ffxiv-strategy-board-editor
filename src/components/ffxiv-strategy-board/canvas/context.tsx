@@ -9,6 +9,8 @@ import {
   normalizeWidth,
   normalizeHeight,
   normalizeLineEndPoint,
+  getConeCenterOffset,
+  getArcCenterOffset,
 } from '@/lib/ffxiv-strategy-board'
 
 import { useStrategyBoard } from '../context'
@@ -32,6 +34,7 @@ export interface StrategyBoardCanvasContextProps {
   flipObjectsVertically: (ids: string[]) => void
   resizeObject: (id: string, size: number | { width: number, height: number }) => void
   rotateObject: (id: string, rotation: number) => void
+  adjustObjectDirection: (id: string, direction: { size: number, rotation: number }) => void
   moveEndPoints: (id: string, endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }) => void
 }
 
@@ -151,6 +154,45 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
     })
   }, [modifyObject])
 
+  const adjustObjectDirection = useCallback((id: string, direction: { size: number, rotation: number }): void => {
+    modifyObject(id, object => {
+      switch (object.type) {
+        case StrategyBoardObjectType.Text:
+        case StrategyBoardObjectType.Line:
+          break
+        case StrategyBoardObjectType.Rectangle:
+          object.rotation = normalizeRotation(direction.rotation)
+          break
+        case StrategyBoardObjectType.MechanicCircleAoE:
+          object.size = normalizeSize(direction.size)
+          break
+        case StrategyBoardObjectType.MechanicConeAoE:
+          const coneCenterOffset = getConeCenterOffset(object.size, object.arcAngle, object.rotation, object.flipped)
+          const updatedConeCenterOffset = getConeCenterOffset(direction.size, object.arcAngle, direction.rotation, object.flipped)
+          object.position = normalizePosition({
+            x: object.position.x - coneCenterOffset.x + updatedConeCenterOffset.x,
+            y: object.position.y - coneCenterOffset.y + updatedConeCenterOffset.y,
+          })
+          object.size = normalizeSize(direction.size)
+          object.rotation = normalizeRotation(direction.rotation)
+          break
+        case StrategyBoardObjectType.MechanicDonutAoE:
+          const arcCenterOffset = getArcCenterOffset(object.size, object.innerRadius, object.arcAngle, object.rotation, object.flipped)
+          const updatedArcCenterOffset = getArcCenterOffset(direction.size, object.innerRadius, object.arcAngle, direction.rotation, object.flipped)
+          object.position = normalizePosition({
+            x: object.position.x - arcCenterOffset.x + updatedArcCenterOffset.x,
+            y: object.position.y - arcCenterOffset.y + updatedArcCenterOffset.y,
+          })
+          object.size = normalizeSize(direction.size)
+          object.rotation = normalizeRotation(direction.rotation)
+          break
+        default:
+          object.size = normalizeSize(direction.size)
+          object.rotation = normalizeRotation(direction.rotation)
+      }
+    })
+  }, [modifyObject])
+
   const moveEndPoints = useCallback((id: string, endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }): void => {
     modifyObject(id, object => {
       if (object.type !== StrategyBoardObjectType.Line) return
@@ -184,6 +226,7 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
     flipObjectsVertically,
     resizeObject,
     rotateObject,
+    adjustObjectDirection,
     moveEndPoints,
   }
 

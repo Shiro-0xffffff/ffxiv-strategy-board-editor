@@ -36,26 +36,35 @@ export function RectangleCanvasObject(props: RectangleCanvasObjectProps) {
 
   const objectRef = useRef<Konva.Rect>(null)
 
+  const canvasSize = {
+    width: size.width * zoomRatio,
+    height: size.height * zoomRatio,
+  }
+
   // 缩放
   const boundingBoxFrameRef = useRef<Konva.Rect>(null)
   const resizeHandlesRef = useRef(new Map<string, Konva.Rect>)
 
   const resizeObjectTemporarily = useCallback((size: { width: number, height: number }): void => {
+    const canvasSize = {
+      width: size.width * zoomRatio,
+      height: size.height * zoomRatio,
+    }
     resizeHandlesRef.current.forEach((resizeHandle, id) => {
       const direction = resizeDirections.get(id)!
-      resizeHandle.x(size.width * zoomRatio / 2 * direction.x)
-      resizeHandle.y(size.height * zoomRatio / 2 * direction.y)
+      resizeHandle.x(canvasSize.width / 2 * direction.x)
+      resizeHandle.y(canvasSize.height / 2 * direction.y)
     })
-    rotateHandleRef.current?.y(-size.height * zoomRatio / 2 - rotateHandleOffset)
-    rotateHandleConnectionLineRef.current?.y(-size.height * zoomRatio / 2 - rotateHandleOffset)
-    boundingBoxFrameRef.current?.offsetX(size.width * zoomRatio / 2)
-    boundingBoxFrameRef.current?.offsetY(size.height * zoomRatio / 2)
-    boundingBoxFrameRef.current?.width(size.width * zoomRatio)
-    boundingBoxFrameRef.current?.height(size.height * zoomRatio)
-    objectRef.current?.offsetX(size.width * zoomRatio / 2)
-    objectRef.current?.offsetY(size.height * zoomRatio / 2)
-    objectRef.current?.width(size.width * zoomRatio)
-    objectRef.current?.height(size.height * zoomRatio)
+    rotateHandleRef.current?.y(-canvasSize.height / 2 - rotateHandleOffset)
+    rotateHandleConnectionLineRef.current?.y(-canvasSize.height / 2 - rotateHandleOffset)
+    boundingBoxFrameRef.current?.offsetX(canvasSize.width / 2)
+    boundingBoxFrameRef.current?.offsetY(canvasSize.height / 2)
+    boundingBoxFrameRef.current?.width(canvasSize.width)
+    boundingBoxFrameRef.current?.height(canvasSize.height)
+    objectRef.current?.offsetX(canvasSize.width / 2)
+    objectRef.current?.offsetY(canvasSize.height / 2)
+    objectRef.current?.width(canvasSize.width)
+    objectRef.current?.height(canvasSize.height)
   }, [zoomRatio])
 
   const getSizeFromResizeHandle = useCallback((resizeHandle: Konva.Node): { width: number, height: number } => {
@@ -77,7 +86,7 @@ export function RectangleCanvasObject(props: RectangleCanvasObjectProps) {
   const handleResizeHandleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     const size = getSizeFromResizeHandle(event.target)
     resizeObjectTemporarily(size)
-    resizeObject?.(id, size)
+    resizeObject(id, size)
   }, [getSizeFromResizeHandle, resizeObjectTemporarily, id, resizeObject])
 
   // 旋转
@@ -87,10 +96,10 @@ export function RectangleCanvasObject(props: RectangleCanvasObjectProps) {
 
   const rotateObjectTemporarily = useCallback((rotation: number): void => {
     rotateHandleRef.current?.x(0)
-    rotateHandleRef.current?.y(-size.height * zoomRatio / 2 - rotateHandleOffset)
+    rotateHandleRef.current?.y(-canvasSize.height / 2 - rotateHandleOffset)
     boundingBoxRef.current?.rotation(rotation)
     objectRef.current?.rotation(rotation)
-  }, [size.height, zoomRatio])
+  }, [canvasSize.height])
 
   const getRotationFromRotateHandle = useCallback((rotateHandle: Konva.Node): number => {
     const rotation = (boundingBoxRef.current?.rotation() ?? 0) + Math.atan2(rotateHandle.x(), -rotateHandle.y()) * 180 / Math.PI
@@ -105,17 +114,17 @@ export function RectangleCanvasObject(props: RectangleCanvasObjectProps) {
   const handleRotateHandleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     const rotation = getRotationFromRotateHandle(event.target)
     rotateObjectTemporarily(rotation)
-    rotateObject?.(id, rotation)
+    rotateObject(id, rotation)
   }, [getRotationFromRotateHandle, rotateObjectTemporarily, id, rotateObject])
 
   return (
     <>
       <Rect
         ref={objectRef}
-        offsetX={size.width * zoomRatio / 2}
-        offsetY={size.height * zoomRatio / 2}
-        width={size.width * zoomRatio}
-        height={size.height * zoomRatio}
+        offsetX={canvasSize.width / 2}
+        offsetY={canvasSize.height / 2}
+        width={canvasSize.width}
+        height={canvasSize.height}
         fill={color}
         opacity={1 - transparency / 100}
         rotation={rotation}
@@ -128,10 +137,10 @@ export function RectangleCanvasObject(props: RectangleCanvasObjectProps) {
           >
             <Rect
               ref={boundingBoxFrameRef}
-              offsetX={size.width * zoomRatio / 2}
-              offsetY={size.height * zoomRatio / 2}
-              width={size.width * zoomRatio}
-              height={size.height * zoomRatio}
+              offsetX={canvasSize.width / 2}
+              offsetY={canvasSize.height / 2}
+              width={canvasSize.width}
+              height={canvasSize.height}
               stroke="#fff"
               strokeWidth={2}
               shadowBlur={4}
@@ -141,7 +150,7 @@ export function RectangleCanvasObject(props: RectangleCanvasObjectProps) {
               <>
                 <Line
                   ref={rotateHandleConnectionLineRef}
-                  y={-size.height * zoomRatio / 2 - rotateHandleOffset}
+                  y={-canvasSize.height / 2 - rotateHandleOffset}
                   points={[0, 0, 0, rotateHandleOffset]}
                   stroke="#fff"
                   strokeWidth={2}
@@ -151,8 +160,8 @@ export function RectangleCanvasObject(props: RectangleCanvasObjectProps) {
                   <Rect
                     key={id}
                     ref={ref => { resizeHandlesRef.current.set(id, ref!) }}
-                    x={size.width * zoomRatio / 2 * direction.x}
-                    y={size.height * zoomRatio / 2 * direction.y}
+                    x={canvasSize.width / 2 * direction.x}
+                    y={canvasSize.height / 2 * direction.y}
                     offsetX={resizeHandleSize / 2}
                     offsetY={resizeHandleSize / 2}
                     width={resizeHandleSize}
@@ -169,7 +178,7 @@ export function RectangleCanvasObject(props: RectangleCanvasObjectProps) {
                 <Rect
                   ref={rotateHandleRef}
                   x={0}
-                  y={-size.height * zoomRatio / 2 - rotateHandleOffset}
+                  y={-canvasSize.height / 2 - rotateHandleOffset}
                   offsetX={rotateHandleSize / 2}
                   offsetY={rotateHandleSize / 2}
                   width={rotateHandleSize}
