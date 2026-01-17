@@ -2,7 +2,7 @@
 
 import { MouseEventHandler, useRef, useCallback } from 'react'
 import { ContextMenuContent, ContextMenuItem, ContextMenuShortcut, ContextMenuTrigger, ContextMenu, ContextMenuGroup, ContextMenuSeparator } from '@/components/ui/context-menu'
-import { Undo2, Redo2, Scissors, Copy, ClipboardPaste, Trash2, CopyCheck } from 'lucide-react'
+import { Undo2, Redo2, Scissors, Copy, ClipboardPaste, FlipHorizontal2, FlipVertical2, CopyCheck, Trash2 } from 'lucide-react'
 import Konva from 'konva'
 import { Stage, Layer, Group, Image } from 'react-konva'
 import useImage from 'use-image'
@@ -153,7 +153,7 @@ export function StrategyBoardCanvas() {
     redoAvailable,
     redo,
   } = useStrategyBoard()
-  const { preview, zoomRatio, moveObjects } = useStrategyBoardCanvas()
+  const { preview, zoomRatio, moveObjects, flipObjectsHorizontally, flipObjectsVertically } = useStrategyBoardCanvas()
 
   const backgroundOption = backgroundOptions.get(scene.background)!
 
@@ -194,6 +194,13 @@ export function StrategyBoardCanvas() {
   const handleContextMenuPasteClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
     pasteObjects()
   }, [pasteObjects])
+
+  const handleContextMenuFlipHorizontallyClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
+    flipObjectsHorizontally(selectedObjectIds)
+  }, [flipObjectsHorizontally, selectedObjectIds])
+  const handleContextMenuFlipVerticallyClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
+    flipObjectsVertically(selectedObjectIds)
+  }, [flipObjectsVertically, selectedObjectIds])
 
   const handleContextMenuSelectAllClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
     selectObjects(scene.objects.map(object => object.id))
@@ -347,6 +354,15 @@ export function StrategyBoardCanvas() {
           <ContextMenuItem onClick={handleContextMenuPasteClick}>
             <ClipboardPaste /> 粘贴
             <ContextMenuShortcut>Ctrl+V</ContextMenuShortcut>
+          </ContextMenuItem>
+        </ContextMenuGroup>
+        <ContextMenuSeparator />
+        <ContextMenuGroup>
+          <ContextMenuItem onClick={handleContextMenuFlipHorizontallyClick}>
+            <FlipHorizontal2 /> 水平翻转
+          </ContextMenuItem>
+          <ContextMenuItem onClick={handleContextMenuFlipVerticallyClick}>
+            <FlipVertical2 /> 垂直翻转
           </ContextMenuItem>
         </ContextMenuGroup>
         <ContextMenuSeparator />

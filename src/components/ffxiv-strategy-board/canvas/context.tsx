@@ -26,6 +26,10 @@ export interface StrategyBoardCanvasContextProps {
   isObjectSelected: (id: string) => boolean
   moveObject: (id: string, position: { x: number, y: number }) => void
   moveObjects: (positions: { id: string, position: { x: number, y: number } }[]) => void
+  flipObjectHorizontally: (id: string) => void
+  flipObjectsHorizontally: (ids: string[]) => void
+  flipObjectVertically: (id: string) => void
+  flipObjectsVertically: (ids: string[]) => void
   resizeObject: (id: string, size: number | { width: number, height: number }) => void
   rotateObject: (id: string, rotation: number) => void
   moveEndPoints: (id: string, endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }) => void
@@ -76,6 +80,45 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
   const moveObject = useCallback((id: string, position: { x: number, y: number }): void => {
     moveObjects([{ id, position }])
   }, [moveObjects])
+
+  const flipObjectsHorizontally = useCallback((ids: string[]): void => {
+    modifyObjects(ids.map(id => ({ id, modification: object => {
+      switch (object.type) {
+        case StrategyBoardObjectType.Text:
+        case StrategyBoardObjectType.Rectangle:
+        case StrategyBoardObjectType.MechanicCircleAoE:
+          break
+        case StrategyBoardObjectType.Line:
+          object.endPointOffset = { x: -object.endPointOffset.x, y: object.endPointOffset.y }
+          break
+        default:
+          object.flipped = !object.flipped
+          object.rotation = normalizeRotation(-object.rotation)
+      }
+    }})))
+  }, [modifyObjects])
+  const flipObjectHorizontally = useCallback((id: string): void => {
+    flipObjectsHorizontally([id])
+  }, [flipObjectsHorizontally])
+  const flipObjectsVertically = useCallback((ids: string[]): void => {
+    modifyObjects(ids.map(id => ({ id, modification: object => {
+      switch (object.type) {
+        case StrategyBoardObjectType.Text:
+        case StrategyBoardObjectType.Rectangle:
+        case StrategyBoardObjectType.MechanicCircleAoE:
+          break
+        case StrategyBoardObjectType.Line:
+          object.endPointOffset = { x: object.endPointOffset.x, y: -object.endPointOffset.y }
+          break
+        default:
+          object.flipped = !object.flipped
+          object.rotation = normalizeRotation(180 - object.rotation)
+      }
+    }})))
+  }, [modifyObjects])
+  const flipObjectVertically = useCallback((id: string): void => {
+    flipObjectsVertically([id])
+  }, [flipObjectsVertically])
 
   const resizeObject = useCallback((id: string, size: number | { width: number, height: number }): void => {
     modifyObject(id, object => {
@@ -135,6 +178,10 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
     isObjectSelected,
     moveObject,
     moveObjects,
+    flipObjectHorizontally,
+    flipObjectsHorizontally,
+    flipObjectVertically,
+    flipObjectsVertically,
     resizeObject,
     rotateObject,
     moveEndPoints,
