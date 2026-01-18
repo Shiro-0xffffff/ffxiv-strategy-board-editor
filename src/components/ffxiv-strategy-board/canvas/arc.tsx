@@ -51,13 +51,14 @@ export function ArcCanvasObject(props: ArcCanvasObjectProps) {
       directionHandleRef.current?.y(-baseBoundingCanvasRadius * direction.size / 100)
       arcAngleHandle1Ref.current?.y(-baseBoundingCanvasRadius * direction.size / 100)
       arcAngleHandle2Ref.current?.y(-baseBoundingCanvasRadius * direction.size / 100)
+      innerRadiusHandleRef.current?.y(-baseCanvasRadius * innerRadius / 256 * direction.size / 100)
       boundingBoxFrameRef.current?.scaleX(direction.size / 100)
       boundingBoxFrameRef.current?.scaleY(direction.size / 100 * (flipped ? -1 : 1))
       boundingBoxRef.current?.rotation(direction.rotation)
       objectRef.current?.scaleX(direction.size / 100 * (flipped ? -1 : 1))
       objectRef.current?.scaleY(direction.size / 100)
       objectRef.current?.rotation(direction.rotation)
-    }, [baseBoundingCanvasRadius, flipped])
+    }, [baseCanvasRadius, baseBoundingCanvasRadius, flipped, innerRadius])
   
     const getDirectionFromDirectionHandle = useCallback((directionHandle: Konva.Node): { size: number, rotation: number } => {
       const size = Math.hypot(directionHandle.x(), directionHandle.y()) / baseBoundingCanvasRadius * 100
