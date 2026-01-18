@@ -84,13 +84,13 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
 
   const addObjectAtCanvasPosition = useCallback((type: StrategyBoardObjectType, canvasPosition: { x: number, y: number }): void => {
     const position = {
-      x: Math.round(canvasPosition.x / 0.2),
-      y: Math.round(canvasPosition.y / 0.2),
+      x: Math.round(canvasPosition.x / zoomRatio),
+      y: Math.round(canvasPosition.y / zoomRatio),
     }
     if (position.x >= -sceneWidth / 2 && position.x <= sceneWidth && position.y >= -sceneHeight / 2 && position.y <= sceneHeight / 2) {
       addObject(type, { position })
     }
-  }, [addObject])
+  }, [zoomRatio, addObject])
 
   const moveObjects = useCallback((positions: { id: string, position: { x: number, y: number } }[]): void => {
     modifyObjects(positions.map(({ id, position }) => ({ id, modification: object => {
