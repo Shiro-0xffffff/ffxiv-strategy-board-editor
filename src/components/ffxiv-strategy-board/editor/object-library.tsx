@@ -7,10 +7,9 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip
 import { PointerSensor, DragStartEvent, DragEndEvent, DndContext, DragOverlay, useSensor, useSensors, useDroppable, useDraggable } from '@dnd-kit/core'
 import { restrictToWindowEdges } from '@dnd-kit/modifiers'
 import { ffxivImageUrl } from '@/lib/utils'
-import { StrategyBoardObjectType, sceneWidth, sceneHeight } from '@/lib/ffxiv-strategy-board'
+import { StrategyBoardObjectType } from '@/lib/ffxiv-strategy-board'
 
 import { objectLibrary, objectLibraryGroups } from '../constants'
-import { useStrategyBoard } from '../context'
 import { StrategyBoardCanvasObjectPreview } from '../canvas'
 
 function ObjectIcon(props: { objectType: StrategyBoardObjectType }) {
@@ -54,12 +53,14 @@ function ObjectPreview(props: { objectType: StrategyBoardObjectType }) {
   )
 }
 
+interface DraggingTargetData {
+  onObjectDraggedIn?: (type: StrategyBoardObjectType, canvasPosition: { x: number, y: number }) => void
+}
+
 export function ObjectLibraryDraggingContainer(props: { children?: ReactNode }) {
   const { children } = props
 
   const [draggingObjectType, setDraggingObjectType] = useState<StrategyBoardObjectType | null>(null)
-
-  const { addObject } = useStrategyBoard()
 
   const contextId = useId()
 
@@ -75,15 +76,14 @@ export function ObjectLibraryDraggingContainer(props: { children?: ReactNode }) 
   const handleDragEnd = useCallback((event: DragEndEvent): void => {
     const { active, over } = event
     setDraggingObjectType(null)
-    if (!draggingObjectType || !over || !active.rect.current.translated) return
-    const canvasX = (active.rect.current.translated.left + active.rect.current.translated.right) / 2 - (over.rect.left + over.rect.right) / 2
-    const canvasY = (active.rect.current.translated.top + active.rect.current.translated.bottom) / 2 - (over.rect.top + over.rect.bottom) / 2
-    const x = Math.round(canvasX * sceneWidth / over.rect.width)
-    const y = Math.round(canvasY * sceneHeight / over.rect.height)
-    if (x >= -sceneWidth / 2 && x <= sceneWidth && y >= -sceneHeight / 2 && y <= sceneHeight / 2) {
-      addObject(draggingObjectType, { position: { x, y } })
+    if (!draggingObjectType || !active.rect.current.translated || !over || !over.data.current) return
+    const position = {
+      x: (active.rect.current.translated.left + active.rect.current.translated.right) / 2 - (over.rect.left + over.rect.right) / 2,
+      y: (active.rect.current.translated.top + active.rect.current.translated.bottom) / 2 - (over.rect.top + over.rect.bottom) / 2,
     }
-  }, [draggingObjectType, addObject])
+    const { onObjectDraggedIn }: DraggingTargetData = over.data.current
+    onObjectDraggedIn?.(draggingObjectType, position)
+  }, [draggingObjectType])
 
   return (
     <DndContext
@@ -104,13 +104,13 @@ export function ObjectLibraryDraggingContainer(props: { children?: ReactNode }) 
   )
 }
 
-export function ObjectLibraryDraggingTargetCanvas(props: { children?: ReactNode }) {
-  const { children } = props
+export function ObjectLibraryDraggingTarget(props: { onObjectDraggedIn?: (type: StrategyBoardObjectType, position: { x: number, y: number }) => void, children?: ReactNode }) {
+  const { onObjectDraggedIn, children } = props
 
-  const { setNodeRef } = useDroppable({ id: 'canvas' })
+  const { setNodeRef } = useDroppable({ id: 'canvas', data: { onObjectDraggedIn } as DraggingTargetData })
 
   return (
-    <div ref={setNodeRef}>
+    <div ref={setNodeRef} className="size-full">
       {children}
     </div>
   )

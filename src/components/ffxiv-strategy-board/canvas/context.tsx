@@ -3,6 +3,8 @@
 import { ReactNode, createContext, useState, useContext, useCallback } from 'react'
 import {
   StrategyBoardObjectType,
+  sceneWidth,
+  sceneHeight,
   normalizePosition,
   normalizeRotation,
   normalizeSize,
@@ -28,6 +30,7 @@ export interface StrategyBoardCanvasContextProps {
   isZoomOutAvailable: boolean
   zoomOut: () => void
   isObjectSelected: (id: string) => boolean
+  addObjectAtCanvasPosition: (type: StrategyBoardObjectType, canvasPosition: { x: number, y: number })=> void
   moveObject: (id: string, position: { x: number, y: number }) => void
   moveObjects: (positions: { id: string, position: { x: number, y: number } }[]) => void
   flipObjectHorizontally: (id: string) => void
@@ -58,7 +61,7 @@ export interface StrategyBoardCanvasProviderProps {
 export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderProps) {
   const { preview = false, children } = props
 
-  const { selectedObjectIds, modifyObject, modifyObjects } = useStrategyBoard()
+  const { selectedObjectIds, addObject, modifyObject, modifyObjects } = useStrategyBoard()
 
   const [zoomRatio, setZoomRatio] = useState<number>(defaultZoomRatio)
 
@@ -78,6 +81,16 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
   const isObjectSelected = useCallback((id: string): boolean => {
     return !preview && selectedObjectIds.includes(id)
   }, [preview, selectedObjectIds])
+
+  const addObjectAtCanvasPosition = useCallback((type: StrategyBoardObjectType, canvasPosition: { x: number, y: number }): void => {
+    const position = {
+      x: Math.round(canvasPosition.x / 0.2),
+      y: Math.round(canvasPosition.y / 0.2),
+    }
+    if (position.x >= -sceneWidth / 2 && position.x <= sceneWidth && position.y >= -sceneHeight / 2 && position.y <= sceneHeight / 2) {
+      addObject(type, { position })
+    }
+  }, [addObject])
 
   const moveObjects = useCallback((positions: { id: string, position: { x: number, y: number } }[]): void => {
     modifyObjects(positions.map(({ id, position }) => ({ id, modification: object => {
@@ -308,6 +321,7 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
     isZoomOutAvailable,
     zoomOut,
     isObjectSelected,
+    addObjectAtCanvasPosition,
     moveObject,
     moveObjects,
     flipObjectHorizontally,

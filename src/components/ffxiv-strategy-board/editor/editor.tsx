@@ -1,14 +1,16 @@
 'use client'
 
-import { PointerEventHandler, useEffect, useCallback } from 'react'
+import { useEffect, useCallback } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
+import { StrategyBoardObjectType } from '@/lib/ffxiv-strategy-board'
 
 import { useStrategyBoard } from '../context'
 import { StrategyBoardCanvasProvider, StrategyBoardCanvas, StrategyBoardCanvasZoomButtons } from '../canvas'
 
-import { ObjectLibraryDraggingContainer, ObjectLibraryDraggingTargetCanvas, ObjectLibraryPanel, ObjectLibraryPanelSkeleton } from './object-library'
+import { ObjectLibraryDraggingContainer, ObjectLibraryDraggingTarget, ObjectLibraryPanel, ObjectLibraryPanelSkeleton } from './object-library'
 import { PropertiesPanel, PropertiesPanelSkeleton } from './properties'
 import { LayersPanel, LayersPanelSkeleton } from './layers'
+import { useStrategyBoardCanvas } from '../canvas/context'
 
 function CanvasArea() {
   const { scene, selectedObjectIds, selectObjects, deleteObjects, cutObjects, copyObjects, pasteObjects, isUndoAvailable, undo, redo } = useStrategyBoard()
@@ -49,34 +51,25 @@ function CanvasArea() {
     }
   }, [handleWindowBeforeUnload])
 
-  const handleBackgroundPointerDown = useCallback<PointerEventHandler<HTMLDivElement>>(() => {
-    selectObjects([])
-  }, [selectObjects])
-  const handleCanvasContainerPointerDown = useCallback<PointerEventHandler<HTMLDivElement>>(event => {
-    event.stopPropagation()
-  }, [])
+  const { addObjectAtCanvasPosition } = useStrategyBoardCanvas()
+
+  const handleObjectLibraryObjectDraggedIn = useCallback((type: StrategyBoardObjectType, position: { x: number, y: number }): void => {
+    addObjectAtCanvasPosition(type, position)
+  }, [addObjectAtCanvasPosition])
 
   return (
-    <div className="relative size-full bg-muted/30">
-      <div className="size-full flex flex-col overflow-auto">
-        <div className="flex-1 min-w-max flex flex-col" onPointerDown={handleBackgroundPointerDown}>
-          <div className="flex-1 px-8 py-8 3xl:px-4 flex items-center justify-center">
-            <div className="shadow-xl" onPointerDown={handleCanvasContainerPointerDown}>
-              <ObjectLibraryDraggingTargetCanvas>
-                <StrategyBoardCanvas />
-              </ObjectLibraryDraggingTargetCanvas>
-            </div>
-          </div>
-          <div className="min-w-0 min-h-0 p-4">
-            <div className="text-center text-balance text-xs text-muted-foreground/15">
-              <p>FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.</p>
-              <p>FINAL FANTASY XI © 2002 - 2020 SQUARE ENIX CO., LTD. All Rights Reserved.</p>
-            </div>
-          </div>
+    <div className="relative size-full flex items-center justify-center bg-muted/30 overflow-hidden">
+      <div className="absolute bottom-0 w-full p-4">
+        <div className="text-center text-balance text-xs text-muted-foreground/15">
+          <p>FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.</p>
+          <p>FINAL FANTASY XI © 2002 - 2020 SQUARE ENIX CO., LTD. All Rights Reserved.</p>
         </div>
-        <div className="absolute right-0 bottom-0 m-4">
-          <StrategyBoardCanvasZoomButtons />
-        </div>
+      </div>
+      <ObjectLibraryDraggingTarget onObjectDraggedIn={handleObjectLibraryObjectDraggedIn}>
+        <StrategyBoardCanvas />
+      </ObjectLibraryDraggingTarget>
+      <div className="absolute right-0 bottom-0 m-4">
+        <StrategyBoardCanvasZoomButtons />
       </div>
     </div>
   )
