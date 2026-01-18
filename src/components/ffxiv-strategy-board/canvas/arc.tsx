@@ -84,10 +84,10 @@ export function ArcCanvasObject(props: ArcCanvasObjectProps) {
     const adjustObjectArcAngleTemporarily = useCallback((arcAngle: number): void => {
       arcAngleHandle1Ref.current?.x(0)
       arcAngleHandle1Ref.current?.y(-baseBoundingCanvasRadius * size / 100)
-      arcAngleHandle1Ref.current?.parent?.rotation(-arcAngle / 2 * (flipped ? -1 : 1))
+      arcAngleHandle1Ref.current?.parent?.rotation(arcAngle / 2 * (flipped ? -1 : 1))
       arcAngleHandle2Ref.current?.x(0)
       arcAngleHandle2Ref.current?.y(-baseBoundingCanvasRadius * size / 100)
-      arcAngleHandle2Ref.current?.parent?.rotation(arcAngle / 2 * (flipped ? -1 : 1))
+      arcAngleHandle2Ref.current?.parent?.rotation(-arcAngle / 2 * (flipped ? -1 : 1))
       boundingBoxFrameRef.current?.angle(arcAngle)
       boundingBoxFrameRef.current?.rotation(-90 - arcAngle / 2 * (flipped ? -1 : 1))
       objectRef.current?.clipFunc(ctx => {
@@ -225,7 +225,7 @@ export function ArcCanvasObject(props: ArcCanvasObjectProps) {
                         onDragEnd={handleDirectionHandleDragEnd}
                       />
                       <Group
-                        rotation={-arcAngle / 2 * (flipped ? -1 : 1)}
+                        rotation={arcAngle / 2 * (flipped ? -1 : 1)}
                       >
                         <Rect
                           ref={arcAngleHandle1Ref}
@@ -246,7 +246,7 @@ export function ArcCanvasObject(props: ArcCanvasObjectProps) {
                         />
                       </Group>
                       <Group
-                        rotation={arcAngle / 2 * (flipped ? -1 : 1)}
+                        rotation={-arcAngle / 2 * (flipped ? -1 : 1)}
                       >
                         <Rect
                           ref={arcAngleHandle2Ref}
