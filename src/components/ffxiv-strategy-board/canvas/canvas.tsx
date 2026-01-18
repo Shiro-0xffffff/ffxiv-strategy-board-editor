@@ -1,6 +1,6 @@
 'use client'
 
-import { MouseEventHandler, useRef, useCallback } from 'react'
+import { MouseEventHandler, useState, useRef, useLayoutEffect, useCallback } from 'react'
 import { ContextMenuContent, ContextMenuItem, ContextMenuShortcut, ContextMenuTrigger, ContextMenu, ContextMenuGroup, ContextMenuSeparator } from '@/components/ui/context-menu'
 import { Undo2, Redo2, Scissors, Copy, ClipboardPaste, FlipHorizontal2, FlipVertical2, CopyCheck, Trash2 } from 'lucide-react'
 import Konva from 'konva'
@@ -160,6 +160,24 @@ export function StrategyBoardCanvas() {
 
   const [backgroundImage] = useImage(ffxivImageUrl(backgroundOption.image))
 
+  // 根据容器尺寸缩放画布
+  const [stageSize, setStageSize] = useState<{ width: number, height: number }>(() => ({ width: 0, height: 0 }))
+
+  const stageContainerRef = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    const stageContainer = stageContainerRef.current
+    if (!stageContainer) return
+    const resizeObserver = new ResizeObserver(() => {
+      setStageSize({
+        width: stageContainer.offsetWidth,
+        height: stageContainer.offsetHeight,
+      })
+    })
+    resizeObserver.observe(stageContainer)
+    return () => resizeObserver.unobserve(stageContainer)
+  }, [])
+
   // 选中图形
   const handleClick = useCallback((event: Konva.KonvaEventObject<MouseEvent>): void => {
     if (preview) return
@@ -293,13 +311,13 @@ export function StrategyBoardCanvas() {
   return (
     <ContextMenu modal={false}>
       <ContextMenuTrigger asChild disabled={preview}>
-        <div className="flex-1 size-full flex items-center justify-center">
+        <div ref={stageContainerRef} className="flex-1 size-full">
           <Stage
             ref={stageRef}
-            offsetX={-sceneWidth / 2 * zoomRatio}
-            offsetY={-sceneHeight / 2 * zoomRatio}
-            width={sceneWidth * zoomRatio}
-            height={sceneHeight * zoomRatio}
+            offsetX={-stageSize.width / 2}
+            offsetY={-stageSize.height / 2}
+            width={stageSize.width}
+            height={stageSize.height}
             onClick={handleClick}
             onDragStart={handleDragStart}
             onDragMove={handleDragMove}
