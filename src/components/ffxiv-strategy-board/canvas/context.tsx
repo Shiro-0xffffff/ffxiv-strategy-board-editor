@@ -92,11 +92,33 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
     modifyObjects(ids.map(id => ({ id, modification: object => {
       switch (object.type) {
         case StrategyBoardObjectType.Text:
-        case StrategyBoardObjectType.Rectangle:
         case StrategyBoardObjectType.MechanicCircleAoE:
           break
         case StrategyBoardObjectType.Line:
           object.endPointOffset = { x: -object.endPointOffset.x, y: object.endPointOffset.y }
+          break
+        case StrategyBoardObjectType.Rectangle:
+          object.rotation = normalizeRotation(-object.rotation)
+          break
+        case StrategyBoardObjectType.MechanicConeAoE:
+          const coneCenterOffset = getConeCenterOffset(object.size, object.arcAngle, object.rotation, object.flipped)
+          const updatedConeCenterOffset = getConeCenterOffset(object.size, object.arcAngle, -object.rotation, !object.flipped)
+          object.position = normalizePosition({
+            x: object.position.x - coneCenterOffset.x + updatedConeCenterOffset.x,
+            y: object.position.y - coneCenterOffset.y + updatedConeCenterOffset.y,
+          })
+          object.flipped = !object.flipped
+          object.rotation = normalizeRotation(-object.rotation)
+          break
+        case StrategyBoardObjectType.MechanicDonutAoE:
+          const arcCenterOffset = getArcCenterOffset(object.size, object.innerRadius, object.arcAngle, object.rotation, object.flipped)
+          const updatedArcCenterOffset = getArcCenterOffset(object.size, object.innerRadius, object.arcAngle, -object.rotation, !object.flipped)
+          object.position = normalizePosition({
+            x: object.position.x - arcCenterOffset.x + updatedArcCenterOffset.x,
+            y: object.position.y - arcCenterOffset.y + updatedArcCenterOffset.y,
+          })
+          object.flipped = !object.flipped
+          object.rotation = normalizeRotation(-object.rotation)
           break
         default:
           object.flipped = !object.flipped
@@ -111,11 +133,33 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
     modifyObjects(ids.map(id => ({ id, modification: object => {
       switch (object.type) {
         case StrategyBoardObjectType.Text:
-        case StrategyBoardObjectType.Rectangle:
         case StrategyBoardObjectType.MechanicCircleAoE:
           break
         case StrategyBoardObjectType.Line:
           object.endPointOffset = { x: object.endPointOffset.x, y: -object.endPointOffset.y }
+          break
+        case StrategyBoardObjectType.Rectangle:
+          object.rotation = normalizeRotation(180 - object.rotation)
+          break
+        case StrategyBoardObjectType.MechanicConeAoE:
+          const coneCenterOffset = getConeCenterOffset(object.size, object.arcAngle, object.rotation, object.flipped)
+          const updatedConeCenterOffset = getConeCenterOffset(object.size, object.arcAngle, 180 - object.rotation, !object.flipped)
+          object.position = normalizePosition({
+            x: object.position.x - coneCenterOffset.x + updatedConeCenterOffset.x,
+            y: object.position.y - coneCenterOffset.y + updatedConeCenterOffset.y,
+          })
+          object.flipped = !object.flipped
+          object.rotation = normalizeRotation(180 - object.rotation)
+          break
+        case StrategyBoardObjectType.MechanicDonutAoE:
+          const arcCenterOffset = getArcCenterOffset(object.size, object.innerRadius, object.arcAngle, object.rotation, object.flipped)
+          const updatedArcCenterOffset = getArcCenterOffset(object.size, object.innerRadius, object.arcAngle, 180 - object.rotation, !object.flipped)
+          object.position = normalizePosition({
+            x: object.position.x - arcCenterOffset.x + updatedArcCenterOffset.x,
+            y: object.position.y - arcCenterOffset.y + updatedArcCenterOffset.y,
+          })
+          object.flipped = !object.flipped
+          object.rotation = normalizeRotation(180 - object.rotation)
           break
         default:
           object.flipped = !object.flipped
