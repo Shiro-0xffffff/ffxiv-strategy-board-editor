@@ -293,41 +293,39 @@ export function StrategyBoardCanvas() {
   return (
     <ContextMenu modal={false}>
       <ContextMenuTrigger disabled={preview}>
-        <div style={{ width: sceneWidth * zoomRatio, height: sceneHeight * zoomRatio }}>
-          <Stage
-            ref={stageRef}
-            width={sceneWidth * zoomRatio}
-            height={sceneHeight * zoomRatio}
-            onClick={handleClick}
-            onDragStart={handleDragStart}
-            onDragMove={handleDragMove}
-            onDragEnd={handleDragEnd}
-          >
-            <Layer listening={!preview}>
-              <Image
-                width={sceneWidth * zoomRatio}
-                height={sceneHeight * zoomRatio}
-                image={backgroundImage}
-                alt={backgroundOption.name}
-                fill="#595959"
-              />
-              <Group x={sceneWidth * zoomRatio / 2} y={sceneHeight * zoomRatio / 2}>
-                {scene.objects.slice().reverse().map(({ id }) => (
-                  <CanvasObject key={id} id={id} />
-                ))}
-              </Group>
+        <Stage
+          ref={stageRef}
+          offsetX={-sceneWidth / 2 * zoomRatio}
+          offsetY={-sceneHeight / 2 * zoomRatio}
+          width={sceneWidth * zoomRatio}
+          height={sceneHeight * zoomRatio}
+          onClick={handleClick}
+          onDragStart={handleDragStart}
+          onDragMove={handleDragMove}
+          onDragEnd={handleDragEnd}
+        >
+          <Layer listening={!preview}>
+            <Image
+              offsetX={sceneWidth / 2 * zoomRatio}
+              offsetY={sceneHeight / 2 * zoomRatio}
+              width={sceneWidth * zoomRatio}
+              height={sceneHeight * zoomRatio}
+              image={backgroundImage}
+              alt={backgroundOption.name}
+              fill="#595959"
+            />
+            {scene.objects.slice().reverse().map(({ id }) => (
+              <CanvasObject key={id} id={id} />
+            ))}
+          </Layer>
+          {!preview && (
+            <Layer>
+              {scene.objects.slice().reverse().map(({ id }) => (
+                <CanvasObjectBoundingBox key={id} id={id} />
+              ))}
             </Layer>
-            {!preview && (
-              <Layer>
-                <Group x={sceneWidth * zoomRatio / 2} y={sceneHeight * zoomRatio / 2}>
-                  {scene.objects.slice().reverse().map(({ id }) => (
-                    <CanvasObjectBoundingBox key={id} id={id} />
-                  ))}
-                </Group>
-              </Layer>
-            )}
-          </Stage>
-        </div>
+          )}
+        </Stage>
       </ContextMenuTrigger>
       <ContextMenuContent>
         <ContextMenuGroup>
