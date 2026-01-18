@@ -2,7 +2,7 @@
 
 import { useRef, useMemo, useCallback } from 'react'
 import Konva from 'konva'
-import { Group, Line, Rect, Image } from 'react-konva'
+import { Group, Line, Rect, Circle, Image } from 'react-konva'
 import { Portal } from 'react-konva-utils'
 import useImage from 'use-image'
 import { StrategyBoardCommonObject, StrategyBoardMechanicLineStackObject, StrategyBoardMechanicLinearKnockbackObject, StrategyBoardObjectType } from '@/lib/ffxiv-strategy-board'
@@ -96,7 +96,7 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
 
   // 旋转
   const boundingBoxRef = useRef<Konva.Group>(null)
-  const rotateHandleRef = useRef<Konva.Rect>(null)
+  const rotateHandleRef = useRef<Konva.Circle>(null)
   const rotateHandleConnectionLineRef = useRef<Konva.Line>(null)
 
   const rotateObjectTemporarily = useCallback((rotation: number): void => {
@@ -203,18 +203,14 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
                     onDragEnd={handleResizeHandleDragEnd}
                   />
                 ))}
-                <Rect
+                <Circle
                   ref={rotateHandleRef}
                   x={0}
                   y={-imageBaseCanvasSize.height * (repeat ? repeat.y : 1) / 2 * size / 100 - rotateHandleOffset}
-                  offsetX={rotateHandleSize / 2}
-                  offsetY={rotateHandleSize / 2}
-                  width={rotateHandleSize}
-                  height={rotateHandleSize}
+                  radius={rotateHandleSize / 2}
                   stroke="#fff"
                   strokeWidth={2}
                   shadowBlur={4}
-                  cornerRadius={rotateHandleSize}
                   fill="#fff"
                   draggable
                   onDragMove={handleRotateHandleDragMove}

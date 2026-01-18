@@ -2,7 +2,7 @@
 
 import { useRef, useCallback } from 'react'
 import Konva from 'konva'
-import { Group, Rect, Arc, Image } from 'react-konva'
+import { Group, Rect, Circle, Arc, Image } from 'react-konva'
 import { Portal } from 'react-konva-utils'
 import useImage from 'use-image'
 import { StrategyBoardArcObject, baseRadius, getArcCenterOffset } from '@/lib/ffxiv-strategy-board'
@@ -44,7 +44,7 @@ export function ArcCanvasObject(props: ArcCanvasObjectProps) {
     // 调整方向
     const boundingBoxRef = useRef<Konva.Group>(null)
     const boundingBoxFrameRef = useRef<Konva.Arc>(null)
-    const directionHandleRef = useRef<Konva.Rect>(null)
+    const directionHandleRef = useRef<Konva.Circle>(null)
   
     const adjustObjectDirectionTemporarily = useCallback((direction: { size: number, rotation: number }): void => {
       directionHandleRef.current?.x(0)
@@ -208,18 +208,21 @@ export function ArcCanvasObject(props: ArcCanvasObjectProps) {
                   />
                   {!locked && (
                     <>
-                      <Rect
-                        ref={directionHandleRef}
-                        x={0}
-                        y={-baseBoundingCanvasRadius * size / 100}
-                        offsetX={directionHandleSize / 2}
-                        offsetY={directionHandleSize / 2}
-                        width={directionHandleSize}
-                        height={directionHandleSize}
+                      <Circle
+                        radius={2}
                         stroke="#fff"
                         strokeWidth={2}
                         shadowBlur={4}
-                        cornerRadius={directionHandleSize}
+                        fill="#fff"
+                      />
+                      <Circle
+                        ref={directionHandleRef}
+                        x={0}
+                        y={-baseBoundingCanvasRadius * size / 100}
+                        radius={directionHandleSize / 2}
+                        stroke="#fff"
+                        strokeWidth={2}
+                        shadowBlur={4}
                         fill="#fff"
                         draggable
                         onDragMove={handleDirectionHandleDragMove}

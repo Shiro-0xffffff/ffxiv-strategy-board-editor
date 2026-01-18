@@ -2,7 +2,7 @@
 
 import { useRef, useCallback } from 'react'
 import Konva from 'konva'
-import { Group, Rect } from 'react-konva'
+import { Group, Rect, Circle } from 'react-konva'
 import { Portal } from 'react-konva-utils'
 import { StrategyBoardLineObject } from '@/lib/ffxiv-strategy-board'
 
@@ -34,8 +34,8 @@ export function LineCanvasObject(props: LineCanvasObjectProps) {
   // 移动端点
   const boundingBoxRef = useRef<Konva.Group>(null)
   const boundingBoxFrameRef = useRef<Konva.Rect>(null)
-  const endPoint1HandleRef = useRef<Konva.Rect>(null)
-  const endPoint2HandleRef = useRef<Konva.Rect>(null)
+  const endPoint1HandleRef = useRef<Konva.Circle>(null)
+  const endPoint2HandleRef = useRef<Konva.Circle>(null)
 
   const moveEndPointsTemporarily = useCallback((endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }): void => {
     const endPointCanvasOffset = {
@@ -128,35 +128,27 @@ export function LineCanvasObject(props: LineCanvasObjectProps) {
             />
             {!locked && (
               <>
-                <Rect
+                <Circle
                   ref={endPoint1HandleRef}
                   x={-endPointCanvasOffset.x}
                   y={-endPointCanvasOffset.y}
-                  offsetX={endPointHandleSize / 2}
-                  offsetY={endPointHandleSize / 2}
-                  width={endPointHandleSize}
-                  height={endPointHandleSize}
+                  radius={endPointHandleSize / 2}
                   stroke="#fff"
                   strokeWidth={2}
                   shadowBlur={4}
-                  cornerRadius={endPointHandleSize}
                   fill="#fff"
                   draggable
                   onDragMove={handleEndPoint1HandleDragMove}
                   onDragEnd={handleEndPoint1HandleDragEnd}
                 />
-                <Rect
+                <Circle
                   ref={endPoint2HandleRef}
                   x={endPointCanvasOffset.x}
                   y={endPointCanvasOffset.y}
-                  offsetX={endPointHandleSize / 2}
-                  offsetY={endPointHandleSize / 2}
-                  width={endPointHandleSize}
-                  height={endPointHandleSize}
+                  radius={endPointHandleSize / 2}
                   stroke="#fff"
                   strokeWidth={2}
                   shadowBlur={4}
-                  cornerRadius={endPointHandleSize}
                   fill="#fff"
                   draggable
                   onDragMove={handleEndPoint2HandleDragMove}

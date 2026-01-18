@@ -2,7 +2,7 @@
 
 import { useRef, useCallback } from 'react'
 import Konva from 'konva'
-import { Group, Line, Rect } from 'react-konva'
+import { Group, Line, Rect, Circle } from 'react-konva'
 import { Portal } from 'react-konva-utils'
 import { StrategyBoardRectangleObject } from '@/lib/ffxiv-strategy-board'
 
@@ -91,7 +91,7 @@ export function RectangleCanvasObject(props: RectangleCanvasObjectProps) {
 
   // 旋转
   const boundingBoxRef = useRef<Konva.Group>(null)
-  const rotateHandleRef = useRef<Konva.Rect>(null)
+  const rotateHandleRef = useRef<Konva.Circle>(null)
   const rotateHandleConnectionLineRef = useRef<Konva.Line>(null)
 
   const rotateObjectTemporarily = useCallback((rotation: number): void => {
@@ -175,18 +175,14 @@ export function RectangleCanvasObject(props: RectangleCanvasObjectProps) {
                     onDragEnd={handleResizeHandleDragEnd}
                   />
                 ))}
-                <Rect
+                <Circle
                   ref={rotateHandleRef}
                   x={0}
                   y={-canvasSize.height / 2 - rotateHandleOffset}
-                  offsetX={rotateHandleSize / 2}
-                  offsetY={rotateHandleSize / 2}
-                  width={rotateHandleSize}
-                  height={rotateHandleSize}
+                  radius={rotateHandleSize / 2}
                   stroke="#fff"
                   strokeWidth={2}
                   shadowBlur={4}
-                  cornerRadius={rotateHandleSize}
                   fill="#fff"
                   draggable
                   onDragMove={handleRotateHandleDragMove}
