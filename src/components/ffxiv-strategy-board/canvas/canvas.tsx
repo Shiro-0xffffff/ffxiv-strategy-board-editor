@@ -138,9 +138,7 @@ function CanvasObjectBoundingBox(props: { id: string }) {
   )
 }
 
-export function StrategyBoardCanvas(props: { preview?: boolean }) {
-  const { preview } = props
-
+export function StrategyBoardCanvas() {
   const {
     scene,
     selectedObjectIds,
@@ -333,7 +331,6 @@ export function StrategyBoardCanvas(props: { preview?: boolean }) {
   }, [setCanvasOffset])
 
   const handlePointerDown = useCallback((event: Konva.KonvaEventObject<PointerEvent>): void => {
-    if (preview) return
     const canvasObject = event.target.findAncestor('.object', true)
     if (canvasObject) {
       const id = canvasObject.getAttr('data-id') as string
@@ -345,55 +342,51 @@ export function StrategyBoardCanvas(props: { preview?: boolean }) {
       return
     }
     handleStagePointerDown(event)
-  }, [preview, handleStagePointerDown, handleObjectPointerDown])
+  }, [handleStagePointerDown, handleObjectPointerDown])
 
   const handleClick = useCallback((event: Konva.KonvaEventObject<MouseEvent>): void => {
-    if (preview) return
     const canvasObject = event.target.findAncestor('.object', true)
     if (canvasObject) {
       const id = canvasObject.getAttr('data-id') as string
       handleObjectClick(id, event)
       return
     }
-  }, [preview, handleObjectClick])
+  }, [handleObjectClick])
 
   const handleDragStart = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     if (event.target instanceof Konva.Stage) {
       handleStageDragStart()
       return
     }
-    if (preview) return
     if (event.target.hasName('object-drag-handle')) {
       handleObjectDragHandleDragStart(event.target)
     }
-  }, [preview, handleStageDragStart, handleObjectDragHandleDragStart])
+  }, [handleStageDragStart, handleObjectDragHandleDragStart])
   const handleDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     if (event.target instanceof Konva.Stage) {
       handleStageDragMove()
       return
     }
-    if (preview) return
     if (event.target.hasName('object-drag-handle')) {
       handleObjectDragHandleDragMove(event.target)
     }
-  }, [preview, handleStageDragMove, handleObjectDragHandleDragMove])
+  }, [handleStageDragMove, handleObjectDragHandleDragMove])
   const handleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     if (event.target instanceof Konva.Stage) {
       handleStageDragEnd(event.target)
       return
     }
-    if (preview) return
     if (event.target.hasName('object-drag-handle')) {
       handleObjectDragHandleDragEnd(event.target)
     }
-  }, [preview, handleStageDragEnd, handleObjectDragHandleDragEnd])
+  }, [handleStageDragEnd, handleObjectDragHandleDragEnd])
 
   return (
     <ContextMenu modal={false}>
-      <ContextMenuTrigger asChild disabled={preview}>
+      <ContextMenuTrigger asChild>
         <div
           ref={stageContainerRef}
-          className="flex-1 size-full data-dragging-stage:cursor-grabbing"
+          className="size-full data-dragging-stage:cursor-grabbing"
           data-dragging-stage={isDraggingStage ? 'dragging' : null}
         >
           <Stage
@@ -409,7 +402,7 @@ export function StrategyBoardCanvas(props: { preview?: boolean }) {
             onDragMove={handleDragMove}
             onDragEnd={handleDragEnd}
           >
-            <Layer listening={!preview}>
+            <Layer>
               <Image
                 offsetX={sceneWidth / 2 * zoomRatio}
                 offsetY={sceneHeight / 2 * zoomRatio}
@@ -426,13 +419,11 @@ export function StrategyBoardCanvas(props: { preview?: boolean }) {
                 <CanvasObject key={id} id={id} />
               ))}
             </Layer>
-            {!preview && (
-              <Layer>
-                {scene.objects.slice().reverse().map(({ id }) => (
-                  <CanvasObjectBoundingBox key={id} id={id} />
-                ))}
-              </Layer>
-            )}
+            <Layer>
+              {scene.objects.slice().reverse().map(({ id }) => (
+                <CanvasObjectBoundingBox key={id} id={id} />
+              ))}
+            </Layer>
           </Stage>
         </div>
       </ContextMenuTrigger>
@@ -487,5 +478,60 @@ export function StrategyBoardCanvas(props: { preview?: boolean }) {
         </ContextMenuGroup>
       </ContextMenuContent>
     </ContextMenu>
+  )
+}
+
+export function StrategyBoardCanvasPreview() {
+  const { scene } = useStrategyBoard()
+  const { canvasSize, setCanvasSize, zoomRatio, zoomTo } = useStrategyBoardCanvas()
+
+  const backgroundOption = backgroundOptions.get(scene.background)!
+
+  const [backgroundImage] = useImage(ffxivImageUrl(backgroundOption.image))
+
+  // 根据容器尺寸缩放画布
+  const stageContainerRef = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    const stageContainer = stageContainerRef.current
+    if (!stageContainer) return
+    const resizeObserver = new ResizeObserver(() => {
+      setCanvasSize({
+        width: stageContainer.offsetWidth,
+        height: stageContainer.offsetHeight,
+      })
+      zoomTo(Math.min(stageContainer.offsetWidth / sceneWidth, stageContainer.offsetHeight / sceneHeight))
+    })
+    resizeObserver.observe(stageContainer)
+    return () => resizeObserver.unobserve(stageContainer)
+  }, [setCanvasSize, zoomTo])
+
+  return (
+    <div
+      ref={stageContainerRef}
+      className="size-full flex items-center justify-center"
+    >
+      <Stage
+        offsetX={-canvasSize.width / 2}
+        offsetY={-canvasSize.height / 2}
+        width={canvasSize.width}
+        height={canvasSize.height}
+      >
+        <Layer listening={false}>
+          <Image
+            offsetX={sceneWidth / 2 * zoomRatio}
+            offsetY={sceneHeight / 2 * zoomRatio}
+            width={sceneWidth * zoomRatio}
+            height={sceneHeight * zoomRatio}
+            image={backgroundImage}
+            alt={backgroundOption.name}
+            fill="#595959"
+          />
+          {scene.objects.slice().reverse().map(({ id }) => (
+            <CanvasObject key={id} id={id} />
+          ))}
+        </Layer>
+      </Stage>
+    </div>
   )
 }

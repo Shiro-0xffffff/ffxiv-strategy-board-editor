@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from '@/components/ui/card'
 
-import { StrategyBoardCanvasProvider, StrategyBoardCanvas } from './canvas'
+import { StrategyBoardCanvasProvider, StrategyBoardCanvasPreview } from './canvas'
 
 export function StrategyBoardViewer() {
   return (
@@ -10,7 +10,7 @@ export function StrategyBoardViewer() {
       <CardContent>
         <div className="w-full aspect-4/3">
           <StrategyBoardCanvasProvider>
-            <StrategyBoardCanvas preview />
+            <StrategyBoardCanvasPreview />
           </StrategyBoardCanvasProvider>
         </div>
       </CardContent>
