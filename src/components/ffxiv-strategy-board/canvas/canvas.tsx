@@ -143,7 +143,7 @@ export function StrategyBoardCanvas() {
     scene,
     selectedObjectIds,
     selectObjects,
-    toggleObjectSelected,
+    deselectObject,
     deleteObjects,
     isClipboardEmpty,
     cutObjects,
@@ -154,7 +154,7 @@ export function StrategyBoardCanvas() {
     isRedoAvailable,
     redo,
   } = useStrategyBoard()
-  const { preview, zoomRatio, moveObjects, flipObjectsHorizontally, flipObjectsVertically } = useStrategyBoardCanvas()
+  const { preview, setCanvasOffset, zoomRatio, moveObjects, flipObjectsHorizontally, flipObjectsVertically } = useStrategyBoardCanvas()
 
   const backgroundOption = backgroundOptions.get(scene.background)!
 
@@ -178,23 +178,37 @@ export function StrategyBoardCanvas() {
     return () => resizeObserver.unobserve(stageContainer)
   }, [])
 
-  // 选中图形
-  const handleClick = useCallback((event: Konva.KonvaEventObject<MouseEvent>): void => {
-    if (preview) return
-    const id = event.target.findAncestor('.object', true)?.getAttr('data-id') as string
-    switch (event.evt.button) {
-      case 0:
-        if (event.evt.shiftKey || event.evt.ctrlKey) {
-          if (id) toggleObjectSelected(id)
-        } else {
-          selectObjects(id ? [id] : [])
-        }
-        break
-      case 2:
-        if (id && !selectedObjectIds.includes(id)) selectObjects([id])
-        break
+  // 选择图形
+  const [selectedObjectOnPointerDown, setSelectedObjectOnPointerDown] = useState<boolean>(false)
+
+  const handleStagePointerDown = useCallback((event: Konva.KonvaEventObject<PointerEvent>): void => {
+    if (event.evt.button === 0) {
+      event.evt.preventDefault()
+      selectObjects([])
+      // TODO: 框选
+      return
     }
-  }, [preview, selectedObjectIds, selectObjects, toggleObjectSelected])
+  }, [selectObjects])
+  const handleObjectPointerDown = useCallback((id: string, event: Konva.KonvaEventObject<PointerEvent>): void => {
+    setSelectedObjectOnPointerDown(false)
+    if (selectedObjectIds.includes(id)) return
+    if (event.evt.shiftKey || event.evt.ctrlKey) {
+      selectObjects([...selectedObjectIds, id])
+    } else {
+      selectObjects([id])
+    }
+    setSelectedObjectOnPointerDown(true)
+  }, [selectedObjectIds, selectObjects])
+  const handleObjectClick = useCallback((id: string, event: Konva.KonvaEventObject<MouseEvent>): void => {
+    setSelectedObjectOnPointerDown(false)
+    if (selectedObjectOnPointerDown) return
+    if (event.evt.button === 2) return
+    if (event.evt.shiftKey || event.evt.ctrlKey) {
+      deselectObject(id)
+    } else {
+      selectObjects([id])
+    }
+  }, [selectedObjectOnPointerDown, selectObjects, deselectObject])
 
   // 右键菜单
   const handleContextMenuUndoClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
@@ -264,10 +278,10 @@ export function StrategyBoardCanvas() {
     })
     return positions
   }, [zoomRatio])
-  const moveObjectsTemporarily = useCallback((draggingCanvasObject: Konva.Node, positions: { id: string, position: { x: number, y: number } }[]): void => {
+  const moveObjectsTemporarily = useCallback((dragHandle: Konva.Node, positions: { id: string, position: { x: number, y: number } }[]): void => {
     const stage = stageRef.current
     if (!stage) return
-    draggingCanvasObject.position({ x: 0, y: 0 })
+    dragHandle.position({ x: 0, y: 0 })
     positions.forEach(({ id, position }) => {
       const canvasObject = stage.findOne(`.object-${id}`)
       if (!canvasObject) return
@@ -283,9 +297,8 @@ export function StrategyBoardCanvas() {
     })
   }, [zoomRatio])
 
-  const handleDragStart = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
-    if (event.target instanceof Konva.Stage || !event.target.hasName('object-drag-handle')) return
-    const draggingObject = event.target.findAncestor('.object')
+  const handleObjectDragHandleDragStart = useCallback((dragHandle: Konva.Node): void => {
+    const draggingObject = dragHandle.findAncestor('.object')
     const id = draggingObject?.getAttr('data-id') as string
     if (!draggingObject || !id) return
     if (selectedObjectIds.includes(id)) {
@@ -295,29 +308,102 @@ export function StrategyBoardCanvas() {
       draggingObjectsRef.current = [draggingObject]
     }
   }, [selectedObjectIds, selectObjects])
-  const handleDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
-    if (event.target instanceof Konva.Stage || !event.target.hasName('object-drag-handle')) return
-    const positions = getPositionsFromDraggingObject(event.target)
-    moveObjectsTemporarily(event.target, positions)
+  const handleObjectDragHandleDragMove = useCallback((dragHandle: Konva.Node): void => {
+    const positions = getPositionsFromDraggingObject(dragHandle)
+    moveObjectsTemporarily(dragHandle, positions)
   }, [getPositionsFromDraggingObject, moveObjectsTemporarily])
-  const handleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
-    if (event.target instanceof Konva.Stage || !event.target.hasName('object-drag-handle')) return
-    const positions = getPositionsFromDraggingObject(event.target)
+  const handleObjectDragHandleDragEnd = useCallback((dragHandle: Konva.Node): void => {
+    const positions = getPositionsFromDraggingObject(dragHandle)
     draggingObjectsRef.current = null
-    moveObjectsTemporarily(event.target, positions)
+    moveObjectsTemporarily(dragHandle, positions)
     moveObjects(positions)
   }, [getPositionsFromDraggingObject, moveObjectsTemporarily, moveObjects])
+
+  // 拖动画布
+  const [isDraggingStage, setIsDraggingStage] = useState<boolean>(false)
+
+  const handleStageDragStart = useCallback((): void => {
+    setIsDraggingStage(true)
+  }, [])
+  const handleStageDragMove = useCallback((): void => {
+  }, [])
+  const handleStageDragEnd = useCallback((stage: Konva.Stage): void => {
+    setIsDraggingStage(false)
+    setCanvasOffset(stage.position())
+  }, [setCanvasOffset])
+
+  const handlePointerDown = useCallback((event: Konva.KonvaEventObject<PointerEvent>): void => {
+    if (preview) return
+    const canvasObject = event.target.findAncestor('.object', true)
+    if (canvasObject) {
+      const id = canvasObject.getAttr('data-id') as string
+      handleObjectPointerDown(id, event)
+      return
+    }
+    const boundingBox = event.target.findAncestor('.object-bounding-box', true)
+    if (boundingBox) {
+      return
+    }
+    handleStagePointerDown(event)
+  }, [preview, handleStagePointerDown, handleObjectPointerDown])
+
+  const handleClick = useCallback((event: Konva.KonvaEventObject<MouseEvent>): void => {
+    if (preview) return
+    const canvasObject = event.target.findAncestor('.object', true)
+    if (canvasObject) {
+      const id = canvasObject.getAttr('data-id') as string
+      handleObjectClick(id, event)
+      return
+    }
+  }, [preview, handleObjectClick])
+
+  const handleDragStart = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
+    if (preview) return
+    if (event.target instanceof Konva.Stage) {
+      handleStageDragStart()
+      return
+    }
+    if (event.target.hasName('object-drag-handle')) {
+      handleObjectDragHandleDragStart(event.target)
+    }
+  }, [preview, handleStageDragStart, handleObjectDragHandleDragStart])
+  const handleDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
+    if (preview) return
+    if (event.target instanceof Konva.Stage) {
+      handleStageDragMove()
+      return
+    }
+    if (event.target.hasName('object-drag-handle')) {
+      handleObjectDragHandleDragMove(event.target)
+    }
+  }, [preview, handleStageDragMove, handleObjectDragHandleDragMove])
+  const handleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
+    if (preview) return
+    if (event.target instanceof Konva.Stage) {
+      handleStageDragEnd(event.target)
+      return
+    }
+    if (event.target.hasName('object-drag-handle')) {
+      handleObjectDragHandleDragEnd(event.target)
+    }
+  }, [preview, handleStageDragEnd, handleObjectDragHandleDragEnd])
 
   return (
     <ContextMenu modal={false}>
       <ContextMenuTrigger asChild disabled={preview}>
-        <div ref={stageContainerRef} className="flex-1 size-full">
+        <div
+          ref={stageContainerRef}
+          className="flex-1 size-full data-dragging-stage:cursor-grabbing"
+          data-dragging-stage={isDraggingStage ? 'dragging' : null}
+        >
           <Stage
             ref={stageRef}
             offsetX={-stageSize.width / 2}
             offsetY={-stageSize.height / 2}
             width={stageSize.width}
             height={stageSize.height}
+            draggable={!preview}
+            onPointerDown={handlePointerDown}
             onClick={handleClick}
             onDragStart={handleDragStart}
             onDragMove={handleDragMove}

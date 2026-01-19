@@ -20,7 +20,7 @@ export interface StrategyBoardContextProps {
   setBackground: (background: StrategyBoardBackground) => void
   selectedObjectIds: string[]
   selectObjects: (ids: string[]) => void
-  toggleObjectSelected: (id: string) => void
+  deselectObject: (id: string) => void
   getObject: (id: string) => StrategyBoardObject | null
   addObject: (type: StrategyBoardObjectType, properties: StrategyBoardObjectProperties) => string
   addObjects: (objectsProperties: { type: StrategyBoardObjectType, properties: StrategyBoardObjectProperties }[]) => string[]
@@ -88,14 +88,8 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
   const selectObjects = useCallback((ids: string[]): void => {
     setSelectedObjectIds(ids)
   }, [])
-  const toggleObjectSelected = useCallback((id: string): void => {
-    setSelectedObjectIds(selectedObjectIds => {
-      if (selectedObjectIds.includes(id)) {
-        return selectedObjectIds.filter(selectedObjectId => selectedObjectId !== id)
-      } else {
-        return [...selectedObjectIds, id]
-      }
-    })
+  const deselectObject = useCallback((id: string): void => {
+    setSelectedObjectIds(selectedObjectIds => selectedObjectIds.filter(selectedObjectId => selectedObjectId !== id))
   }, [])
 
   const getObject = useCallback((id: string): StrategyBoardObject | null => {
@@ -225,7 +219,7 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     setBackground,
     selectedObjectIds,
     selectObjects,
-    toggleObjectSelected,
+    deselectObject,
     getObject,
     addObject,
     addObjects,

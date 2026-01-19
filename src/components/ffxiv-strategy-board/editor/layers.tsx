@@ -1,6 +1,6 @@
 'use client'
 
-import { MouseEventHandler, useState, useRef, useEffect, useCallback, useId } from 'react'
+import { MouseEventHandler, PointerEventHandler, useState, useRef, useEffect, useCallback, useId } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -19,7 +19,7 @@ import { useStrategyBoard } from '../context'
 function Layer(props: { id: string }) {
   const { id } = props
 
-  const { selectedObjectIds, selectObjects, toggleObjectSelected, getObject, toggleObjectVisible, toggleObjectLocked } = useStrategyBoard()
+  const { selectedObjectIds, selectObjects, deselectObject, getObject, toggleObjectVisible, toggleObjectLocked } = useStrategyBoard()
 
   const object = getObject(id)!
   const objectLibraryItem = objectLibrary.get(object.type)!
@@ -32,13 +32,28 @@ function Layer(props: { id: string }) {
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }, [selected])
 
-  const handlePointerDown = useCallback<MouseEventHandler<HTMLDivElement>>(event => {
+  const [selectedObjectOnPointerDown, setSelectedObjectOnPointerDown] = useState<boolean>(false)
+
+  const handlePointerDown = useCallback<PointerEventHandler<HTMLDivElement>>(event => {
+    setSelectedObjectOnPointerDown(false)
+    if (selectedObjectIds.includes(id)) return
     if (event.shiftKey || event.ctrlKey) {
-      toggleObjectSelected(id)
+      selectObjects([...selectedObjectIds, id])
     } else {
       selectObjects([id])
     }
-  }, [id, selectObjects, toggleObjectSelected])
+    setSelectedObjectOnPointerDown(true)
+  }, [id, selectedObjectIds, selectObjects])
+  const handleClick = useCallback<MouseEventHandler<HTMLDivElement>>(event => {
+    setSelectedObjectOnPointerDown(false)
+    if (selectedObjectOnPointerDown) return
+    if (event.button === 2) return
+    if (event.shiftKey || event.ctrlKey) {
+      deselectObject(id)
+    } else {
+      selectObjects([id])
+    }
+  }, [id, selectedObjectOnPointerDown, selectObjects, deselectObject])
 
   const handleToggleLockedButtonClick = useCallback<MouseEventHandler<HTMLButtonElement>>(event => {
     event.stopPropagation()
@@ -57,6 +72,7 @@ function Layer(props: { id: string }) {
         'inset-ring-1 ring-primary bg-[color-mix(in_oklab,var(--primary)_20%,var(--card))]': selected,
       })}
       onPointerDown={handlePointerDown}
+      onClick={handleClick}
     >
       <Image className="size-10" src={ffxivImageUrl(objectLibraryItem.icon)} alt={objectLibraryItem.abbr} width={80} height={80} />
       <div className="flex-1 w-0 text-sm truncate">

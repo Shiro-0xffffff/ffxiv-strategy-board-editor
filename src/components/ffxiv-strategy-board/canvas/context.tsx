@@ -24,6 +24,8 @@ const zoomLevels = [0.05, 0.08, 0.1, 0.12, 0.14, 0.16, 0.18, 0.2, 0.22, 0.25, 0.
 
 export interface StrategyBoardCanvasContextProps {
   preview: boolean
+  canvasOffset: { x: number, y: number }
+  setCanvasOffset: (canvasOffset: { x: number, y: number }) => void
   zoomRatio: number
   isZoomInAvailable: boolean
   zoomIn: () => void
@@ -63,6 +65,8 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
 
   const { selectedObjectIds, addObject, modifyObject, modifyObjects } = useStrategyBoard()
 
+  const [canvasOffset, setCanvasOffset] = useState<{ x: number, y: number }>(() => ({ x: 0, y: 0 }))
+
   const [zoomRatio, setZoomRatio] = useState<number>(defaultZoomRatio)
 
   const isZoomInAvailable = zoomLevels.some(zoomLevel => zoomLevel > zoomRatio)
@@ -84,13 +88,13 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
 
   const addObjectAtCanvasPosition = useCallback((type: StrategyBoardObjectType, canvasPosition: { x: number, y: number }): void => {
     const position = {
-      x: Math.round(canvasPosition.x / zoomRatio),
-      y: Math.round(canvasPosition.y / zoomRatio),
+      x: Math.round((canvasPosition.x - canvasOffset.x) / zoomRatio),
+      y: Math.round((canvasPosition.y - canvasOffset.y) / zoomRatio),
     }
     if (position.x >= -sceneWidth / 2 && position.x <= sceneWidth && position.y >= -sceneHeight / 2 && position.y <= sceneHeight / 2) {
       addObject(type, { position })
     }
-  }, [zoomRatio, addObject])
+  }, [canvasOffset, zoomRatio, addObject])
 
   const moveObjects = useCallback((positions: { id: string, position: { x: number, y: number } }[]): void => {
     modifyObjects(positions.map(({ id, position }) => ({ id, modification: object => {
@@ -315,6 +319,8 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
 
   const contextValue: StrategyBoardCanvasContextProps = {
     preview,
+    canvasOffset,
+    setCanvasOffset,
     zoomRatio,
     isZoomInAvailable,
     zoomIn,
