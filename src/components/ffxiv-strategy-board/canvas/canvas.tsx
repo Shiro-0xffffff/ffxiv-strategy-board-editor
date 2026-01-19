@@ -93,7 +93,7 @@ function CanvasObject(props: { id: string }) {
   const { id } = props
 
   const { getObject } = useStrategyBoard()
-  const { preview, zoomRatio } = useStrategyBoardCanvas()
+  const { zoomRatio } = useStrategyBoardCanvas()
 
   const object = getObject(id)!
   const { visible, locked, position } = object
@@ -110,7 +110,7 @@ function CanvasObject(props: { id: string }) {
         name="object-drag-handle"
         x={0}
         y={0}
-        draggable={!preview && !locked}
+        draggable={!locked}
       >
         <CanvasObjectContent object={object} />
       </Group>
@@ -138,7 +138,9 @@ function CanvasObjectBoundingBox(props: { id: string }) {
   )
 }
 
-export function StrategyBoardCanvas() {
+export function StrategyBoardCanvas(props: { preview?: boolean }) {
+  const { preview } = props
+
   const {
     scene,
     selectedObjectIds,
@@ -154,29 +156,27 @@ export function StrategyBoardCanvas() {
     isRedoAvailable,
     redo,
   } = useStrategyBoard()
-  const { preview, setCanvasOffset, zoomRatio, moveObjects, flipObjectsHorizontally, flipObjectsVertically } = useStrategyBoardCanvas()
+  const { canvasSize, setCanvasSize, setCanvasOffset, zoomRatio, moveObjects, flipObjectsHorizontally, flipObjectsVertically } = useStrategyBoardCanvas()
 
   const backgroundOption = backgroundOptions.get(scene.background)!
 
   const [backgroundImage] = useImage(ffxivImageUrl(backgroundOption.image))
 
   // 根据容器尺寸缩放画布
-  const [stageSize, setStageSize] = useState<{ width: number, height: number }>(() => ({ width: 0, height: 0 }))
-
   const stageContainerRef = useRef<HTMLDivElement>(null)
 
   useLayoutEffect(() => {
     const stageContainer = stageContainerRef.current
     if (!stageContainer) return
     const resizeObserver = new ResizeObserver(() => {
-      setStageSize({
+      setCanvasSize({
         width: stageContainer.offsetWidth,
         height: stageContainer.offsetHeight,
       })
     })
     resizeObserver.observe(stageContainer)
     return () => resizeObserver.unobserve(stageContainer)
-  }, [])
+  }, [setCanvasSize])
 
   // 选择图形
   const [selectedObjectOnPointerDown, setSelectedObjectOnPointerDown] = useState<boolean>(false)
@@ -358,31 +358,31 @@ export function StrategyBoardCanvas() {
   }, [preview, handleObjectClick])
 
   const handleDragStart = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
-    if (preview) return
     if (event.target instanceof Konva.Stage) {
       handleStageDragStart()
       return
     }
+    if (preview) return
     if (event.target.hasName('object-drag-handle')) {
       handleObjectDragHandleDragStart(event.target)
     }
   }, [preview, handleStageDragStart, handleObjectDragHandleDragStart])
   const handleDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
-    if (preview) return
     if (event.target instanceof Konva.Stage) {
       handleStageDragMove()
       return
     }
+    if (preview) return
     if (event.target.hasName('object-drag-handle')) {
       handleObjectDragHandleDragMove(event.target)
     }
   }, [preview, handleStageDragMove, handleObjectDragHandleDragMove])
   const handleDragEnd = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
-    if (preview) return
     if (event.target instanceof Konva.Stage) {
       handleStageDragEnd(event.target)
       return
     }
+    if (preview) return
     if (event.target.hasName('object-drag-handle')) {
       handleObjectDragHandleDragEnd(event.target)
     }
@@ -398,11 +398,11 @@ export function StrategyBoardCanvas() {
         >
           <Stage
             ref={stageRef}
-            offsetX={-stageSize.width / 2}
-            offsetY={-stageSize.height / 2}
-            width={stageSize.width}
-            height={stageSize.height}
-            draggable={!preview}
+            offsetX={-canvasSize.width / 2}
+            offsetY={-canvasSize.height / 2}
+            width={canvasSize.width}
+            height={canvasSize.height}
+            draggable
             onPointerDown={handlePointerDown}
             onClick={handleClick}
             onDragStart={handleDragStart}

@@ -23,14 +23,16 @@ const defaultZoomRatio = 0.2
 const zoomLevels = [0.05, 0.08, 0.1, 0.12, 0.14, 0.16, 0.18, 0.2, 0.22, 0.25, 0.3, 0.35, 0.4, 0.5, 0.6, 0.8, 1]
 
 export interface StrategyBoardCanvasContextProps {
-  preview: boolean
+  canvasSize: { width: number, height: number }
+  setCanvasSize: (size: { width: number, height: number }) => void
   canvasOffset: { x: number, y: number }
-  setCanvasOffset: (canvasOffset: { x: number, y: number }) => void
+  setCanvasOffset: (offset: { x: number, y: number }) => void
   zoomRatio: number
   isZoomInAvailable: boolean
   zoomIn: () => void
   isZoomOutAvailable: boolean
   zoomOut: () => void
+  zoomToFit: () => void
   isObjectSelected: (id: string) => boolean
   addObjectAtCanvasPosition: (type: StrategyBoardObjectType, canvasPosition: { x: number, y: number })=> void
   moveObject: (id: string, position: { x: number, y: number }) => void
@@ -56,15 +58,15 @@ export function useStrategyBoardCanvas(): StrategyBoardCanvasContextProps {
 }
 
 export interface StrategyBoardCanvasProviderProps {
-  preview?: boolean
   children?: ReactNode
 }
 
 export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderProps) {
-  const { preview = false, children } = props
+  const { children } = props
 
   const { selectedObjectIds, addObject, modifyObject, modifyObjects } = useStrategyBoard()
 
+  const [canvasSize, setCanvasSize] = useState<{ width: number, height: number }>(() => ({ width: 0, height: 0 }))
   const [canvasOffset, setCanvasOffset] = useState<{ x: number, y: number }>(() => ({ x: 0, y: 0 }))
 
   const [zoomRatio, setZoomRatio] = useState<number>(defaultZoomRatio)
@@ -82,9 +84,15 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
     setZoomRatio(zoomLevel)
   }, [zoomRatio])
 
+  const zoomToFit = useCallback((): void => {
+    const horizontalZoomRatio = canvasSize.width / sceneWidth
+    const verticalZoomRatio = canvasSize.height / sceneHeight
+    setZoomRatio(Math.min(horizontalZoomRatio, verticalZoomRatio))
+  }, [canvasSize])
+
   const isObjectSelected = useCallback((id: string): boolean => {
-    return !preview && selectedObjectIds.includes(id)
-  }, [preview, selectedObjectIds])
+    return selectedObjectIds.includes(id)
+  }, [selectedObjectIds])
 
   const addObjectAtCanvasPosition = useCallback((type: StrategyBoardObjectType, canvasPosition: { x: number, y: number }): void => {
     const position = {
@@ -318,7 +326,8 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
   }, [modifyObject])
 
   const contextValue: StrategyBoardCanvasContextProps = {
-    preview,
+    canvasSize,
+    setCanvasSize,
     canvasOffset,
     setCanvasOffset,
     zoomRatio,
@@ -326,6 +335,7 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
     zoomIn,
     isZoomOutAvailable,
     zoomOut,
+    zoomToFit,
     isObjectSelected,
     addObjectAtCanvasPosition,
     moveObject,
