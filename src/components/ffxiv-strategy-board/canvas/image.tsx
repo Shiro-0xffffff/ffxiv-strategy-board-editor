@@ -60,7 +60,7 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
 
   // 缩放
   const boundingBoxFrameRef = useRef<Konva.Rect>(null)
-  const resizeHandlesRef = useRef(new Map<string, Konva.Rect>)
+  const resizeHandlesRef = useRef(new Map<string, Konva.Rect>())
 
   const resizeObjectTemporarily = useCallback((size: number): void => {
     resizeHandlesRef.current.forEach((resizeHandle, id) => {

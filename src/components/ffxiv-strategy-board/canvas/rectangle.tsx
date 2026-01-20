@@ -43,7 +43,7 @@ export function RectangleCanvasObject(props: RectangleCanvasObjectProps) {
 
   // 缩放
   const boundingBoxFrameRef = useRef<Konva.Rect>(null)
-  const resizeHandlesRef = useRef(new Map<string, Konva.Rect>)
+  const resizeHandlesRef = useRef(new Map<string, Konva.Rect>())
 
   const resizeObjectTemporarily = useCallback((size: { width: number, height: number }): void => {
     const canvasSize = {

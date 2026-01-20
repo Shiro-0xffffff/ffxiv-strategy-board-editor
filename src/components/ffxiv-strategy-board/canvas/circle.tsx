@@ -42,7 +42,7 @@ export function CircleCanvasObject(props: CircleCanvasObjectProps) {
 
   // 缩放
   const boundingBoxFrameRef = useRef<Konva.Circle>(null)
-  const resizeHandlesRef = useRef(new Map<string, Konva.Rect>)
+  const resizeHandlesRef = useRef(new Map<string, Konva.Rect>())
 
   const resizeObjectTemporarily = useCallback((size: number): void => {
     resizeHandlesRef.current.forEach((resizeHandle, id) => {
