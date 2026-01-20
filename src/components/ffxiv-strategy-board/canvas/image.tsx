@@ -196,6 +196,7 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
                     height={resizeHandleSize}
                     stroke="#fff"
                     strokeWidth={2}
+                    hitStrokeWidth={8}
                     shadowBlur={4}
                     fill="#fff"
                     draggable
@@ -210,6 +211,7 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
                   radius={rotateHandleSize / 2}
                   stroke="#fff"
                   strokeWidth={2}
+                  hitStrokeWidth={8}
                   shadowBlur={4}
                   fill="#fff"
                   draggable

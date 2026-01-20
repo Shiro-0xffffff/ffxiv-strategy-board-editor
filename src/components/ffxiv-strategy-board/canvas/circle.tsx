@@ -122,6 +122,7 @@ export function CircleCanvasObject(props: CircleCanvasObjectProps) {
                     height={resizeHandleSize}
                     stroke="#fff"
                     strokeWidth={2}
+                    hitStrokeWidth={8}
                     shadowBlur={4}
                     fill="#fff"
                     draggable

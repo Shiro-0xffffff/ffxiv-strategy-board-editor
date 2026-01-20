@@ -222,6 +222,7 @@ export function ArcCanvasObject(props: ArcCanvasObjectProps) {
                         radius={directionHandleSize / 2}
                         stroke="#fff"
                         strokeWidth={2}
+                        hitStrokeWidth={8}
                         shadowBlur={4}
                         fill="#fff"
                         draggable
@@ -241,6 +242,7 @@ export function ArcCanvasObject(props: ArcCanvasObjectProps) {
                           height={arcAngleHandleSize}
                           stroke="#fff"
                           strokeWidth={2}
+                          hitStrokeWidth={8}
                           shadowBlur={4}
                           fill="#fff"
                           rotation={45}
@@ -262,6 +264,7 @@ export function ArcCanvasObject(props: ArcCanvasObjectProps) {
                           height={arcAngleHandleSize}
                           stroke="#fff"
                           strokeWidth={2}
+                          hitStrokeWidth={8}
                           shadowBlur={4}
                           fill="#fff"
                           rotation={45}
@@ -280,6 +283,7 @@ export function ArcCanvasObject(props: ArcCanvasObjectProps) {
                         height={innerRadiusHandleSize}
                         stroke="#fff"
                         strokeWidth={2}
+                        hitStrokeWidth={8}
                         shadowBlur={4}
                         fill="#fff"
                         rotation={45}

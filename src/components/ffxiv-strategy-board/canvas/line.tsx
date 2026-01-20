@@ -135,6 +135,7 @@ export function LineCanvasObject(props: LineCanvasObjectProps) {
                   radius={endPointHandleSize / 2}
                   stroke="#fff"
                   strokeWidth={2}
+                  hitStrokeWidth={8}
                   shadowBlur={4}
                   fill="#fff"
                   draggable
@@ -148,6 +149,7 @@ export function LineCanvasObject(props: LineCanvasObjectProps) {
                   radius={endPointHandleSize / 2}
                   stroke="#fff"
                   strokeWidth={2}
+                  hitStrokeWidth={8}
                   shadowBlur={4}
                   fill="#fff"
                   draggable

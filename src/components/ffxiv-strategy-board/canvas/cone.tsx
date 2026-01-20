@@ -185,6 +185,7 @@ export function ConeCanvasObject(props: ConeCanvasObjectProps) {
                       radius={directionHandleSize / 2}
                       stroke="#fff"
                       strokeWidth={2}
+                      hitStrokeWidth={8}
                       shadowBlur={4}
                       fill="#fff"
                       draggable
@@ -204,6 +205,7 @@ export function ConeCanvasObject(props: ConeCanvasObjectProps) {
                         height={arcAngleHandleSize}
                         stroke="#fff"
                         strokeWidth={2}
+                        hitStrokeWidth={8}
                         shadowBlur={4}
                         fill="#fff"
                         rotation={45}
@@ -225,6 +227,7 @@ export function ConeCanvasObject(props: ConeCanvasObjectProps) {
                         height={arcAngleHandleSize}
                         stroke="#fff"
                         strokeWidth={2}
+                        hitStrokeWidth={8}
                         shadowBlur={4}
                         fill="#fff"
                         rotation={45}
