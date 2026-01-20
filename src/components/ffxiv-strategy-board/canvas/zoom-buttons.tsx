@@ -1,6 +1,7 @@
 'use client'
 
 import { MouseEventHandler, useCallback } from 'react'
+import { useHotkeys } from 'react-hotkeys-hook'
 import { Button } from '@/components/ui/button'
 import { ButtonGroup } from '@/components/ui/button-group'
 import { Plus, Minus } from 'lucide-react'
@@ -9,6 +10,13 @@ import { useStrategyBoardCanvas } from './context'
 
 export function StrategyBoardCanvasZoomButtons() {
   const { isZoomInAvailable, zoomIn, isZoomOutAvailable, zoomOut } = useStrategyBoardCanvas()
+
+  useHotkeys('mod+equal, mod+add', () => {
+    zoomIn()
+  }, { preventDefault: true }, [zoomIn])
+  useHotkeys('mod+minus, mod+subtract', () => {
+    zoomOut()
+  }, { preventDefault: true }, [zoomOut])
 
   const handleZoomOutButtonClick = useCallback<MouseEventHandler<HTMLButtonElement>>(() => {
     zoomOut()
