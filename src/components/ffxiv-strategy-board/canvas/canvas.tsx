@@ -1,10 +1,11 @@
 'use client'
 
-import { MouseEventHandler, useState, useRef, useLayoutEffect, useCallback } from 'react'
+import { MouseEventHandler, useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react'
 import { ContextMenuContent, ContextMenuItem, ContextMenuShortcut, ContextMenuTrigger, ContextMenu, ContextMenuGroup, ContextMenuSeparator } from '@/components/ui/context-menu'
 import { Undo2, Redo2, Scissors, Copy, ClipboardPaste, FlipHorizontal2, FlipVertical2, CopyCheck, Trash2 } from 'lucide-react'
 import Konva from 'konva'
-import { Stage, Layer, Group, Image } from 'react-konva'
+import { HitCanvas } from 'konva/lib/Canvas'
+import { Stage, Layer, Group, Rect, Image } from 'react-konva'
 import useImage from 'use-image'
 import { StrategyBoardObject, StrategyBoardObjectType, sceneWidth, sceneHeight, createObject } from '@/lib/ffxiv-strategy-board'
 import { isMac, ffxivImageUrl } from '@/lib/utils'
@@ -19,6 +20,8 @@ import { CircleCanvasObject } from './circle'
 import { ConeCanvasObject } from './cone'
 import { ArcCanvasObject } from './arc'
 import { ImageCanvasObject } from './image'
+
+const hitCanvasPixelRatio = 0.25
 
 interface CanvasObjectContentProps {
   object: StrategyBoardObject
@@ -174,17 +177,76 @@ export function StrategyBoardCanvas() {
     return () => resizeObserver.unobserve(stageContainer)
   }, [setCanvasSize])
 
+  // 框选
+  const [rectangleSelectionStartPoint, setRectangleSelectionStartPoint] = useState<{ x: number, y: number } | null>(null)
+
+  const selectionRectRef = useRef<Konva.Rect>(null)
+  const objectHitCanvasesRef = useRef<{ id: string, canvas: HitCanvas }[]>(null)
+
+  const handleStagePointerDown = useCallback((event: Konva.KonvaEventObject<PointerEvent>): void => {
+    if (event.evt.pointerType !== 'mouse' || event.evt.button !== 0) return
+    event.evt.preventDefault()
+    selectObjects([])
+    const stage = stageRef.current
+    if (!stage) return
+    objectHitCanvasesRef.current = stage.find('.object').map(canvasObject => {
+      const id = canvasObject.getAttr('data-id') as string
+      const canvas = new HitCanvas({ width: stage!.width(), height: stage!.height(), pixelRatio: hitCanvasPixelRatio })
+      canvasObject.drawHit(canvas)
+      return { id, canvas }
+    })
+    selectionRectRef.current?.position(stage.getRelativePointerPosition())
+    selectionRectRef.current?.size({ width: 0, height: 0 })
+    const stageBoundingRect = stage.container().getBoundingClientRect()
+    setRectangleSelectionStartPoint({ x: event.evt.clientX - stageBoundingRect.x, y: event.evt.clientY - stageBoundingRect.y })
+  }, [selectObjects])
+
+  const handleWindowPointerMove = useCallback((event: PointerEvent): void => {
+    if (!rectangleSelectionStartPoint || !objectHitCanvasesRef.current) return
+    if (!stageRef.current || !selectionRectRef.current) return
+    const stageBoundingRect = stageRef.current.container().getBoundingClientRect()
+    const selectionRectSize = {
+      width: event.clientX - stageBoundingRect.x - rectangleSelectionStartPoint.x,
+      height: event.clientY - stageBoundingRect.y - rectangleSelectionStartPoint.y,
+    }
+    selectionRectRef.current.size(selectionRectSize)
+    const imageDataRect = {
+      x: Math.round(rectangleSelectionStartPoint.x * hitCanvasPixelRatio),
+      y: Math.round(rectangleSelectionStartPoint.y * hitCanvasPixelRatio),
+      width: Math.round(selectionRectSize.width * hitCanvasPixelRatio),
+      height: Math.round(selectionRectSize.height * hitCanvasPixelRatio),
+    }
+    const selectedObjectIds = objectHitCanvasesRef.current.filter(({ canvas }) => {
+      if (!imageDataRect.width || !imageDataRect.height) return false
+      const context = canvas.getContext()
+      const imageData = context.getImageData(imageDataRect.x, imageDataRect.y, imageDataRect.width, imageDataRect.height)
+      return new Uint32Array(imageData.data.buffer).some(pixel => pixel !== 0)
+    }).map(({ id }) => id)
+    selectObjects(selectedObjectIds)
+  }, [rectangleSelectionStartPoint, selectObjects])
+  const handleWindowPointerUp = useCallback((): void => {
+    if (!rectangleSelectionStartPoint) return
+    setRectangleSelectionStartPoint(null)
+  }, [rectangleSelectionStartPoint])
+
+  useEffect(() => {
+    if (rectangleSelectionStartPoint) {
+      window.addEventListener('pointermove', handleWindowPointerMove)
+      window.addEventListener('pointerup', handleWindowPointerUp)
+    }
+    return () => {
+      window.removeEventListener('pointermove', handleWindowPointerMove)
+      window.removeEventListener('pointerup', handleWindowPointerUp)
+    }
+  }, [rectangleSelectionStartPoint, handleWindowPointerMove, handleWindowPointerUp])
+
   // 选择图形
   const [selectedObjectOnPointerDown, setSelectedObjectOnPointerDown] = useState<boolean>(false)
 
-  const handleStagePointerDown = useCallback((event: Konva.KonvaEventObject<PointerEvent>): void => {
-    if (event.evt.button === 0) {
-      event.evt.preventDefault()
-      selectObjects([])
-      // TODO: 框选
-      return
-    }
+  const handleStageTap = useCallback((): void => {
+    selectObjects([])
   }, [selectObjects])
+
   const handleObjectPointerDown = useCallback((id: string, event: Konva.KonvaEventObject<PointerEvent>): void => {
     setSelectedObjectOnPointerDown(false)
     if (selectedObjectIds.includes(id)) return
@@ -195,7 +257,7 @@ export function StrategyBoardCanvas() {
     }
     setSelectedObjectOnPointerDown(true)
   }, [selectedObjectIds, selectObjects])
-  const handleObjectClick = useCallback((id: string, event: Konva.KonvaEventObject<MouseEvent>): void => {
+  const handleObjectPointerClick = useCallback((id: string, event: Konva.KonvaEventObject<PointerEvent>): void => {
     setSelectedObjectOnPointerDown(false)
     if (selectedObjectOnPointerDown) return
     if (event.evt.button === 2) return
@@ -343,14 +405,25 @@ export function StrategyBoardCanvas() {
     handleStagePointerDown(event)
   }, [handleStagePointerDown, handleObjectPointerDown])
 
-  const handleClick = useCallback((event: Konva.KonvaEventObject<MouseEvent>): void => {
+  const handlePointerClick = useCallback((event: Konva.KonvaEventObject<PointerEvent>): void => {
     const canvasObject = event.target.findAncestor('.object', true)
     if (canvasObject) {
       const id = canvasObject.getAttr('data-id') as string
-      handleObjectClick(id, event)
+      handleObjectPointerClick(id, event)
       return
     }
-  }, [handleObjectClick])
+  }, [handleObjectPointerClick])
+  const handleTap = useCallback((event: Konva.KonvaEventObject<TouchEvent>): void => {
+    const canvasObject = event.target.findAncestor('.object', true)
+    if (canvasObject) {
+      return
+    }
+    const boundingBox = event.target.findAncestor('.object-bounding-box', true)
+    if (boundingBox) {
+      return
+    }
+    handleStageTap()
+  }, [handleStageTap])
 
   const handleDragStart = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     if (event.target instanceof Konva.Stage) {
@@ -396,7 +469,8 @@ export function StrategyBoardCanvas() {
             height={canvasSize.height}
             draggable
             onPointerDown={handlePointerDown}
-            onClick={handleClick}
+            onPointerClick={handlePointerClick}
+            onTap={handleTap}
             onDragStart={handleDragStart}
             onDragMove={handleDragMove}
             onDragEnd={handleDragEnd}
@@ -422,6 +496,16 @@ export function StrategyBoardCanvas() {
               {scene.objects.slice().reverse().map(({ id }) => (
                 <CanvasObjectBoundingBox key={id} id={id} />
               ))}
+            </Layer>
+            <Layer listening={false}>
+              <Rect
+                ref={selectionRectRef}
+                stroke="#fff"
+                strokeWidth={1}
+                shadowBlur={2}
+                fill="rgba(255,255,255,0.2)"
+                visible={!!rectangleSelectionStartPoint}
+              />
             </Layer>
           </Stage>
         </div>

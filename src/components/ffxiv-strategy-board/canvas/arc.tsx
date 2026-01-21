@@ -159,9 +159,10 @@ export function ArcCanvasObject(props: ArcCanvasObjectProps) {
               ref={objectRef}
               clipFunc={ctx => {
                 ctx.beginPath()
-                ctx.moveTo(0, 0)
-                ctx.arc(0, 0, baseBoundingCanvasRadius, -Math.PI / 2 - arcAngle / 2 * Math.PI / 180, -Math.PI / 2 + arcAngle / 2 * Math.PI / 180)
+                ctx.moveTo(0, -baseBoundingCanvasRadius)
+                ctx.arc(0, 0, baseBoundingCanvasRadius, -Math.PI / 2, -Math.PI / 2 + arcAngle / 2 * Math.PI / 180)
                 ctx.arc(0, 0, baseHoleCanvasRadius, -Math.PI / 2 + arcAngle / 2 * Math.PI / 180, -Math.PI / 2 - arcAngle / 2 * Math.PI / 180, true)
+                ctx.arc(0, 0, baseBoundingCanvasRadius, -Math.PI / 2 - arcAngle / 2 * Math.PI / 180, -Math.PI / 2)
               }}
               opacity={1 - transparency / 100}
               scaleX={size / 100 * (flipped ? -1 : 1)}
