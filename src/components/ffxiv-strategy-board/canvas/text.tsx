@@ -51,6 +51,8 @@ export function TextCanvasObject(props: TextCanvasObjectProps) {
             width={textContainerCanvasSize.width}
             height={textContainerCanvasSize.height}
             text={text}
+            fontFamily="Noto Sans"
+            fontStyle="300"
             fontSize={canvasFontSize}
             align="center"
             verticalAlign="middle"

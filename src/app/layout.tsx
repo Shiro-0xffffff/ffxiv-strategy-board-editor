@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
-import { Inter, Roboto_Mono } from 'next/font/google'
+import { Inter, Roboto_Mono, Noto_Sans } from 'next/font/google'
 
 import './globals.css'
 
@@ -13,6 +13,10 @@ const robotoMono = Roboto_Mono({
   variable: '--font-mono',
   subsets: ['latin'],
 })
+const notoSans = Noto_Sans({
+  variable: '--font-preview',
+  subsets: ['latin'],
+})
 
 export const metadata: Metadata = {
   title: 'FF14 战术板编辑器',
@@ -21,7 +25,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="zh" className={`${inter.variable} ${robotoMono.variable}`} suppressHydrationWarning>
+    <html lang="zh" className={`${inter.variable} ${robotoMono.variable} ${notoSans.variable}`} suppressHydrationWarning>
       <body className="antialiased">
         <ThemeProvider
           attribute="class"
