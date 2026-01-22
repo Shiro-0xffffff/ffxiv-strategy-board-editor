@@ -9,7 +9,7 @@ import { Plus, Minus } from 'lucide-react'
 import { useStrategyBoardCanvas } from './context'
 
 export function StrategyBoardCanvasZoomButtons() {
-  const { isZoomInAvailable, zoomIn, isZoomOutAvailable, zoomOut } = useStrategyBoardCanvas()
+  const { canvasSize, isZoomInAvailable, zoomIn, isZoomOutAvailable, zoomOut, zoomToFit } = useStrategyBoardCanvas()
 
   useHotkeys('mod+equal, mod+add', () => {
     zoomIn()
@@ -17,6 +17,9 @@ export function StrategyBoardCanvasZoomButtons() {
   useHotkeys('mod+minus, mod+subtract', () => {
     zoomOut()
   }, { preventDefault: true }, [zoomOut])
+  useHotkeys('mod+0', () => {
+    zoomToFit(canvasSize)
+  }, { preventDefault: true }, [zoomToFit, canvasSize])
 
   const handleZoomOutButtonClick = useCallback<MouseEventHandler<HTMLButtonElement>>(() => {
     zoomOut()
