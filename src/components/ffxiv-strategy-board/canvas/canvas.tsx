@@ -21,7 +21,7 @@ import { ConeCanvasObject } from './cone'
 import { ArcCanvasObject } from './arc'
 import { ImageCanvasObject } from './image'
 
-const hitCanvasPixelRatio = 0.25
+const hitCanvasPixelRatio = 0.125
 
 interface CanvasObjectContentProps {
   object: StrategyBoardObject
@@ -178,10 +178,10 @@ export function StrategyBoardCanvas() {
   }, [setCanvasSize])
 
   // 框选
-  const [rectangleSelectionStartPoint, setRectangleSelectionStartPoint] = useState<{ x: number, y: number } | null>(null)
+  const [selectionRectStartPoint, setSelectionRectStartPoint] = useState<{ x: number, y: number } | null>(null)
 
   const selectionRectRef = useRef<Konva.Rect>(null)
-  const objectHitCanvasesRef = useRef<{ id: string, canvas: HitCanvas }[]>(null)
+  const objectHitCanvasesRef = useRef<{ id: string, canvas: HitCanvas, offset: { x: number, y: number } }[]>(null)
 
   const handleStagePointerDown = useCallback((event: Konva.KonvaEventObject<PointerEvent>): void => {
     if (event.evt.pointerType !== 'mouse' || event.evt.button !== 0) return
@@ -189,48 +189,70 @@ export function StrategyBoardCanvas() {
     selectObjects([])
     const stage = stageRef.current
     if (!stage) return
+    const transformCanvasAxisToStageAxis = stage.getTransform().copy().invert()
     objectHitCanvasesRef.current = stage.find('.object').map(canvasObject => {
       const id = canvasObject.getAttr('data-id') as string
-      const canvas = new HitCanvas({ width: stage!.width(), height: stage!.height(), pixelRatio: hitCanvasPixelRatio })
+      const rect = canvasObject.getClientRect({ skipShadow: true, skipStroke: true, relativeTo: stage })
+      const canvas = new HitCanvas({ width: rect.width, height: rect.height, pixelRatio: hitCanvasPixelRatio / zoomRatio })
+      const context = canvas.getContext()
+      context.transform(...transformCanvasAxisToStageAxis.getMatrix() as [number, number, number, number, number, number])
+      context.translate(-rect.x, -rect.y)
       canvasObject.drawHit(canvas)
-      return { id, canvas }
+      const offset = {
+        x: rect.x * hitCanvasPixelRatio / zoomRatio,
+        y: rect.y * hitCanvasPixelRatio / zoomRatio,
+      }
+      return { id, canvas, offset }
     })
-    selectionRectRef.current?.position(stage.getRelativePointerPosition())
     selectionRectRef.current?.size({ width: 0, height: 0 })
-    const stageBoundingRect = stage.container().getBoundingClientRect()
-    setRectangleSelectionStartPoint({ x: event.evt.clientX - stageBoundingRect.x, y: event.evt.clientY - stageBoundingRect.y })
-  }, [selectObjects])
+    const pointerPosition = stage.getRelativePointerPosition()
+    setSelectionRectStartPoint({ x: (pointerPosition?.x ?? 0) / zoomRatio, y: (pointerPosition?.y ?? 0) / zoomRatio })
+  }, [zoomRatio, selectObjects])
 
   const handleWindowPointerMove = useCallback((event: PointerEvent): void => {
-    if (!rectangleSelectionStartPoint || !objectHitCanvasesRef.current) return
-    if (!stageRef.current || !selectionRectRef.current) return
-    const stageBoundingRect = stageRef.current.container().getBoundingClientRect()
+    if (!selectionRectStartPoint || !objectHitCanvasesRef.current) return
+    const stage = stageRef.current
+    const selectionRect = selectionRectRef.current
+    if (!stage || !selectionRect) return
+    const transformCanvasAxisToStageAxis = stage.getTransform().copy().invert()
+    const stageBoundingRect = stage.container().getBoundingClientRect()
+    const pointerPosition = transformCanvasAxisToStageAxis.point({
+      x: event.clientX - stageBoundingRect.x,
+      y: event.clientY - stageBoundingRect.y,
+    })
+    const selectionRectEndPoint = {
+      x: pointerPosition.x / zoomRatio,
+      y: pointerPosition.y / zoomRatio,
+    }
     const selectionRectSize = {
-      width: event.clientX - stageBoundingRect.x - rectangleSelectionStartPoint.x,
-      height: event.clientY - stageBoundingRect.y - rectangleSelectionStartPoint.y,
+      width: selectionRectEndPoint.x - selectionRectStartPoint.x,
+      height: selectionRectEndPoint.y - selectionRectStartPoint.y,
     }
-    selectionRectRef.current.size(selectionRectSize)
+    selectionRect.size({
+      width: selectionRectSize.width * zoomRatio,
+      height: selectionRectSize.height * zoomRatio,
+    })
     const imageDataRect = {
-      x: Math.round(rectangleSelectionStartPoint.x * hitCanvasPixelRatio),
-      y: Math.round(rectangleSelectionStartPoint.y * hitCanvasPixelRatio),
-      width: Math.round(selectionRectSize.width * hitCanvasPixelRatio),
-      height: Math.round(selectionRectSize.height * hitCanvasPixelRatio),
+      x: Math.round(selectionRectStartPoint.x * hitCanvasPixelRatio),
+      y: Math.round(selectionRectStartPoint.y * hitCanvasPixelRatio),
+      width: Math.ceil(Math.max(Math.abs(selectionRectSize.width * hitCanvasPixelRatio), 1)) * Math.sign(1 / selectionRectSize.width),
+      height: Math.ceil(Math.max(Math.abs(selectionRectSize.height * hitCanvasPixelRatio), 1)) * Math.sign(1 / selectionRectSize.height),
     }
-    const selectedObjectIds = objectHitCanvasesRef.current.filter(({ canvas }) => {
+    const selectedObjectIds = objectHitCanvasesRef.current.filter(({ canvas, offset }) => {
       if (!imageDataRect.width || !imageDataRect.height) return false
       const context = canvas.getContext()
-      const imageData = context.getImageData(imageDataRect.x, imageDataRect.y, imageDataRect.width, imageDataRect.height)
+      const imageData = context.getImageData(imageDataRect.x - offset.x, imageDataRect.y - offset.y, imageDataRect.width, imageDataRect.height)
       return new Uint32Array(imageData.data.buffer).some(pixel => pixel !== 0)
     }).map(({ id }) => id)
     selectObjects(selectedObjectIds)
-  }, [rectangleSelectionStartPoint, selectObjects])
+  }, [zoomRatio, selectionRectStartPoint, selectObjects])
   const handleWindowPointerUp = useCallback((): void => {
-    if (!rectangleSelectionStartPoint) return
-    setRectangleSelectionStartPoint(null)
-  }, [rectangleSelectionStartPoint])
+    if (!selectionRectStartPoint) return
+    setSelectionRectStartPoint(null)
+  }, [selectionRectStartPoint])
 
   useEffect(() => {
-    if (rectangleSelectionStartPoint) {
+    if (selectionRectStartPoint) {
       window.addEventListener('pointermove', handleWindowPointerMove)
       window.addEventListener('pointerup', handleWindowPointerUp)
     }
@@ -238,7 +260,7 @@ export function StrategyBoardCanvas() {
       window.removeEventListener('pointermove', handleWindowPointerMove)
       window.removeEventListener('pointerup', handleWindowPointerUp)
     }
-  }, [rectangleSelectionStartPoint, handleWindowPointerMove, handleWindowPointerUp])
+  }, [selectionRectStartPoint, handleWindowPointerMove, handleWindowPointerUp])
 
   // 选择图形
   const [selectedObjectOnPointerDown, setSelectedObjectOnPointerDown] = useState<boolean>(false)
@@ -500,11 +522,13 @@ export function StrategyBoardCanvas() {
             <Layer listening={false}>
               <Rect
                 ref={selectionRectRef}
+                x={(selectionRectStartPoint?.x ?? 0) * zoomRatio}
+                y={(selectionRectStartPoint?.y ?? 0) * zoomRatio}
                 stroke="#fff"
                 strokeWidth={1}
                 shadowBlur={2}
                 fill="rgba(255,255,255,0.2)"
-                visible={!!rectangleSelectionStartPoint}
+                visible={!!selectionRectStartPoint}
               />
             </Layer>
           </Stage>
