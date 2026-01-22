@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode, createContext, useState, useContext, useCallback } from 'react'
+import { ReactNode, createContext, useState, useContext, useMemo, useCallback } from 'react'
 import {
   StrategyBoardObjectType,
   sceneWidth,
@@ -19,20 +19,22 @@ import {
 
 import { useStrategyBoard } from '../context'
 
-const defaultZoomRatio = 0.2
-const zoomLevels = [0.05, 0.08, 0.1, 0.12, 0.14, 0.16, 0.18, 0.2, 0.22, 0.25, 0.3, 0.35, 0.4, 0.5, 0.6, 0.8, 1]
+const defaultZoomLevel = -2.5
+const minZoomLevel = -4
+const maxZoomLevel = 0
 
 export interface StrategyBoardCanvasContextProps {
   canvasSize: { width: number, height: number }
   setCanvasSize: (size: { width: number, height: number }) => void
   canvasOffset: { x: number, y: number }
   setCanvasOffset: (offset: { x: number, y: number }) => void
+  zoomLevel: number
   zoomRatio: number
-  zoomTo: (zoomRatio: number) => void
   isZoomInAvailable: boolean
-  zoomIn: () => void
+  zoomIn: (level?: number) => void
   isZoomOutAvailable: boolean
-  zoomOut: () => void
+  zoomOut: (level?: number) => void
+  setFixedZoomRatio: (zoomRatio: number | null) => void
   isObjectSelected: (id: string) => boolean
   addObjectAtCanvasPosition: (type: StrategyBoardObjectType, canvasPosition: { x: number, y: number })=> void
   moveObject: (id: string, position: { x: number, y: number }) => void
@@ -69,23 +71,19 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
   const [canvasSize, setCanvasSize] = useState<{ width: number, height: number }>(() => ({ width: 0, height: 0 }))
   const [canvasOffset, setCanvasOffset] = useState<{ x: number, y: number }>(() => ({ x: 0, y: 0 }))
 
-  const [zoomRatio, setZoomRatio] = useState<number>(defaultZoomRatio)
-  const zoomTo = useCallback((zoomRatio: number): void => {
-    setZoomRatio(zoomRatio)
-  }, [])
+  const [zoomLevel, setZoomLevel] = useState<number>(defaultZoomLevel)
+  const [fixedZoomRatio, setFixedZoomRatio] = useState<number | null>(null)
 
-  const isZoomInAvailable = zoomLevels.some(zoomLevel => zoomLevel > zoomRatio)
-  const zoomIn = useCallback((): void => {
-    const zoomLevel = zoomLevels.find(zoomLevel => zoomLevel > zoomRatio)
-    if (!zoomLevel) return
-    setZoomRatio(zoomLevel)
-  }, [zoomRatio])
-  const isZoomOutAvailable = zoomLevels.some(zoomLevel => zoomLevel < zoomRatio)
-  const zoomOut = useCallback((): void => {
-    const zoomLevel = zoomLevels.findLast(zoomLevel => zoomLevel < zoomRatio)
-    if (!zoomLevel) return
-    setZoomRatio(zoomLevel)
-  }, [zoomRatio])
+  const zoomRatio = useMemo(() => fixedZoomRatio ?? Math.pow(2, zoomLevel), [fixedZoomRatio, zoomLevel])
+
+  const isZoomInAvailable = zoomLevel < maxZoomLevel
+  const zoomIn = useCallback((level: number = 0.5): void => {
+    setZoomLevel(zoomLevel => Math.min(zoomLevel + level, maxZoomLevel))
+  }, [])
+  const isZoomOutAvailable = zoomLevel > minZoomLevel
+  const zoomOut = useCallback((level: number = 0.5): void => {
+    setZoomLevel(zoomLevel => Math.max(zoomLevel - level, minZoomLevel))
+  }, [])
 
   const isObjectSelected = useCallback((id: string): boolean => {
     return selectedObjectIds.includes(id)
@@ -327,12 +325,13 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
     setCanvasSize,
     canvasOffset,
     setCanvasOffset,
+    zoomLevel,
     zoomRatio,
-    zoomTo,
     isZoomInAvailable,
     zoomIn,
     isZoomOutAvailable,
     zoomOut,
+    setFixedZoomRatio,
     isObjectSelected,
     addObjectAtCanvasPosition,
     moveObject,

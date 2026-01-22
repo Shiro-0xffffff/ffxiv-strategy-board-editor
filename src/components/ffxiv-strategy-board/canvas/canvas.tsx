@@ -21,8 +21,6 @@ import { ConeCanvasObject } from './cone'
 import { ArcCanvasObject } from './arc'
 import { ImageCanvasObject } from './image'
 
-const hitCanvasPixelRatio = 0.125
-
 interface CanvasObjectContentProps {
   object: StrategyBoardObject
 }
@@ -155,7 +153,17 @@ export function StrategyBoardCanvas() {
     isRedoAvailable,
     redo,
   } = useStrategyBoard()
-  const { canvasSize, setCanvasSize, setCanvasOffset, zoomRatio, moveObjects, flipObjectsHorizontally, flipObjectsVertically } = useStrategyBoardCanvas()
+  const {
+    canvasSize,
+    setCanvasSize,
+    setCanvasOffset,
+    zoomRatio,
+    zoomIn,
+    zoomOut,
+    moveObjects,
+    flipObjectsHorizontally,
+    flipObjectsVertically,
+  } = useStrategyBoardCanvas()
 
   const backgroundOption = backgroundOptions.get(scene.background)!
 
@@ -178,6 +186,8 @@ export function StrategyBoardCanvas() {
   }, [setCanvasSize])
 
   // 框选
+  const hitCanvasPixelRatio = 0.125
+
   const [selectionRectStartPoint, setSelectionRectStartPoint] = useState<{ x: number, y: number } | null>(null)
 
   const selectionRectRef = useRef<Konva.Rect>(null)
@@ -406,7 +416,7 @@ export function StrategyBoardCanvas() {
     if (positions) moveObjects(positions)
   }, [getPositionsFromDraggingHandle, moveObjectsTemporarily, moveObjects])
 
-  // 拖动画布
+  // 移动画布
   const [isDraggingStage, setIsDraggingStage] = useState<boolean>(false)
 
   const handleStageDragStart = useCallback((): void => {
@@ -418,6 +428,18 @@ export function StrategyBoardCanvas() {
     setIsDraggingStage(false)
     setCanvasOffset(stage.position())
   }, [setCanvasOffset])
+
+  const handleStageScroll = useCallback((delta: { x: number, y: number }): void => {
+    const scrollDistanceRatio = 0.3
+    stageRef.current?.move({ x: delta.x * scrollDistanceRatio, y: delta.y * scrollDistanceRatio })
+  }, [])
+
+  // 缩放画布
+  const handleStageZoomScroll = useCallback((delta: number): void => {
+    const zoomLevelRatio = 0.005
+    if (delta > 0) zoomOut(delta * zoomLevelRatio)
+    if (delta < 0) zoomIn(-delta * zoomLevelRatio)
+  }, [zoomIn, zoomOut])
 
   const handlePointerDown = useCallback((event: Konva.KonvaEventObject<PointerEvent>): void => {
     const canvasObject = event.target.findAncestor('.object', true)
@@ -481,6 +503,20 @@ export function StrategyBoardCanvas() {
     }
   }, [handleStageDragEnd, handleObjectDragHandleDragEnd])
 
+  const handleWheel = useCallback((event: Konva.KonvaEventObject<WheelEvent>): void => {
+    const deltaRatio = event.evt.deltaMode === 1 || event.evt.deltaMode === 2 ? 100 : 1
+    if (event.evt.ctrlKey) {
+      event.evt.preventDefault()
+      handleStageZoomScroll(event.evt.deltaY * deltaRatio)
+      return
+    }
+    if (event.evt.shiftKey) {
+      handleStageScroll({ x: event.evt.deltaY * deltaRatio, y: event.evt.deltaX * deltaRatio })
+    } else {
+      handleStageScroll({ x: event.evt.deltaX * deltaRatio, y: event.evt.deltaY * deltaRatio })
+    }
+  }, [handleStageScroll, handleStageZoomScroll])
+
   return (
     <ContextMenu modal={false}>
       <ContextMenuTrigger asChild>
@@ -502,6 +538,7 @@ export function StrategyBoardCanvas() {
             onDragStart={handleDragStart}
             onDragMove={handleDragMove}
             onDragEnd={handleDragEnd}
+            onWheel={handleWheel}
           >
             <Layer>
               <Image
@@ -596,7 +633,7 @@ export function StrategyBoardCanvas() {
 
 export function StrategyBoardCanvasPreview() {
   const { scene } = useStrategyBoard()
-  const { canvasSize, setCanvasSize, zoomRatio, zoomTo } = useStrategyBoardCanvas()
+  const { canvasSize, setCanvasSize, zoomRatio, setFixedZoomRatio } = useStrategyBoardCanvas()
 
   const backgroundOption = backgroundOptions.get(scene.background)!
 
@@ -613,11 +650,11 @@ export function StrategyBoardCanvasPreview() {
         width: stageContainer.offsetWidth,
         height: stageContainer.offsetHeight,
       })
-      zoomTo(Math.min(stageContainer.offsetWidth / sceneWidth, stageContainer.offsetHeight / sceneHeight))
+      setFixedZoomRatio(Math.min(stageContainer.offsetWidth / sceneWidth, stageContainer.offsetHeight / sceneHeight))
     })
     resizeObserver.observe(stageContainer)
     return () => resizeObserver.unobserve(stageContainer)
-  }, [setCanvasSize, zoomTo])
+  }, [setCanvasSize, setFixedZoomRatio])
 
   return (
     <div
