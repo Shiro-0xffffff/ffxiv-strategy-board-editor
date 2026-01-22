@@ -161,6 +161,7 @@ export function StrategyBoardCanvas() {
     zoomRatio,
     zoomIn,
     zoomOut,
+    zoomToFit,
     moveObjects,
     flipObjectsHorizontally,
     flipObjectsVertically,
@@ -172,6 +173,19 @@ export function StrategyBoardCanvas() {
 
   // 根据容器尺寸缩放画布
   const stageContainerRef = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    const stageContainer = stageContainerRef.current
+    if (!stageContainer) return
+    setCanvasSize({
+      width: stageContainer.offsetWidth,
+      height: stageContainer.offsetHeight,
+    })
+    zoomToFit({
+      width: stageContainer.offsetWidth,
+      height: stageContainer.offsetHeight,
+    })
+  }, [setCanvasSize, zoomToFit])
 
   useLayoutEffect(() => {
     const stageContainer = stageContainerRef.current
