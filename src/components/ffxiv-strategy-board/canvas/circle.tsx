@@ -78,7 +78,7 @@ export function CircleCanvasObject(props: CircleCanvasObjectProps) {
         ref={objectRef}
         clipFunc={ctx => {
           ctx.beginPath()
-          ctx.moveTo(0, 0)
+          ctx.moveTo(baseBoundingCanvasRadius, 0)
           ctx.arc(0, 0, baseBoundingCanvasRadius, 0, Math.PI * 2)
         }}
         opacity={1 - transparency / 100}

@@ -15,15 +15,21 @@ const resizeHandleSize = 6
 const rotateHandleSize = 8
 const rotateHandleOffset = 24
 
-const resizeDirections = new Map<string, { x: -1 | 0 | 1, y: -1 | 0 | 1 }>([
-  ['right', { x: 1, y: 0 }],
-  ['bottom', { x: 0, y: 1 }],
-  ['left', { x: -1, y: 0 }],
-  ['top', { x: 0, y: -1 }],
-  ['top-left', { x: -1, y: -1 }],
-  ['bottom-left', { x: -1, y: 1 }],
-  ['bottom-right', { x: 1, y: 1 }],
-  ['top-right', { x: 1, y: -1 }],
+const squareResizeDirections = new Map<string, { x: -1 | 0 | 1, y: -1 | 0 | 1 }>([
+  ['square-right', { x: 1, y: 0 }],
+  ['square-bottom', { x: 0, y: 1 }],
+  ['square-left', { x: -1, y: 0 }],
+  ['square-top', { x: 0, y: -1 }],
+  ['square-top-left', { x: -1, y: -1 }],
+  ['square-bottom-left', { x: -1, y: 1 }],
+  ['square-bottom-right', { x: 1, y: 1 }],
+  ['square-top-right', { x: 1, y: -1 }],
+])
+const roundResizeDirections = new Map<string, { x: -1 | 0 | 1, y: -1 | 0 | 1 }>([
+  ['round-right', { x: 1, y: 0 }],
+  ['round-bottom', { x: 0, y: 1 }],
+  ['round-left', { x: -1, y: 0 }],
+  ['round-top', { x: 0, y: -1 }],
 ])
 
 export interface ImageCanvasObjectProps {
@@ -53,36 +59,37 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
 
   const [backgroundImage] = useImage(ffxivImageUrl(objectLibraryItem.image ?? ''))
 
-  const imageBaseCanvasSize = {
-    width: objectLibraryItem.baseSize * zoomRatio,
-    height: objectLibraryItem.baseSize * zoomRatio,
-  }
+  const imageBaseCanvasSize = objectLibraryItem.baseSize * zoomRatio
 
   // 缩放
-  const boundingBoxFrameRef = useRef<Konva.Rect>(null)
+  const squareBoundingBoxFrameRef = useRef<Konva.Rect>(null)
+  const roundBoundingBoxFrameRef = useRef<Konva.Circle>(null)
   const resizeHandlesRef = useRef(new Map<string, Konva.Rect>())
 
   const resizeObjectTemporarily = useCallback((size: number): void => {
     resizeHandlesRef.current.forEach((resizeHandle, id) => {
-      const direction = resizeDirections.get(id)!
-      resizeHandle.x(imageBaseCanvasSize.width * (repeat ? repeat.x : 1) / 2 * size / 100 * direction.x)
-      resizeHandle.y(imageBaseCanvasSize.height * (repeat ? repeat.y : 1) / 2 * size / 100 * direction.y)
+      const direction = squareResizeDirections.get(id) ?? roundResizeDirections.get(id)
+      if (!direction) return
+      resizeHandle.x(imageBaseCanvasSize * (repeat ? repeat.x : 1) / 2 * size / 100 * direction.x)
+      resizeHandle.y(imageBaseCanvasSize * (repeat ? repeat.y : 1) / 2 * size / 100 * direction.y)
     })
-    rotateHandleRef.current?.y(-imageBaseCanvasSize.height * (repeat ? repeat.y : 1) / 2 * size / 100 - rotateHandleOffset)
-    rotateHandleConnectionLineRef.current?.y(-imageBaseCanvasSize.height * (repeat ? repeat.y : 1) / 2 * size / 100 - rotateHandleOffset)
-    boundingBoxFrameRef.current?.scaleX(size / 100)
-    boundingBoxFrameRef.current?.scaleY(size / 100)
+    rotateHandleRef.current?.y(-imageBaseCanvasSize * (repeat ? repeat.y : 1) / 2 * size / 100 - rotateHandleOffset)
+    rotateHandleConnectionLineRef.current?.y(-imageBaseCanvasSize * (repeat ? repeat.y : 1) / 2 * size / 100 - rotateHandleOffset)
+    squareBoundingBoxFrameRef.current?.scaleX(size / 100)
+    roundBoundingBoxFrameRef.current?.scaleX(size / 100)
+    squareBoundingBoxFrameRef.current?.scaleY(size / 100)
+    roundBoundingBoxFrameRef.current?.scaleY(size / 100)
     objectRef.current?.scaleX(size / 100)
     objectRef.current?.scaleY(size / 100)
-  }, [imageBaseCanvasSize.width, imageBaseCanvasSize.height, repeat])
+  }, [imageBaseCanvasSize, repeat])
 
   const getSizeFromResizeHandle = useCallback((resizeHandle: Konva.Node): number => {
     const x = resizeHandle.x() / (repeat ? repeat.x : 1)
     const y = resizeHandle.y() / (repeat ? repeat.y : 1)
-    const size = Math.max(Math.abs(x * 2 / imageBaseCanvasSize.width), Math.abs(y * 2 / imageBaseCanvasSize.height)) * 100
+    const size = Math.max(Math.abs(x * 2 / imageBaseCanvasSize), Math.abs(y * 2 / imageBaseCanvasSize)) * 100
     const normalizedSize = Math.round(Math.min(Math.max(size, 0), 255))
     return normalizedSize
-  }, [imageBaseCanvasSize.width, imageBaseCanvasSize.height, repeat])
+  }, [imageBaseCanvasSize, repeat])
 
   const handleResizeHandleDragMove = useCallback((event: Konva.KonvaEventObject<DragEvent>): void => {
     const size = getSizeFromResizeHandle(event.target)
@@ -101,10 +108,10 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
 
   const rotateObjectTemporarily = useCallback((rotation: number): void => {
     rotateHandleRef.current?.x(0)
-    rotateHandleRef.current?.y(-imageBaseCanvasSize.height * (repeat ? repeat.y : 1) / 2 * size / 100 - rotateHandleOffset)
+    rotateHandleRef.current?.y(-imageBaseCanvasSize * (repeat ? repeat.y : 1) / 2 * size / 100 - rotateHandleOffset)
     boundingBoxRef.current?.rotation(rotation)
     objectRef.current?.rotation(rotation)
-  }, [imageBaseCanvasSize.height, repeat, size])
+  }, [imageBaseCanvasSize, repeat, size])
 
   const getRotationFromRotateHandle = useCallback((rotateHandle: Konva.Node): number => {
     const rotation = (boundingBoxRef.current?.rotation() ?? 0) + Math.atan2(rotateHandle.x(), -rotateHandle.y()) * 180 / Math.PI
@@ -126,6 +133,13 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
     <>
       <Group
         ref={objectRef}
+        {...objectLibraryItem.shape === 'round' && !repeat && {
+          clipFunc: ctx => {
+            ctx.beginPath()
+            ctx.moveTo(imageBaseCanvasSize / 2, 0)
+            ctx.arc(0, 0, imageBaseCanvasSize / 2, 0, Math.PI * 2)
+          }
+        }}
         opacity={1 - transparency / 100}
         scaleX={size / 100}
         scaleY={size / 100}
@@ -133,21 +147,21 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
       >
         {repeat ? (
           <Rect
-            offsetX={imageBaseCanvasSize.width * repeat.x / 2}
-            offsetY={imageBaseCanvasSize.height * repeat.y / 2}
-            width={imageBaseCanvasSize.width * repeat.x}
-            height={imageBaseCanvasSize.height * repeat.y}
+            offsetX={imageBaseCanvasSize * repeat.x / 2}
+            offsetY={imageBaseCanvasSize * repeat.y / 2}
+            width={imageBaseCanvasSize * repeat.x}
+            height={imageBaseCanvasSize * repeat.y}
             fillPatternImage={backgroundImage}
-            fillPatternScaleX={backgroundImage?.width ? imageBaseCanvasSize.width / backgroundImage.width : 1}
-            fillPatternScaleY={backgroundImage?.height ? imageBaseCanvasSize.height / backgroundImage.height : 1}
+            fillPatternScaleX={backgroundImage?.width ? imageBaseCanvasSize / backgroundImage.width : 1}
+            fillPatternScaleY={backgroundImage?.height ? imageBaseCanvasSize / backgroundImage.height : 1}
             scaleX={flipped ? -1 : 1}
           />
         ) : (
           <Image
-            offsetX={imageBaseCanvasSize.width / 2}
-            offsetY={imageBaseCanvasSize.height / 2}
-            width={imageBaseCanvasSize.width}
-            height={imageBaseCanvasSize.height}
+            offsetX={imageBaseCanvasSize / 2}
+            offsetY={imageBaseCanvasSize / 2}
+            width={imageBaseCanvasSize}
+            height={imageBaseCanvasSize}
             image={backgroundImage}
             alt={objectLibraryItem.abbr}
             scaleX={flipped ? -1 : 1}
@@ -160,36 +174,50 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
             ref={boundingBoxRef}
             rotation={rotation}
           >
-            <Rect
-              ref={boundingBoxFrameRef}
-              offsetX={imageBaseCanvasSize.width * (repeat ? repeat.x : 1) / 2}
-              offsetY={imageBaseCanvasSize.height * (repeat ? repeat.y : 1) / 2}
-              width={imageBaseCanvasSize.width * (repeat ? repeat.x : 1)}
-              height={imageBaseCanvasSize.height * (repeat ? repeat.y : 1)}
-              stroke="#fff"
-              strokeWidth={2}
-              shadowBlur={4}
-              scaleX={size / 100}
-              scaleY={size / 100}
-              strokeScaleEnabled={false}
-              listening={false}
-            />
+            {objectLibraryItem.shape === 'round' && !repeat ? (
+              <Circle
+                ref={roundBoundingBoxFrameRef}
+                radius={imageBaseCanvasSize / 2}
+                stroke="#fff"
+                strokeWidth={2}
+                shadowBlur={4}
+                scaleX={size / 100}
+                scaleY={size / 100}
+                strokeScaleEnabled={false}
+                listening={false}
+              />
+            ) : (
+              <Rect
+                ref={squareBoundingBoxFrameRef}
+                offsetX={imageBaseCanvasSize * (repeat ? repeat.x : 1) / 2}
+                offsetY={imageBaseCanvasSize * (repeat ? repeat.y : 1) / 2}
+                width={imageBaseCanvasSize * (repeat ? repeat.x : 1)}
+                height={imageBaseCanvasSize * (repeat ? repeat.y : 1)}
+                stroke="#fff"
+                strokeWidth={2}
+                shadowBlur={4}
+                scaleX={size / 100}
+                scaleY={size / 100}
+                strokeScaleEnabled={false}
+                listening={false}
+              />
+            )}
             {!locked && (
               <>
                 <Line
                   ref={rotateHandleConnectionLineRef}
-                  y={-imageBaseCanvasSize.height * (repeat ? repeat.y : 1) / 2 * size / 100 - rotateHandleOffset}
+                  y={-imageBaseCanvasSize * (repeat ? repeat.y : 1) / 2 * size / 100 - rotateHandleOffset}
                   points={[0, 0, 0, rotateHandleOffset]}
                   stroke="#fff"
                   strokeWidth={2}
                   shadowBlur={4}
                 />
-                {[...resizeDirections.entries()].map(([id, direction]) => (
+                {[...(objectLibraryItem.shape === 'round' && !repeat ? roundResizeDirections : squareResizeDirections).entries()].map(([id, direction]) => (
                   <Rect
                     key={id}
                     ref={ref => { resizeHandlesRef.current.set(id, ref!) }}
-                    x={imageBaseCanvasSize.width * (repeat ? repeat.x : 1) / 2 * size / 100 * direction.x}
-                    y={imageBaseCanvasSize.height * (repeat ? repeat.y : 1) / 2 * size / 100 * direction.y}
+                    x={imageBaseCanvasSize * (repeat ? repeat.x : 1) / 2 * size / 100 * direction.x}
+                    y={imageBaseCanvasSize * (repeat ? repeat.y : 1) / 2 * size / 100 * direction.y}
                     offsetX={resizeHandleSize / 2}
                     offsetY={resizeHandleSize / 2}
                     width={resizeHandleSize}
@@ -207,7 +235,7 @@ export function ImageCanvasObject(props: ImageCanvasObjectProps) {
                 <Circle
                   ref={rotateHandleRef}
                   x={0}
-                  y={-imageBaseCanvasSize.height * (repeat ? repeat.y : 1) / 2 * size / 100 - rotateHandleOffset}
+                  y={-imageBaseCanvasSize * (repeat ? repeat.y : 1) / 2 * size / 100 - rotateHandleOffset}
                   radius={rotateHandleSize / 2}
                   stroke="#fff"
                   strokeWidth={2}

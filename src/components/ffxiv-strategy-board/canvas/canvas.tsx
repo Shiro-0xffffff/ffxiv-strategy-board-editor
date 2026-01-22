@@ -70,7 +70,7 @@ export interface StrategyBoardCanvasObjectPreviewProps {
 export function StrategyBoardCanvasObjectPreview(props: StrategyBoardCanvasObjectPreviewProps) {
   const { objectType } = props
 
-  const previewCanvasSize = 512
+  const previewCanvasSize = 1024
   const object = createObject(objectType)
 
   return (
