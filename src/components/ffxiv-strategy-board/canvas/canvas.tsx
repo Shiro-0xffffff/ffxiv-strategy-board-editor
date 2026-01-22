@@ -156,6 +156,7 @@ export function StrategyBoardCanvas() {
   const {
     canvasSize,
     setCanvasSize,
+    canvasOffset,
     setCanvasOffset,
     zoomRatio,
     zoomIn,
@@ -431,11 +432,11 @@ export function StrategyBoardCanvas() {
 
   const handleStageScroll = useCallback((delta: { x: number, y: number }): void => {
     const scrollDistanceRatio = 0.3
-    stageRef.current?.move({
-      x: delta.x * scrollDistanceRatio * (isMac() ? 1 : -1),
-      y: delta.y * scrollDistanceRatio * (isMac() ? 1 : -1),
+    setCanvasOffset({
+      x: canvasOffset.x + delta.x * scrollDistanceRatio * (isMac() ? 1 : -1),
+      y: canvasOffset.y + delta.y * scrollDistanceRatio * (isMac() ? 1 : -1),
     })
-  }, [])
+  }, [canvasOffset, setCanvasOffset])
 
   // 缩放画布
   const handleStageZoomScroll = useCallback((delta: number): void => {
@@ -530,6 +531,8 @@ export function StrategyBoardCanvas() {
         >
           <Stage
             ref={stageRef}
+            x={canvasOffset.x}
+            y={canvasOffset.y}
             offsetX={-canvasSize.width / 2}
             offsetY={-canvasSize.height / 2}
             width={canvasSize.width}
