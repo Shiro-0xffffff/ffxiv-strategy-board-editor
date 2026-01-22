@@ -431,7 +431,10 @@ export function StrategyBoardCanvas() {
 
   const handleStageScroll = useCallback((delta: { x: number, y: number }): void => {
     const scrollDistanceRatio = 0.3
-    stageRef.current?.move({ x: delta.x * scrollDistanceRatio, y: delta.y * scrollDistanceRatio })
+    stageRef.current?.move({
+      x: delta.x * scrollDistanceRatio * (isMac() ? 1 : -1),
+      y: delta.y * scrollDistanceRatio * (isMac() ? 1 : -1),
+    })
   }, [])
 
   // 缩放画布
