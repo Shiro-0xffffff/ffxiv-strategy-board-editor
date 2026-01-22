@@ -26,17 +26,19 @@ export function TextCanvasObject(props: TextCanvasObjectProps) {
   const textRef = useRef<Konva.Text>(null)
 
   const [textCanvasWidth, setTextCanvasWidth] = useState<number>(0)
-  useLayoutEffect(() => {
-    const textSize = textRef.current?.measureSize(text)
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (textSize) setTextCanvasWidth(textSize.width)
-  }, [text])
 
   const textContainerCanvasSize = {
     width: textCanvasWidth + horizontalPadding * 2,
     height: baseHeight * zoomRatio
   }
   const canvasFontSize = baseFontSize * zoomRatio
+
+  useLayoutEffect(() => {
+    textRef.current?.fontSize(canvasFontSize)
+    const textSize = textRef.current?.measureSize(text)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (textSize) setTextCanvasWidth(textSize.width)
+  }, [text, canvasFontSize])
 
   return (
     <>
