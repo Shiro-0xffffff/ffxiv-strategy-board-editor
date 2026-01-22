@@ -181,17 +181,19 @@ export function StrategyBoardCanvas() {
   const [selectionRectStartPoint, setSelectionRectStartPoint] = useState<{ x: number, y: number } | null>(null)
 
   const selectionRectRef = useRef<Konva.Rect>(null)
-  const objectHitCanvasesRef = useRef<{ id: string, canvas: HitCanvas, offset: { x: number, y: number } }[]>(null)
+  const objectHitCanvasesRef = useRef<{ id: string, selected: boolean, canvas: HitCanvas, offset: { x: number, y: number } }[]>(null)
 
   const handleStagePointerDown = useCallback((event: Konva.KonvaEventObject<PointerEvent>): void => {
     if (event.evt.pointerType !== 'mouse' || event.evt.button !== 0) return
     event.evt.preventDefault()
-    selectObjects([])
+    const multiselect = event.evt.shiftKey || event.evt.ctrlKey
+    if (!multiselect) selectObjects([])
     const stage = stageRef.current
     if (!stage) return
     const transformCanvasAxisToStageAxis = stage.getTransform().copy().invert()
     objectHitCanvasesRef.current = stage.find('.object').map(canvasObject => {
       const id = canvasObject.getAttr('data-id') as string
+      const selected = multiselect && selectedObjectIds.includes(id)
       const rect = canvasObject.getClientRect({ skipShadow: true, skipStroke: true, relativeTo: stage })
       const canvas = new HitCanvas({ width: rect.width, height: rect.height, pixelRatio: hitCanvasPixelRatio / zoomRatio })
       const context = canvas.getContext()
@@ -202,15 +204,16 @@ export function StrategyBoardCanvas() {
         x: rect.x * hitCanvasPixelRatio / zoomRatio,
         y: rect.y * hitCanvasPixelRatio / zoomRatio,
       }
-      return { id, canvas, offset }
+      return { id, selected, canvas, offset }
     })
     selectionRectRef.current?.size({ width: 0, height: 0 })
     const pointerPosition = stage.getRelativePointerPosition()
     setSelectionRectStartPoint({ x: (pointerPosition?.x ?? 0) / zoomRatio, y: (pointerPosition?.y ?? 0) / zoomRatio })
-  }, [zoomRatio, selectObjects])
+  }, [zoomRatio, selectedObjectIds, selectObjects])
 
   const handleWindowPointerMove = useCallback((event: PointerEvent): void => {
     if (!selectionRectStartPoint || !objectHitCanvasesRef.current) return
+    const multiselect = event.shiftKey || event.ctrlKey
     const stage = stageRef.current
     const selectionRect = selectionRectRef.current
     if (!stage || !selectionRect) return
@@ -238,11 +241,12 @@ export function StrategyBoardCanvas() {
       width: Math.ceil(Math.max(Math.abs(selectionRectSize.width * hitCanvasPixelRatio), 1)) * Math.sign(1 / selectionRectSize.width),
       height: Math.ceil(Math.max(Math.abs(selectionRectSize.height * hitCanvasPixelRatio), 1)) * Math.sign(1 / selectionRectSize.height),
     }
-    const selectedObjectIds = objectHitCanvasesRef.current.filter(({ canvas, offset }) => {
-      if (!imageDataRect.width || !imageDataRect.height) return false
+    const selectedObjectIds = objectHitCanvasesRef.current.filter(({ selected, canvas, offset }) => {
+      if (!imageDataRect.width || !imageDataRect.height) return selected
       const context = canvas.getContext()
       const imageData = context.getImageData(imageDataRect.x - offset.x, imageDataRect.y - offset.y, imageDataRect.width, imageDataRect.height)
-      return new Uint32Array(imageData.data.buffer).some(pixel => pixel !== 0)
+      const isObjectInSelectionRect = new Uint32Array(imageData.data.buffer).some(pixel => pixel !== 0)
+      return multiselect ? isObjectInSelectionRect !== selected : isObjectInSelectionRect || selected
     }).map(({ id }) => id)
     selectObjects(selectedObjectIds)
   }, [zoomRatio, selectionRectStartPoint, selectObjects])
@@ -270,9 +274,10 @@ export function StrategyBoardCanvas() {
   }, [selectObjects])
 
   const handleObjectPointerDown = useCallback((id: string, event: Konva.KonvaEventObject<PointerEvent>): void => {
+    const multiselect = event.evt.shiftKey || event.evt.ctrlKey
     setSelectedObjectOnPointerDown(false)
     if (selectedObjectIds.includes(id)) return
-    if (event.evt.shiftKey || event.evt.ctrlKey) {
+    if (multiselect) {
       selectObjects([...selectedObjectIds, id])
     } else {
       selectObjects([id])
@@ -280,10 +285,11 @@ export function StrategyBoardCanvas() {
     setSelectedObjectOnPointerDown(true)
   }, [selectedObjectIds, selectObjects])
   const handleObjectPointerClick = useCallback((id: string, event: Konva.KonvaEventObject<PointerEvent>): void => {
+    const multiselect = event.evt.shiftKey || event.evt.ctrlKey
     setSelectedObjectOnPointerDown(false)
     if (selectedObjectOnPointerDown) return
     if (event.evt.button === 2) return
-    if (event.evt.shiftKey || event.evt.ctrlKey) {
+    if (multiselect) {
       deselectObject(id)
     } else {
       selectObjects([id])
