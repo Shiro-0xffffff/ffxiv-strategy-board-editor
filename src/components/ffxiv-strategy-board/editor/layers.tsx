@@ -4,14 +4,15 @@ import { MouseEventHandler, PointerEventHandler, useState, useRef, useEffect, us
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { ContextMenuContent, ContextMenuItem, ContextMenuShortcut, ContextMenuTrigger, ContextMenu, ContextMenuGroup, ContextMenuSeparator } from '@/components/ui/context-menu'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PointerSensor, DragStartEvent, DragEndEvent, DndContext, DragOverlay, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { restrictToVerticalAxis, restrictToFirstScrollableAncestor } from '@dnd-kit/modifiers'
 import { CSS } from '@dnd-kit/utilities'
-import { Lock, Unlock, Eye, EyeOff } from 'lucide-react'
-import { cn, ffxivImageUrl } from '@/lib/utils'
+import { Undo2, Redo2, Scissors, Copy, ClipboardPaste, CopyCheck, Trash2, Lock, Unlock, Eye, EyeOff } from 'lucide-react'
 import { StrategyBoardObjectType } from '@/lib/ffxiv-strategy-board'
+import { cn, isMac, ffxivImageUrl } from '@/lib/utils'
 
 import { objectLibrary } from '../constants'
 import { useStrategyBoard } from '../context'
@@ -134,11 +135,52 @@ function SortableLayer(props: { id: string }) {
 }
 
 export function LayersPanel() {
-  const { scene, reorderObject } = useStrategyBoard()
+  const {
+    scene,
+    selectedObjectIds,
+    selectObjects,
+    deleteObjects,
+    isClipboardEmpty,
+    cutObjects,
+    copyObjects,
+    pasteObjects,
+    reorderObject,
+    isUndoAvailable,
+    undo,
+    isRedoAvailable,
+    redo,
+  } = useStrategyBoard()
 
+  // 右键菜单
+  const handleContextMenuUndoClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
+    undo()
+  }, [undo])
+  const handleContextMenuRedoClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
+    redo()
+  }, [redo])
+
+  const handleContextMenuCutClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
+    cutObjects(selectedObjectIds)
+  }, [cutObjects, selectedObjectIds])
+  const handleContextMenuCopyClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
+    copyObjects(selectedObjectIds)
+  }, [copyObjects, selectedObjectIds])
+  const handleContextMenuPasteClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
+    pasteObjects()
+  }, [pasteObjects])
+
+  const handleContextMenuSelectAllClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
+    selectObjects(scene.objects.map(object => object.id))
+  }, [selectObjects, scene])
+
+  const handleContextMenuDeleteClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
+    deleteObjects(selectedObjectIds)
+  }, [deleteObjects, selectedObjectIds])
+
+  // 拖动排序
   const [draggingObjectId, setDraggingObjectId] = useState<string | null>(null)
 
-  const contextId = useId()
+  const dndContextId = useId()
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -166,28 +208,73 @@ export function LayersPanel() {
       <div className="p-4 flex items-center justify-between">
         <div className="font-semibold">图层</div>
       </div>
-      <ScrollArea className="flex-1 min-h-0 pb-4">
-        <div className="px-2 flex flex-col gap-0.5">
-          <DndContext
-            id={contextId}
-            sensors={sensors}
-            modifiers={[restrictToVerticalAxis, restrictToFirstScrollableAncestor]}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext items={scene.objects} strategy={verticalListSortingStrategy}>
-              {scene.objects.map(({ id }) => (
-                <SortableLayer key={id} id={id} />
-              ))}
-              <DragOverlay className="**:cursor-grabbing">
-                {draggingObjectId && (
-                  <Layer id={draggingObjectId} />
-                )}
-              </DragOverlay>
-            </SortableContext>
-          </DndContext>
-        </div>
-      </ScrollArea>
+      <ContextMenu modal={false}>
+        <ContextMenuTrigger asChild>
+          <ScrollArea className="flex-1 min-h-0 pb-4">
+            <div className="px-2 flex flex-col gap-0.5">
+              <DndContext
+                id={dndContextId}
+                sensors={sensors}
+                modifiers={[restrictToVerticalAxis, restrictToFirstScrollableAncestor]}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext items={scene.objects} strategy={verticalListSortingStrategy}>
+                  {scene.objects.map(({ id }) => (
+                    <SortableLayer key={id} id={id} />
+                  ))}
+                  <DragOverlay className="**:cursor-grabbing">
+                    {draggingObjectId && (
+                      <Layer id={draggingObjectId} />
+                    )}
+                  </DragOverlay>
+                </SortableContext>
+              </DndContext>
+            </div>
+          </ScrollArea>
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuGroup>
+            <ContextMenuItem disabled={!isUndoAvailable} onClick={handleContextMenuUndoClick}>
+              <Undo2 /> 撤销
+              <ContextMenuShortcut>{isMac() ? '⌘Z' : 'Ctrl+Z'}</ContextMenuShortcut>
+            </ContextMenuItem>
+            <ContextMenuItem disabled={!isRedoAvailable} onClick={handleContextMenuRedoClick}>
+              <Redo2 /> 重做
+              <ContextMenuShortcut>{isMac() ? '⇧⌘Z' : 'Ctrl+Y'}</ContextMenuShortcut>
+            </ContextMenuItem>
+          </ContextMenuGroup>
+          <ContextMenuSeparator />
+          <ContextMenuGroup>
+            <ContextMenuItem disabled={!selectedObjectIds.length} onClick={handleContextMenuCutClick}>
+              <Scissors /> 剪切
+              <ContextMenuShortcut>{isMac() ? '⌘X' : 'Ctrl+X'}</ContextMenuShortcut>
+            </ContextMenuItem>
+            <ContextMenuItem disabled={!selectedObjectIds.length} onClick={handleContextMenuCopyClick}>
+              <Copy /> 复制
+              <ContextMenuShortcut>{isMac() ? '⌘C' : 'Ctrl+C'}</ContextMenuShortcut>
+            </ContextMenuItem>
+            <ContextMenuItem disabled={isClipboardEmpty} onClick={handleContextMenuPasteClick}>
+              <ClipboardPaste /> 粘贴
+              <ContextMenuShortcut>{isMac() ? '⌘V' : 'Ctrl+V'}</ContextMenuShortcut>
+            </ContextMenuItem>
+          </ContextMenuGroup>
+          <ContextMenuSeparator />
+          <ContextMenuGroup>
+            <ContextMenuItem onClick={handleContextMenuSelectAllClick}>
+              <CopyCheck /> 全选
+              <ContextMenuShortcut>{isMac() ? '⌘A' : 'Ctrl+A'}</ContextMenuShortcut>
+            </ContextMenuItem>
+          </ContextMenuGroup>
+          <ContextMenuSeparator />
+          <ContextMenuGroup>
+            <ContextMenuItem variant="destructive" onClick={handleContextMenuDeleteClick}>
+              <Trash2 /> 删除
+              <ContextMenuShortcut>Del</ContextMenuShortcut>
+            </ContextMenuItem>
+          </ContextMenuGroup>
+        </ContextMenuContent>
+      </ContextMenu>
     </div>
   )
 }
