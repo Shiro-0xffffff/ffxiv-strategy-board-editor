@@ -34,7 +34,7 @@ export interface StrategyBoardCanvasContextProps {
   zoomIn: (level?: number) => void
   isZoomOutAvailable: boolean
   zoomOut: (level?: number) => void
-  zoomToFit: (size: { width: number, height: number }, padding?: number) => void
+  resetCanvas: (size: { width: number, height: number }, padding?: number) => void
   setFixedZoomRatio: (zoomRatio: number | null) => void
   isObjectSelected: (id: string) => boolean
   addObjectAtCanvasPosition: (type: StrategyBoardObjectType, canvasPosition: { x: number, y: number })=> void
@@ -86,7 +86,8 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
     setZoomLevel(zoomLevel => Math.max(zoomLevel - level, minZoomLevel))
   }, [])
 
-  const zoomToFit = useCallback((size: { width: number, height: number }, padding: number = 32): void => {
+  const resetCanvas = useCallback((size: { width: number, height: number }, padding: number = 32): void => {
+    setCanvasOffset({ x: 0, y: 0 })
     const horizontalZoomRatio = (size.width - padding * 2) / sceneWidth
     const verticalZoomRatio = (size.height - padding * 2) / sceneHeight
     setZoomLevel(Math.min(Math.log2(Math.min(horizontalZoomRatio, verticalZoomRatio)), defaultZoomLevel))
@@ -338,7 +339,7 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
     zoomIn,
     isZoomOutAvailable,
     zoomOut,
-    zoomToFit,
+    resetCanvas,
     setFixedZoomRatio,
     isObjectSelected,
     addObjectAtCanvasPosition,

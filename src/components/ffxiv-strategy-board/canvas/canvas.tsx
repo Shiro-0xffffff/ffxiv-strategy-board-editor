@@ -161,7 +161,7 @@ export function StrategyBoardCanvas() {
     zoomRatio,
     zoomIn,
     zoomOut,
-    zoomToFit,
+    resetCanvas,
     moveObjects,
     flipObjectsHorizontally,
     flipObjectsVertically,
@@ -181,11 +181,11 @@ export function StrategyBoardCanvas() {
       width: stageContainer.offsetWidth,
       height: stageContainer.offsetHeight,
     })
-    zoomToFit({
+    resetCanvas({
       width: stageContainer.offsetWidth,
       height: stageContainer.offsetHeight,
     })
-  }, [setCanvasSize, zoomToFit])
+  }, [setCanvasSize, resetCanvas])
 
   useLayoutEffect(() => {
     const stageContainer = stageContainerRef.current
