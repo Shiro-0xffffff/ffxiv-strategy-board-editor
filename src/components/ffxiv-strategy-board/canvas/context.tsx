@@ -24,7 +24,7 @@ const minZoomLevel = -4
 const maxZoomLevel = 0
 
 export interface StrategyBoardCanvasContextProps {
-  canvasSize: { width: number, height: number }
+  canvasSize: { width: number, height: number } | null
   setCanvasSize: (size: { width: number, height: number }) => void
   canvasOffset: { x: number, y: number }
   setCanvasOffset: (offset: { x: number, y: number }) => void
@@ -69,7 +69,7 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
 
   const { selectedObjectIds, addObject, modifyObject, modifyObjects } = useStrategyBoard()
 
-  const [canvasSize, setCanvasSize] = useState<{ width: number, height: number }>(() => ({ width: 0, height: 0 }))
+  const [canvasSize, setCanvasSize] = useState<{ width: number, height: number } | null>(null)
   const [canvasOffset, setCanvasOffset] = useState<{ x: number, y: number }>(() => ({ x: 0, y: 0 }))
 
   const [zoomLevel, setZoomLevel] = useState<number>(defaultZoomLevel)

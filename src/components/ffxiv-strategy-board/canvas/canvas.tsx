@@ -546,57 +546,59 @@ export function StrategyBoardCanvas() {
           className="size-full data-dragging-stage:cursor-grabbing"
           data-dragging-stage={isDraggingStage ? 'dragging' : null}
         >
-          <Stage
-            ref={stageRef}
-            x={canvasOffset.x}
-            y={canvasOffset.y}
-            offsetX={-canvasSize.width / 2}
-            offsetY={-canvasSize.height / 2}
-            width={canvasSize.width}
-            height={canvasSize.height}
-            onPointerDown={handlePointerDown}
-            onPointerClick={handlePointerClick}
-            onTap={handleTap}
-            onDragStart={handleDragStart}
-            onDragMove={handleDragMove}
-            onDragEnd={handleDragEnd}
-            onWheel={handleWheel}
-          >
-            <Layer listening={!isDraggingStage}>
-              <Image
-                offsetX={sceneWidth / 2 * zoomRatio}
-                offsetY={sceneHeight / 2 * zoomRatio}
-                width={sceneWidth * zoomRatio}
-                height={sceneHeight * zoomRatio}
-                image={backgroundImage}
-                alt={backgroundOption.name}
-                shadowBlur={16}
-                shadowOffsetY={12}
-                shadowOpacity={0.2}
-                fill="#595959"
-              />
-              {scene.objects.slice().reverse().map(({ id }) => (
-                <CanvasObject key={id} id={id} />
-              ))}
-            </Layer>
-            <Layer listening={!isDraggingStage}>
-              {scene.objects.slice().reverse().map(({ id }) => (
-                <CanvasObjectBoundingBox key={id} id={id} />
-              ))}
-            </Layer>
-            <Layer listening={false}>
-              <Rect
-                ref={selectionRectRef}
-                x={(selectionRectStartPoint?.x ?? 0) * zoomRatio}
-                y={(selectionRectStartPoint?.y ?? 0) * zoomRatio}
-                stroke="#fff"
-                strokeWidth={1}
-                shadowBlur={2}
-                fill="rgba(255,255,255,0.2)"
-                visible={!!selectionRectStartPoint}
-              />
-            </Layer>
-          </Stage>
+          {!!canvasSize && (
+            <Stage
+              ref={stageRef}
+              x={canvasOffset.x}
+              y={canvasOffset.y}
+              offsetX={-canvasSize.width / 2}
+              offsetY={-canvasSize.height / 2}
+              width={canvasSize.width}
+              height={canvasSize.height}
+              onPointerDown={handlePointerDown}
+              onPointerClick={handlePointerClick}
+              onTap={handleTap}
+              onDragStart={handleDragStart}
+              onDragMove={handleDragMove}
+              onDragEnd={handleDragEnd}
+              onWheel={handleWheel}
+            >
+              <Layer listening={!isDraggingStage}>
+                <Image
+                  offsetX={sceneWidth / 2 * zoomRatio}
+                  offsetY={sceneHeight / 2 * zoomRatio}
+                  width={sceneWidth * zoomRatio}
+                  height={sceneHeight * zoomRatio}
+                  image={backgroundImage}
+                  alt={backgroundOption.name}
+                  shadowBlur={16}
+                  shadowOffsetY={12}
+                  shadowOpacity={0.2}
+                  fill="#595959"
+                />
+                {scene.objects.slice().reverse().map(({ id }) => (
+                  <CanvasObject key={id} id={id} />
+                ))}
+              </Layer>
+              <Layer listening={!isDraggingStage}>
+                {scene.objects.slice().reverse().map(({ id }) => (
+                  <CanvasObjectBoundingBox key={id} id={id} />
+                ))}
+              </Layer>
+              <Layer listening={false}>
+                <Rect
+                  ref={selectionRectRef}
+                  x={(selectionRectStartPoint?.x ?? 0) * zoomRatio}
+                  y={(selectionRectStartPoint?.y ?? 0) * zoomRatio}
+                  stroke="#fff"
+                  strokeWidth={1}
+                  shadowBlur={2}
+                  fill="rgba(255,255,255,0.2)"
+                  visible={!!selectionRectStartPoint}
+                />
+              </Layer>
+            </Stage>
+          )}
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent>
@@ -683,27 +685,29 @@ export function StrategyBoardCanvasPreview() {
       ref={stageContainerRef}
       className="size-full flex items-center justify-center"
     >
-      <Stage
-        offsetX={-canvasSize.width / 2}
-        offsetY={-canvasSize.height / 2}
-        width={canvasSize.width}
-        height={canvasSize.height}
-      >
-        <Layer listening={false}>
-          <Image
-            offsetX={sceneWidth / 2 * zoomRatio}
-            offsetY={sceneHeight / 2 * zoomRatio}
-            width={sceneWidth * zoomRatio}
-            height={sceneHeight * zoomRatio}
-            image={backgroundImage}
-            alt={backgroundOption.name}
-            fill="#595959"
-          />
-          {scene.objects.slice().reverse().map(({ id }) => (
-            <CanvasObject key={id} id={id} />
-          ))}
-        </Layer>
-      </Stage>
+      {!!canvasSize && (
+        <Stage
+          offsetX={-canvasSize.width / 2}
+          offsetY={-canvasSize.height / 2}
+          width={canvasSize.width}
+          height={canvasSize.height}
+        >
+          <Layer listening={false}>
+            <Image
+              offsetX={sceneWidth / 2 * zoomRatio}
+              offsetY={sceneHeight / 2 * zoomRatio}
+              width={sceneWidth * zoomRatio}
+              height={sceneHeight * zoomRatio}
+              image={backgroundImage}
+              alt={backgroundOption.name}
+              fill="#595959"
+            />
+            {scene.objects.slice().reverse().map(({ id }) => (
+              <CanvasObject key={id} id={id} />
+            ))}
+          </Layer>
+        </Stage>
+      )}
     </div>
   )
 }
