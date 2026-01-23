@@ -210,7 +210,6 @@ export function StrategyBoardCanvas() {
 
   const handleStagePointerDown = useCallback((event: Konva.KonvaEventObject<PointerEvent>): void => {
     if (event.evt.pointerType !== 'mouse' || event.evt.button !== 0) return
-    event.evt.preventDefault()
     const multiselect = event.evt.shiftKey || event.evt.ctrlKey
     if (!multiselect) selectObjects([])
     const stage = stageRef.current
@@ -460,6 +459,10 @@ export function StrategyBoardCanvas() {
   }, [zoomIn, zoomOut])
 
   const handlePointerDown = useCallback((event: Konva.KonvaEventObject<PointerEvent>): void => {
+    if (event.evt.button === 1) {
+      stageRef.current?.startDrag()
+      return
+    }
     const canvasObject = event.target.findAncestor('.object', true)
     if (canvasObject) {
       const id = canvasObject.getAttr('data-id') as string
@@ -551,7 +554,6 @@ export function StrategyBoardCanvas() {
             offsetY={-canvasSize.height / 2}
             width={canvasSize.width}
             height={canvasSize.height}
-            draggable
             onPointerDown={handlePointerDown}
             onPointerClick={handlePointerClick}
             onTap={handleTap}
@@ -560,7 +562,7 @@ export function StrategyBoardCanvas() {
             onDragEnd={handleDragEnd}
             onWheel={handleWheel}
           >
-            <Layer>
+            <Layer listening={!isDraggingStage}>
               <Image
                 offsetX={sceneWidth / 2 * zoomRatio}
                 offsetY={sceneHeight / 2 * zoomRatio}
@@ -577,7 +579,7 @@ export function StrategyBoardCanvas() {
                 <CanvasObject key={id} id={id} />
               ))}
             </Layer>
-            <Layer>
+            <Layer listening={!isDraggingStage}>
               {scene.objects.slice().reverse().map(({ id }) => (
                 <CanvasObjectBoundingBox key={id} id={id} />
               ))}
