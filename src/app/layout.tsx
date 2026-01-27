@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import { Metadata } from 'next'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
 import { Inter, Roboto_Mono, Noto_Sans } from 'next/font/google'
@@ -20,7 +20,7 @@ const notoSans = Noto_Sans({
 
 export const metadata: Metadata = {
   title: 'FF14 战术板编辑器',
-  description: 'FF14 战术板编辑器',
+  description: '针对《最终幻想XIV》中战术板的编辑器，在这里创建、编辑、预览、分享你的战术板。',
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
