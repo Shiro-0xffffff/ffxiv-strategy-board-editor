@@ -2,6 +2,8 @@
 
 import { ReactNode, createContext, useState, useContext, useMemo, useCallback } from 'react'
 import {
+  StrategyBoardScene,
+  StrategyBoardObject,
   StrategyBoardObjectType,
   sceneWidth,
   sceneHeight,
@@ -24,6 +26,7 @@ const minZoomLevel = -4
 const maxZoomLevel = 0
 
 export interface StrategyBoardCanvasContextProps {
+  scene: StrategyBoardScene
   canvasSize: { width: number, height: number } | null
   setCanvasSize: (size: { width: number, height: number }) => void
   canvasOffset: { x: number, y: number }
@@ -37,19 +40,20 @@ export interface StrategyBoardCanvasContextProps {
   resetCanvas: (size: { width: number, height: number }, padding?: number) => void
   setFixedZoomRatio: (zoomRatio: number | null) => void
   isObjectSelected: (id: string) => boolean
+  getObject: (id: string) => StrategyBoardObject | null
   addObjectAtCanvasPosition: (type: StrategyBoardObjectType, canvasPosition: { x: number, y: number })=> void
-  moveObject: (id: string, position: { x: number, y: number }) => void
-  moveObjects: (positions: { id: string, position: { x: number, y: number } }[]) => void
+  moveObject: (id: string, position: { x: number, y: number }, transition?: boolean) => void
+  moveObjects: (positions: { id: string, position: { x: number, y: number } }[], transition?: boolean) => void
   flipObjectHorizontally: (id: string) => void
   flipObjectsHorizontally: (ids: string[]) => void
   flipObjectVertically: (id: string) => void
   flipObjectsVertically: (ids: string[]) => void
-  resizeObject: (id: string, size: number | { width: number, height: number }) => void
-  rotateObject: (id: string, rotation: number) => void
-  adjustObjectDirection: (id: string, direction: { size: number, rotation: number }) => void
-  adjustObjectArcAngle: (id: string, arcAngle: number) => void
-  adjustObjectInnerRadius: (id: string, innerRadius: number) => void
-  moveEndPoints: (id: string, endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }) => void
+  resizeObject: (id: string, size: number | { width: number, height: number }, transition?: boolean) => void
+  rotateObject: (id: string, rotation: number, transition?: boolean) => void
+  adjustObjectDirection: (id: string, direction: { size: number, rotation: number }, transition?: boolean) => void
+  adjustObjectArcAngle: (id: string, arcAngle: number, transition?: boolean) => void
+  adjustObjectInnerRadius: (id: string, innerRadius: number, transition?: boolean) => void
+  moveEndPoints: (id: string, endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }, transition?: boolean) => void
 }
 
 const StrategyBoardCanvasContext = createContext<StrategyBoardCanvasContextProps | null>(null)
@@ -67,7 +71,9 @@ export interface StrategyBoardCanvasProviderProps {
 export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderProps) {
   const { children } = props
 
-  const { selectedObjectIds, addObject, modifyObject, modifyObjects } = useStrategyBoard()
+  const { scene, selectedObjectIds, addObject, modifyObject, modifyObjects } = useStrategyBoard()
+
+  const [frozenScene, setFrozenScene] = useState<StrategyBoardScene | null>(null)
 
   const [canvasSize, setCanvasSize] = useState<{ width: number, height: number } | null>(null)
   const [canvasOffset, setCanvasOffset] = useState<{ x: number, y: number }>(() => ({ x: 0, y: 0 }))
@@ -97,6 +103,10 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
     return selectedObjectIds.includes(id)
   }, [selectedObjectIds])
 
+  const getObject = useCallback((id: string): StrategyBoardObject | null => {
+    return (frozenScene ?? scene).objects.find(object => object.id === id) ?? null
+  }, [scene, frozenScene])
+
   const addObjectAtCanvasPosition = useCallback((type: StrategyBoardObjectType, canvasPosition: { x: number, y: number }): void => {
     const position = {
       x: Math.round((canvasPosition.x - canvasOffset.x) / zoomRatio),
@@ -107,13 +117,14 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
     }
   }, [canvasOffset, zoomRatio, addObject])
 
-  const moveObjects = useCallback((positions: { id: string, position: { x: number, y: number } }[]): void => {
+  const moveObjects = useCallback((positions: { id: string, position: { x: number, y: number } }[], transition?: boolean): void => {
+    setFrozenScene(frozenScene => transition ? frozenScene ?? scene : null)
     modifyObjects(positions.map(({ id, position }) => ({ id, modification: object => {
       object.position = normalizePosition(position)
-    }})))
-  }, [modifyObjects])
-  const moveObject = useCallback((id: string, position: { x: number, y: number }): void => {
-    moveObjects([{ id, position }])
+    }})), transition)
+  }, [scene, modifyObjects])
+  const moveObject = useCallback((id: string, position: { x: number, y: number }, transition?: boolean): void => {
+    moveObjects([{ id, position }], transition)
   }, [moveObjects])
 
   const flipObjectsHorizontally = useCallback((ids: string[]): void => {
@@ -199,7 +210,8 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
     flipObjectsVertically([id])
   }, [flipObjectsVertically])
 
-  const resizeObject = useCallback((id: string, size: number | { width: number, height: number }): void => {
+  const resizeObject = useCallback((id: string, size: number | { width: number, height: number }, transition?: boolean): void => {
+    setFrozenScene(frozenScene => transition ? frozenScene ?? scene : null)
     modifyObject(id, object => {
       switch (object.type) {
         case StrategyBoardObjectType.Text:
@@ -214,10 +226,11 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
         default:
           object.size = normalizeSize(size as number)
       }
-    })
-  }, [modifyObject])
+    }, transition)
+  }, [scene, modifyObject])
 
-  const rotateObject = useCallback((id: string, rotation: number): void => {
+  const rotateObject = useCallback((id: string, rotation: number, transition?: boolean): void => {
+    setFrozenScene(frozenScene => transition ? frozenScene ?? scene : null)
     modifyObject(id, object => {
       switch (object.type) {
         case StrategyBoardObjectType.Text:
@@ -227,10 +240,11 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
         default:
           object.rotation = normalizeRotation(rotation)
       }
-    })
-  }, [modifyObject])
+    }, transition)
+  }, [scene, modifyObject])
 
-  const adjustObjectDirection = useCallback((id: string, direction: { size: number, rotation: number }): void => {
+  const adjustObjectDirection = useCallback((id: string, direction: { size: number, rotation: number }, transition?: boolean): void => {
+    setFrozenScene(frozenScene => transition ? frozenScene ?? scene : null)
     modifyObject(id, object => {
       switch (object.type) {
         case StrategyBoardObjectType.Text:
@@ -266,10 +280,11 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
           object.size = normalizeSize(direction.size)
           object.rotation = normalizeRotation(direction.rotation)
       }
-    })
-  }, [modifyObject])
+    }, transition)
+  }, [scene, modifyObject])
 
-  const adjustObjectArcAngle = useCallback((id: string, arcAngle: number): void => {
+  const adjustObjectArcAngle = useCallback((id: string, arcAngle: number, transition?: boolean): void => {
+    setFrozenScene(frozenScene => transition ? frozenScene ?? scene : null)
     modifyObject(id, object => {
       switch (object.type) {
         case StrategyBoardObjectType.MechanicConeAoE:
@@ -295,10 +310,11 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
           object.arcAngle = normalizeArcAngle(arcAngle)
           break
       }
-    })
-  }, [modifyObject])
+    }, transition)
+  }, [scene, modifyObject])
 
-  const adjustObjectInnerRadius = useCallback((id: string, innerRadius: number): void => {
+  const adjustObjectInnerRadius = useCallback((id: string, innerRadius: number, transition?: boolean): void => {
+    setFrozenScene(frozenScene => transition ? frozenScene ?? scene : null)
     modifyObject(id, object => {
       if (object.type !== StrategyBoardObjectType.MechanicDonutAoE) return
       const arcCenterOffset = getArcCenterOffset(object.size, object.innerRadius, object.arcAngle, object.rotation, object.flipped)
@@ -308,10 +324,11 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
         y: object.position.y - arcCenterOffset.y + updatedArcCenterOffset.y,
       })
       object.innerRadius = normalizeInnerRadius(innerRadius)
-    })
-  }, [modifyObject])
+    }, transition)
+  }, [scene, modifyObject])
 
-  const moveEndPoints = useCallback((id: string, endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }): void => {
+  const moveEndPoints = useCallback((id: string, endPoint1: { x: number, y: number }, endPoint2: { x: number, y: number }, transition?: boolean): void => {
+    setFrozenScene(frozenScene => transition ? frozenScene ?? scene : null)
     modifyObject(id, object => {
       if (object.type !== StrategyBoardObjectType.Line) return
       const [normalizedEndPoint1, normalizedEndPoint2] = normalizeLineEndPoint(endPoint1, endPoint2)
@@ -325,10 +342,11 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
       }
       object.position = position
       object.endPointOffset = endPointOffset
-    })
-  }, [modifyObject])
+    }, transition)
+  }, [scene, modifyObject])
 
   const contextValue: StrategyBoardCanvasContextProps = {
+    scene: frozenScene ?? scene,
     canvasSize,
     setCanvasSize,
     canvasOffset,
@@ -342,6 +360,7 @@ export function StrategyBoardCanvasProvider(props: StrategyBoardCanvasProviderPr
     resetCanvas,
     setFixedZoomRatio,
     isObjectSelected,
+    getObject,
     addObjectAtCanvasPosition,
     moveObject,
     moveObjects,

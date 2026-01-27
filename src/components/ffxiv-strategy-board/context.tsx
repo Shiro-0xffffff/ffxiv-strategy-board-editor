@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode, createContext, useState, useContext, useCallback } from 'react'
+import { ReactNode, createContext, useState, useContext, useCallback, useMemo } from 'react'
 import { produce } from 'immer'
 import {
   StrategyBoardScene,
@@ -11,6 +11,7 @@ import {
   sceneToShareCode,
   shareCodeToScene,
 } from '@/lib/ffxiv-strategy-board'
+import { throttle } from 'es-toolkit'
 
 export type StrategyBoardObjectProperties = Partial<Omit<StrategyBoardObject, 'id' | 'type'>>
 
@@ -31,8 +32,8 @@ export interface StrategyBoardContextProps {
   copyObjects: (ids: string[]) => void
   pasteObjects: () => void
   reorderObject: (id: string, newIndex: number) => void
-  modifyObject: (id: string, modification: (object: StrategyBoardObject) => void) => void
-  modifyObjects: (modifications: { id: string, modification: (object: StrategyBoardObject) => void }[]) => void
+  modifyObject: (id: string, modification: (object: StrategyBoardObject) => void, transition?: boolean) => void
+  modifyObjects: (modifications: { id: string, modification: (object: StrategyBoardObject) => void }[], transition?: boolean) => void
   toggleObjectVisible: (id: string) => void
   toggleObjectLocked: (id: string) => void
   isUndoAvailable: boolean
@@ -60,17 +61,28 @@ export interface StrategyBoardProviderProps {
 export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
   const { scene, onSceneChange, children } = props
 
+  const [sceneDraft, setSceneDraft] = useState<StrategyBoardScene | null>(null)
+  const [sceneDraftModificationAbortController, setSceneDraftModificationAbortController] = useState<AbortController>(() => new AbortController())
   const [history, setHistory] = useState<StrategyBoardScene[]>(() => [scene])
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState<number>(0)
 
   const modifyScene = useCallback((modification: (scene: StrategyBoardScene) => void): void => {
+    sceneDraftModificationAbortController.abort()
+    setSceneDraft(null)
+    setSceneDraftModificationAbortController(new AbortController())
     const updatedScene = produce(scene, scene => {
       modification(scene)
     })
     setHistory(history => history.slice(0, currentHistoryIndex + 1).concat([updatedScene]))
     setCurrentHistoryIndex(currentHistoryIndex => currentHistoryIndex + 1)
     onSceneChange?.(updatedScene)
-  }, [scene, currentHistoryIndex, onSceneChange])
+  }, [scene, sceneDraftModificationAbortController, currentHistoryIndex, onSceneChange])
+
+  const modifySceneTransitionally = useMemo(() => throttle((modification: (scene: StrategyBoardScene) => void): void => {
+    setSceneDraft(produce(scene, scene => {
+      modification(scene)
+    }))
+  }, 50, { signal: sceneDraftModificationAbortController.signal }), [scene, sceneDraftModificationAbortController])
 
   const setName = useCallback((name: string): void => {
     modifyScene(scene => {
@@ -93,8 +105,8 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
   }, [])
 
   const getObject = useCallback((id: string): StrategyBoardObject | null => {
-    return scene.objects.find(object => object.id === id) ?? null
-  }, [scene])
+    return (sceneDraft ?? scene).objects.find(object => object.id === id) ?? null
+  }, [scene, sceneDraft])
 
   const addObjects = useCallback((objectsProperties: { type: StrategyBoardObjectType, properties: StrategyBoardObjectProperties }[]): string[] => {
     if (!objectsProperties.length) return []
@@ -156,22 +168,22 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
     })
   }, [modifyScene])
 
-  const modifyObjects = useCallback((modifications: { id: string, modification: (object: StrategyBoardObject) => void }[]): void => {
-    modifyScene(scene => {
+  const modifyObjects = useCallback((modifications: { id: string, modification: (object: StrategyBoardObject) => void }[], transition?: boolean): void => {
+    ;(transition ? modifySceneTransitionally : modifyScene)(scene => {
       modifications.forEach(({ id, modification }) => {
         const object = scene.objects.find(object => object.id === id)
         if (!object) return
         modification(object)
       })
     })
-  }, [modifyScene])
-  const modifyObject = useCallback((id: string, modification: (object: StrategyBoardObject) => void): void => {
-    modifyScene(scene => {
+  }, [modifyScene, modifySceneTransitionally])
+  const modifyObject = useCallback((id: string, modification: (object: StrategyBoardObject) => void, transition?: boolean): void => {
+    ;(transition ? modifySceneTransitionally : modifyScene)(scene => {
       const object = scene.objects.find(object => object.id === id)
       if (!object) return
       modification(object)
     })
-  }, [modifyScene])
+  }, [modifyScene, modifySceneTransitionally])
 
   const toggleObjectVisible = useCallback((id: string): void => {
     modifyObject(id, object => {
@@ -187,34 +199,43 @@ export function StrategyBoardProvider(props: StrategyBoardProviderProps) {
   const isUndoAvailable = currentHistoryIndex > 0
   const undo = useCallback((): void => {
     if (!isUndoAvailable) return
+    sceneDraftModificationAbortController.abort()
+    setSceneDraft(null)
+    setSceneDraftModificationAbortController(new AbortController())
     setCurrentHistoryIndex(currentHistoryIndex - 1)
     const scene = history[currentHistoryIndex - 1]
     setSelectedObjectIds(selectedObjectIds => selectedObjectIds.filter(selectedObjectId => scene.objects.find(({ id }) => id === selectedObjectId)))
     onSceneChange?.(scene)
-  }, [history, currentHistoryIndex, isUndoAvailable, onSceneChange])
+  }, [sceneDraftModificationAbortController, history, currentHistoryIndex, isUndoAvailable, onSceneChange])
   const isRedoAvailable = currentHistoryIndex < history.length - 1
   const redo = useCallback((): void => {
     if (!isRedoAvailable) return
+    sceneDraftModificationAbortController.abort()
+    setSceneDraft(null)
+    setSceneDraftModificationAbortController(new AbortController())
     setCurrentHistoryIndex(currentHistoryIndex + 1)
     const scene = history[currentHistoryIndex + 1]
     setSelectedObjectIds(selectedObjectIds => selectedObjectIds.filter(selectedObjectId => scene.objects.find(({ id }) => id === selectedObjectId)))
     onSceneChange?.(scene)
-  }, [history, currentHistoryIndex, isRedoAvailable, onSceneChange])
+  }, [sceneDraftModificationAbortController, history, currentHistoryIndex, isRedoAvailable, onSceneChange])
 
   const importFromShareCode = useCallback(async (shareCode: string): Promise<void> => {
+    sceneDraftModificationAbortController.abort()
+    setSceneDraft(null)
+    setSceneDraftModificationAbortController(new AbortController())
     const scene = await shareCodeToScene(shareCode)
     setHistory([scene])
     setCurrentHistoryIndex(0)
     setSelectedObjectIds([])
     onSceneChange?.(scene)
-  }, [onSceneChange])
+  }, [sceneDraftModificationAbortController, onSceneChange])
   const exportToShareCode = useCallback(async (): Promise<string> => {
     const shareCode = await sceneToShareCode(scene)
     return shareCode
   }, [scene])
 
   const contextValue: StrategyBoardContextProps = {
-    scene,
+    scene: sceneDraft ?? scene,
     setName,
     setBackground,
     selectedObjectIds,

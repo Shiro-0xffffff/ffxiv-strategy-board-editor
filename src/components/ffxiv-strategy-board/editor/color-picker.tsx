@@ -1,6 +1,6 @@
 'use client'
 
-import { ComponentProps, CSSProperties, PointerEventHandler, ChangeEventHandler, FocusEventHandler, useState, useRef, useEffect, useCallback } from 'react'
+import { ComponentProps, CSSProperties, PointerEventHandler, ChangeEventHandler, FocusEventHandler, useState, useRef, useEffect, useEffectEvent, useCallback } from 'react'
 import { Slider } from '@/components/ui/slider'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Popover, PopoverContent, PopoverAnchor } from '@/components/ui/popover'
@@ -20,10 +20,11 @@ const colorSwatches = [
 interface ColorPickerProps extends Omit<ComponentProps<'input'>, 'value' | 'onChange'> {
   value: string | null
   onChange?: (color: string) => void
+  onCommit?: (color: string) => void
 }
 
 export function ColorPicker(props: ColorPickerProps) {
-  const { className, value, onChange, onFocus, onBlur, ...restProps } = props
+  const { className, value, onChange, onCommit, onFocus, onBlur, ...restProps } = props
 
   const rgbColor = Color(value ?? '#ffffff')
 
@@ -35,31 +36,50 @@ export function ColorPicker(props: ColorPickerProps) {
   const inputGroupRef = useRef<HTMLDivElement>(null)
   const colorFieldRef = useRef<HTMLDivElement>(null)
 
-  const handleInputChange = useCallback<ChangeEventHandler<HTMLInputElement>>(event => {
-    const draft = event.target.value
-    setInputDraft(draft)
+  const commitValueBeforeUnmount = useEffectEvent(() => {
+    const draft = hsvDraft ?? inputDraft
+    if (draft === null) return
     try {
-      const value = Color(draft).rgb().hex().toLowerCase()
-      setHSVDraft(Color(draft).hsv().object() as { h: number, s: number, v: number })
+      onCommit?.(Color(draft).rgb().hex().toLowerCase())
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (err) {}
+  })
+  useEffect(() => () => commitValueBeforeUnmount(), [])
+
+  const handleInputChange = useCallback<ChangeEventHandler<HTMLInputElement>>(event => {
+    const inputDraft = event.target.value
+    setInputDraft(inputDraft)
+    try {
+      const value = Color(inputDraft).rgb().hex().toLowerCase()
+      setHSVDraft(Color(inputDraft).hsv().object() as { h: number, s: number, v: number })
       onChange?.(value)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {}
   }, [onChange])
   const handleInputFocus = useCallback<FocusEventHandler<HTMLInputElement>>(event => {
-    setPopoverOpen(true)
     onFocus?.(event)
+    setPopoverOpen(true)
   }, [onFocus])
   const handleInputBlur = useCallback<FocusEventHandler<HTMLInputElement>>(event => {
-    setInputDraft(null)
     onBlur?.(event)
-  }, [onBlur])
+    if (inputDraft === null) return
+    setInputDraft(null)
+    try {
+      const value = Color(inputDraft).rgb().hex().toLowerCase()
+      setHSVDraft(Color(inputDraft).hsv().object() as { h: number, s: number, v: number })
+      if (!popoverOpen) onCommit?.(value)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (err) {}
+  }, [inputDraft, popoverOpen, onCommit, onBlur])
 
   const handlePopoverOpenChange = useCallback((open: boolean): void => {
     setPopoverOpen(open)
     if (!open) {
+      if (hsvDraft === null) return
       setHSVDraft(null)
+      onCommit?.(Color(hsvDraft).rgb().hex().toLowerCase())
     }
-  }, [])
+  }, [hsvDraft, onCommit])
   const handlePopoverInteractOutside = useCallback((event: CustomEvent): void => {
     if (inputGroupRef.current?.contains(event.target as Node)) event.preventDefault()
   }, [])
@@ -86,12 +106,14 @@ export function ColorPicker(props: ColorPickerProps) {
     const { s, v } = getSVFromPointerPosition(event)
     const updatedHSVDraft = { ...hsvDraft ?? rgbColor.hsv().object() as { h: number, s: number, v: number }, s, v }
     setHSVDraft(updatedHSVDraft)
-  }, [rgbColor, hsvDraft, isDraggingColorFieldMarker, getSVFromPointerPosition])
+    onChange?.(Color(updatedHSVDraft).rgb().hex().toLowerCase())
+  }, [rgbColor, hsvDraft, isDraggingColorFieldMarker, getSVFromPointerPosition, onChange])
   const handleWindowPointerUp = useCallback((event: PointerEvent): void => {
     if (!isDraggingColorFieldMarker) return
     setIsDraggingColorFieldMarker(false)
     const { s, v } = getSVFromPointerPosition(event)
     const updatedHSVDraft = { ...hsvDraft ?? rgbColor.hsv().object() as { h: number, s: number, v: number }, s, v }
+    setHSVDraft(updatedHSVDraft)
     onChange?.(Color(updatedHSVDraft).rgb().hex().toLowerCase())
   }, [rgbColor, hsvDraft, isDraggingColorFieldMarker, getSVFromPointerPosition, onChange])
 
@@ -109,9 +131,11 @@ export function ColorPicker(props: ColorPickerProps) {
   const handleHueSliderValueChange = useCallback(([value]: number[]): void => {
     const updatedHSVDraft = { ...hsvDraft ?? rgbColor.hsv().object() as { h: number, s: number, v: number }, h: value }
     setHSVDraft(updatedHSVDraft)
-  }, [rgbColor, hsvDraft])
+    onChange?.(Color(updatedHSVDraft).rgb().hex().toLowerCase())
+  }, [rgbColor, hsvDraft, onChange])
   const handleHueSliderValueCommit = useCallback(([value]: number[]): void => {
     const updatedHSVDraft = { ...hsvDraft ?? rgbColor.hsv().object() as { h: number, s: number, v: number }, h: value }
+    setHSVDraft(updatedHSVDraft)
     onChange?.(Color(updatedHSVDraft).rgb().hex().toLowerCase())
   }, [rgbColor, hsvDraft, onChange])
 

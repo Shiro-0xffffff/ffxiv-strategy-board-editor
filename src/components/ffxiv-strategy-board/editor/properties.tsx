@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode, MouseEventHandler, ChangeEventHandler, FocusEventHandler, useState, useCallback, useId } from 'react'
+import { ReactNode, MouseEventHandler, ChangeEventHandler, FocusEventHandler, useState, useEffect, useEffectEvent, useCallback, useId } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
@@ -17,22 +17,33 @@ import { useStrategyBoard } from '../context'
 
 import { ColorPicker } from './color-picker'
 
-function InputField(props: { name: string, description?: string, maxBytes?: number, value: string | null, onChange?: (value: string) => void }) {
-  const { name, description, maxBytes = Infinity, value, onChange } = props
+function InputField(props: { name: string, description?: string, maxBytes?: number, value: string | null, onChange?: (value: string) => void, onCommit?: (value: string) => void }) {
+  const { name, description, maxBytes = Infinity, value, onChange, onCommit } = props
 
   const [draft, setDraft] = useState<string | null>(null)
 
   const id = useId()
+
+  const commitValueBeforeUnmount = useEffectEvent(() => {
+    if (draft === null) return
+    setDraft(null)
+    const value = truncateString(draft, maxBytes)
+    onCommit?.(value)
+  })
+  useEffect(() => () => commitValueBeforeUnmount(), [])
 
   const handleInputChange = useCallback<ChangeEventHandler<HTMLInputElement>>(event => {
     const draft = event.target.value
     setDraft(draft)
     const value = truncateString(draft, maxBytes)
     onChange?.(value)
-  }, [onChange, maxBytes])
+  }, [maxBytes, onChange])
   const handleInputBlur = useCallback<FocusEventHandler<HTMLInputElement>>(() => {
+    if (draft === null) return
     setDraft(null)
-  }, [])
+    const value = truncateString(draft, maxBytes)
+    onCommit?.(value)
+  }, [draft, maxBytes, onCommit])
 
   return (
     <Field>
@@ -50,22 +61,33 @@ function InputField(props: { name: string, description?: string, maxBytes?: numb
   )
 }
 
-function NumberInputField(props: { name: string, description?: string, min?: number, max?: number, step?: number, roundTo?: number, value: number | null, onChange?: (value: number) => void }) {
-  const { name, description, min = -Infinity, max = Infinity, step = 1, roundTo = 1, value, onChange } = props
+function NumberInputField(props: { name: string, description?: string, min?: number, max?: number, step?: number, roundTo?: number, value: number | null, onChange?: (value: number) => void, onCommit?: (value: number) => void }) {
+  const { name, description, min = -Infinity, max = Infinity, step = 1, roundTo = 1, value, onChange, onCommit } = props
 
   const [draft, setDraft] = useState<string | null>(null)
 
   const id = useId()
+
+  const commitValueBeforeUnmount = useEffectEvent(() => {
+    if (draft === null) return
+    setDraft(null)
+    const value = Math.round(Math.min(Math.max(Number(draft), min), max) / roundTo) * roundTo
+    if (Number.isInteger(value)) onCommit?.(value)
+  })
+  useEffect(() => () => commitValueBeforeUnmount(), [])
 
   const handleInputChange = useCallback<ChangeEventHandler<HTMLInputElement>>(event => {
     const draft = event.target.value
     setDraft(draft)
     const value = Math.round(Math.min(Math.max(Number(draft), min), max) / roundTo) * roundTo
     if (Number.isInteger(value)) onChange?.(value)
-  }, [onChange, min, max, roundTo])
+  }, [min, max, roundTo, onChange])
   const handleInputBlur = useCallback<FocusEventHandler<HTMLInputElement>>(() => {
+    if (draft === null) return
     setDraft(null)
-  }, [])
+    const value = Math.round(Math.min(Math.max(Number(draft), min), max) / roundTo) * roundTo
+    if (Number.isInteger(value)) onCommit?.(value)
+  }, [draft, min, max, roundTo, onCommit])
 
   return (
     <Field>
@@ -87,31 +109,40 @@ function NumberInputField(props: { name: string, description?: string, min?: num
   )
 }
 
-function SliderField(props: { name: string, description?: string, min?: number, max?: number, step?: number, roundTo?: number, value: number | null, onChange?: (value: number) => void }) {
-  const { name, description, min = -Infinity, max = Infinity, step = 1, roundTo = 1, value, onChange } = props
+function SliderField(props: { name: string, description?: string, min?: number, max?: number, step?: number, roundTo?: number, value: number | null, onChange?: (value: number) => void, onCommit?: (value: number) => void }) {
+  const { name, description, min = -Infinity, max = Infinity, step = 1, roundTo = 1, value, onChange, onCommit } = props
 
-  const [draft, setDraft] = useState<string | null>(null)
-  const [sliderDraft, setSliderDraft] = useState<number | null>(null)
+  const [inputDraft, setInputDraft] = useState<string | null>(null)
 
   const id = useId()
 
+  const commitValueBeforeUnmount = useEffectEvent(() => {
+    if (inputDraft === null) return
+    setInputDraft(null)
+    const value = Math.round(Math.min(Math.max(Number(inputDraft), min), max) / roundTo) * roundTo
+    if (Number.isInteger(value)) onCommit?.(value)
+  })
+  useEffect(() => () => commitValueBeforeUnmount(), [])
+
   const handleSliderValueChange = useCallback(([value]: number[]): void => {
-    setSliderDraft(value)
-  }, [])
-  const handleSliderValueCommit = useCallback(([value]: number[]): void => {
-    setSliderDraft(null)
     onChange?.(value)
-  }, [ onChange])
+  }, [onChange])
+  const handleSliderValueCommit = useCallback(([value]: number[]): void => {
+    onCommit?.(value)
+  }, [onCommit])
 
   const handleInputChange = useCallback<ChangeEventHandler<HTMLInputElement>>(event => {
     const draft = event.target.value
-    setDraft(draft)
+    setInputDraft(draft)
     const value = Math.round(Math.min(Math.max(Number(draft), min), max) / roundTo) * roundTo
     if (Number.isInteger(value)) onChange?.(value)
-  }, [onChange, min, max, roundTo])
+  }, [min, max, roundTo, onChange])
   const handleInputBlur = useCallback<FocusEventHandler<HTMLInputElement>>(() => {
-    setDraft(null)
-  }, [])
+    if (inputDraft === null) return
+    setInputDraft(null)
+    const value = Math.round(Math.min(Math.max(Number(inputDraft), min), max) / roundTo) * roundTo
+    if (Number.isInteger(value)) onCommit?.(value)
+  }, [inputDraft, min, max, roundTo, onCommit])
 
   return (
     <Field>
@@ -125,7 +156,7 @@ function SliderField(props: { name: string, description?: string, min?: number, 
           min={min}
           max={max}
           step={step}
-          value={[sliderDraft ?? value ?? 0]}
+          value={value === null ? [] : [value]}
           onValueChange={handleSliderValueChange}
           onValueCommit={handleSliderValueCommit}
         />
@@ -136,7 +167,7 @@ function SliderField(props: { name: string, description?: string, min?: number, 
             min={min}
             max={max}
             step={step}
-            value={draft ?? value ?? ''}
+            value={inputDraft ?? value ?? ''}
             onChange={handleInputChange}
             onBlur={handleInputBlur}
           />
@@ -147,15 +178,15 @@ function SliderField(props: { name: string, description?: string, min?: number, 
   )
 }
 
-function SelectField<T>(props: { name: string, description?: string, options: { value: T, name: string }[], value: T | null, onChange?: (value: T) => void }) {
-  const { name, description, options, value, onChange } = props
+function SelectField<T>(props: { name: string, description?: string, options: { value: T, name: string }[], value: T | null, onChange?: (value: T) => void, onCommit?: (value: T) => void }) {
+  const { name, description, options, value, onCommit } = props
 
   const id = useId()
 
   const handleSelectValueChange = useCallback((valueJson: string): void => {
     const value: T = JSON.parse(valueJson)
-    onChange?.(value)
-  }, [onChange])
+    onCommit?.(value)
+  }, [onCommit])
 
   return (
     <Field>
@@ -184,14 +215,17 @@ function SelectField<T>(props: { name: string, description?: string, options: { 
   )
 }
 
-function ColorSelectField(props: { name: string, description?: string, value: string | null, onChange?: (value: string) => void }) {
-  const { name, description, value, onChange } = props
+function ColorSelectField(props: { name: string, description?: string, value: string | null, onChange?: (value: string) => void, onCommit?: (value: string) => void }) {
+  const { name, description, value, onChange, onCommit } = props
 
   const id = useId()
 
   const handleColorPickerChange = useCallback((value: string): void => {
     onChange?.(value)
   }, [onChange])
+  const handleColorPickerCommit = useCallback((value: string): void => {
+    onCommit?.(value)
+  }, [onCommit])
 
   return (
     <Field>
@@ -203,6 +237,7 @@ function ColorSelectField(props: { name: string, description?: string, value: st
         id={id}
         value={value}
         onChange={handleColorPickerChange}
+        onCommit={handleColorPickerCommit}
       />
     </Field>
   )
@@ -243,7 +278,7 @@ interface ObjectPropertyFieldProps<T, O extends StrategyBoardObject> {
   availableFor?: (object: StrategyBoardObject) => object is O
   getValueFromObject: (object: O) => T
   updateObjectWithValue: (object: O, value: T) => void
-  renderField: (props: { value: T | null, onChange: (value: T) => void }) => ReactNode
+  renderField: (props: { value: T | null, onChange: (value: T) => void, onCommit: (value: T) => void }) => ReactNode
 }
 
 function ObjectPropertyField<T, O extends StrategyBoardObject>(props: ObjectPropertyFieldProps<T, O>) {
@@ -261,6 +296,12 @@ function ObjectPropertyField<T, O extends StrategyBoardObject>(props: ObjectProp
   return renderField({
     value: objectsForField.every(object => getValueFromObject(object) === value) ? value : null,
     onChange: value => modifyObjects(objectsForField.map(object => ({
+      id: object.id,
+      modification: object => {
+        if (availableFor(object)) updateObjectWithValue(object, value)
+      },
+    })), true),
+    onCommit: value => modifyObjects(objectsForField.map(object => ({
       id: object.id,
       modification: object => {
         if (availableFor(object)) updateObjectWithValue(object, value)
@@ -309,28 +350,26 @@ function ObjectPropertiesPanel() {
                 <ObjectPropertyField
                   getValueFromObject={object => object.position.x}
                   updateObjectWithValue={(object, value) => { object.position.x = value }}
-                  renderField={({ value, onChange }) => (
+                  renderField={props => (
                     <NumberInputField
                       name="X"
                       min={-sceneWidth / 2}
                       max={sceneWidth / 2}
                       step={10}
-                      value={value}
-                      onChange={onChange}
+                      {...props}
                     />
                   )}
                 />
                 <ObjectPropertyField
                   getValueFromObject={object => object.position.y}
                   updateObjectWithValue={(object, value) => { object.position.y = value }}
-                  renderField={({ value, onChange }) => (
+                  renderField={props => (
                     <NumberInputField
                       name="Y"
                       min={-sceneHeight / 2}
                       max={sceneHeight / 2}
                       step={10}
-                      value={value}
-                      onChange={onChange}
+                      {...props}
                     />
                   )}
                 />
@@ -343,14 +382,13 @@ function ObjectPropertiesPanel() {
                 )}
                 getValueFromObject={object => object.rotation}
                 updateObjectWithValue={(object, value) => { object.rotation = value }}
-                renderField={({ value, onChange }) => (
+                renderField={props => (
                   <NumberInputField
                     name="角度"
                     min={-180}
                     max={180}
                     step={15}
-                    value={value}
-                    onChange={onChange}
+                    {...props}
                   />
                 )}
               />
@@ -362,14 +400,13 @@ function ObjectPropertiesPanel() {
                 )}
                 getValueFromObject={object => object.size}
                 updateObjectWithValue={(object, value) => { object.size = value }}
-                renderField={({ value, onChange }) => (
+                renderField={props => (
                   <NumberInputField
                     name="尺寸"
                     min={0}
                     max={255}
                     step={10}
-                    value={value}
-                    onChange={onChange}
+                    {...props}
                   />
                 )}
               />
@@ -379,15 +416,14 @@ function ObjectPropertiesPanel() {
                     availableFor={object => object.type === StrategyBoardObjectType.Rectangle}
                     getValueFromObject={object => object.size.width}
                     updateObjectWithValue={(object, value) => { object.size.width = value }}
-                    renderField={({ value, onChange }) => (
+                    renderField={props => (
                       <NumberInputField
                         name="宽度"
                         min={0}
                         max={Math.hypot(sceneWidth * 2, sceneHeight * 2)}
                         step={10}
                         roundTo={10}
-                        value={value}
-                        onChange={onChange}
+                        {...props}
                       />
                     )}
                   />
@@ -395,15 +431,14 @@ function ObjectPropertiesPanel() {
                     availableFor={object => object.type === StrategyBoardObjectType.Rectangle}
                     getValueFromObject={object => object.size.height}
                     updateObjectWithValue={(object, value) => { object.size.height = value }}
-                    renderField={({ value, onChange }) => (
+                    renderField={props => (
                       <NumberInputField
                         name="高度"
                         min={0}
                         max={Math.hypot(sceneWidth * 2, sceneHeight * 2)}
                         step={10}
                         roundTo={10}
-                        value={value}
-                        onChange={onChange}
+                        {...props}
                       />
                     )}
                   />
@@ -415,14 +450,13 @@ function ObjectPropertiesPanel() {
                     availableFor={object => object.type === StrategyBoardObjectType.Line}
                     getValueFromObject={object => object.endPointOffset.x}
                     updateObjectWithValue={(object, value) => { object.endPointOffset.x = value }}
-                    renderField={({ value, onChange }) => (
+                    renderField={props => (
                       <NumberInputField
                         name="端点 X"
                         min={-sceneWidth}
                         max={sceneWidth}
                         step={10}
-                        value={value}
-                        onChange={onChange}
+                        {...props}
                       />
                     )}
                   />
@@ -430,14 +464,13 @@ function ObjectPropertiesPanel() {
                     availableFor={object => object.type === StrategyBoardObjectType.Line}
                     getValueFromObject={object => object.endPointOffset.y}
                     updateObjectWithValue={(object, value) => { object.endPointOffset.y = value }}
-                    renderField={({ value, onChange }) => (
+                    renderField={props => (
                       <NumberInputField
                         name="端点 Y"
                         min={-sceneHeight}
                         max={sceneHeight}
                         step={10}
-                        value={value}
-                        onChange={onChange}
+                        {...props}
                       />
                     )}
                   />
@@ -446,14 +479,13 @@ function ObjectPropertiesPanel() {
                   availableFor={object => object.type === StrategyBoardObjectType.Line}
                   getValueFromObject={object => object.lineWidth}
                   updateObjectWithValue={(object, value) => { object.lineWidth = value }}
-                  renderField={({ value, onChange }) => (
+                  renderField={props => (
                     <NumberInputField
                       name="线条宽度"
                       min={0}
                       max={Math.hypot(sceneWidth * 2, sceneHeight * 2)}
                       step={10}
-                      value={value}
-                      onChange={onChange}
+                      {...props}
                     />
                   )}
                 />
@@ -462,14 +494,13 @@ function ObjectPropertiesPanel() {
                 availableFor={object => object.type === StrategyBoardObjectType.MechanicDonutAoE}
                 getValueFromObject={object => object.innerRadius}
                 updateObjectWithValue={(object, value) => { object.innerRadius = value }}
-                renderField={({ value, onChange }) => (
+                renderField={props => (
                   <NumberInputField
                     name="环形范围"
                     min={0}
                     max={255}
                     step={10}
-                    value={value}
-                    onChange={onChange}
+                    {...props}
                   />
                 )}
               />
@@ -480,14 +511,13 @@ function ObjectPropertiesPanel() {
                 )}
                 getValueFromObject={object => object.arcAngle}
                 updateObjectWithValue={(object, value) => { object.arcAngle = value }}
-                renderField={({ value, onChange }) => (
+                renderField={props => (
                   <NumberInputField
                     name="范围角度"
                     min={0}
                     max={360}
                     step={10}
-                    value={value}
-                    onChange={onChange}
+                    {...props}
                   />
                 )}
               />
@@ -495,14 +525,13 @@ function ObjectPropertiesPanel() {
                 availableFor={object => object.type === StrategyBoardObjectType.MechanicLineStack}
                 getValueFromObject={object => object.displayCount}
                 updateObjectWithValue={(object, value) => { object.displayCount = value }}
-                renderField={({ value, onChange }) => (
+                renderField={props => (
                   <NumberInputField
                     name="显示数量"
                     min={1}
                     max={63}
                     step={1}
-                    value={value}
-                    onChange={onChange}
+                    {...props}
                   />
                 )}
               />
@@ -512,14 +541,13 @@ function ObjectPropertiesPanel() {
                     availableFor={object => object.type === StrategyBoardObjectType.MechanicLinearKnockback}
                     getValueFromObject={object => object.displayCount.horizontal}
                     updateObjectWithValue={(object, value) => { object.displayCount.horizontal = value }}
-                    renderField={({ value, onChange }) => (
+                    renderField={props => (
                       <NumberInputField
                         name="横向数量"
                         min={1}
                         max={63}
                         step={1}
-                        value={value}
-                        onChange={onChange}
+                        {...props}
                       />
                     )}
                   />
@@ -527,14 +555,13 @@ function ObjectPropertiesPanel() {
                     availableFor={object => object.type === StrategyBoardObjectType.MechanicLinearKnockback}
                     getValueFromObject={object => object.displayCount.vertical}
                     updateObjectWithValue={(object, value) => { object.displayCount.vertical = value }}
-                    renderField={({ value, onChange }) => (
+                    renderField={props => (
                       <NumberInputField
                         name="纵向数量"
                         min={1}
                         max={63}
                         step={1}
-                        value={value}
-                        onChange={onChange}
+                        {...props}
                       />
                     )}
                   />
@@ -544,13 +571,12 @@ function ObjectPropertiesPanel() {
                 availableFor={object => object.type === StrategyBoardObjectType.Text}
                 getValueFromObject={object => object.text}
                 updateObjectWithValue={(object, value) => { object.text = value }}
-                renderField={({ value, onChange }) => (
+                renderField={props => (
                   <InputField
                     name="文本"
                     description="最多30字符，汉字及全角符号算作3字符"
                     maxBytes={30}
-                    value={value}
-                    onChange={onChange}
+                    {...props}
                   />
                 )}
               />
@@ -562,11 +588,10 @@ function ObjectPropertiesPanel() {
                 )}
                 getValueFromObject={object => object.color}
                 updateObjectWithValue={(object, value) => { object.color = value }}
-                renderField={({ value, onChange }) => (
+                renderField={props => (
                   <ColorSelectField
                     name="颜色"
-                    value={value}
-                    onChange={onChange}
+                    {...props}
                   />
                 )}
               />
@@ -574,14 +599,13 @@ function ObjectPropertiesPanel() {
                 availableFor={object => object.type !== StrategyBoardObjectType.Text}
                 getValueFromObject={object => object.transparency}
                 updateObjectWithValue={(object, value) => { object.transparency = value }}
-                renderField={({ value, onChange }) => (
+                renderField={props => (
                   <SliderField
                     name="透明度"
                     min={0}
                     max={100}
                     step={10}
-                    value={value}
-                    onChange={onChange}
+                    {...props}
                   />
                 )}
               />

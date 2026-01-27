@@ -93,8 +93,7 @@ export function StrategyBoardCanvasObjectPreview(props: StrategyBoardCanvasObjec
 function CanvasObject(props: { id: string }) {
   const { id } = props
 
-  const { getObject } = useStrategyBoard()
-  const { zoomRatio } = useStrategyBoardCanvas()
+  const { zoomRatio, getObject } = useStrategyBoardCanvas()
 
   const object = getObject(id)!
   const { visible, position } = object
@@ -120,8 +119,7 @@ function CanvasObject(props: { id: string }) {
 function CanvasObjectBoundingBox(props: { id: string }) {
   const { id } = props
 
-  const { getObject } = useStrategyBoard()
-  const { zoomRatio } = useStrategyBoardCanvas()
+  const { zoomRatio, getObject } = useStrategyBoardCanvas()
 
   const object = getObject(id)!
   const { visible, position } = object
@@ -139,7 +137,6 @@ function CanvasObjectBoundingBox(props: { id: string }) {
 
 export function StrategyBoardCanvas() {
   const {
-    scene,
     selectedObjectIds,
     selectObjects,
     deselectObject,
@@ -154,6 +151,7 @@ export function StrategyBoardCanvas() {
     redo,
   } = useStrategyBoard()
   const {
+    scene,
     canvasSize,
     setCanvasSize,
     canvasOffset,
