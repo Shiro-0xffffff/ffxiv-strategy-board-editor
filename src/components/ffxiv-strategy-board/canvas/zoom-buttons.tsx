@@ -18,7 +18,7 @@ export function StrategyBoardCanvasZoomButtons() {
     zoomOut()
   }, { preventDefault: true }, [zoomOut])
   useHotkeys('mod+0', () => {
-    resetCanvas(canvasSize)
+    if (canvasSize) resetCanvas(canvasSize)
   }, { preventDefault: true }, [resetCanvas, canvasSize])
 
   const handleZoomOutButtonClick = useCallback<MouseEventHandler<HTMLButtonElement>>(() => {
