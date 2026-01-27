@@ -89,7 +89,7 @@ export default function EditPage() {
   }, [saveSceneDraft])
 
   return (
-    <div className="w-screen h-screen flex flex-col">
+    <div className="w-full h-dvh flex flex-col">
       {scene ? (
         <StrategyBoardProvider scene={scene} onSceneChange={handleEditorSceneChange}>
           <TopBar />

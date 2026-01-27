@@ -25,7 +25,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="zh" className={`${inter.variable} ${robotoMono.variable} ${notoSans.variable}`} suppressHydrationWarning>
+    <html lang="zh" className={`${inter.variable} ${robotoMono.variable} ${notoSans.variable} overscroll-none`} suppressHydrationWarning>
       <body className="antialiased">
         <ThemeProvider
           attribute="class"

@@ -70,7 +70,7 @@ export function CreatePanel() {
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-dvh flex flex-col">
       <header className="h-16 border-b">
         <div className="container mx-auto p-4">
           <div className="mx-auto max-w-4xl flex items-center justify-between">

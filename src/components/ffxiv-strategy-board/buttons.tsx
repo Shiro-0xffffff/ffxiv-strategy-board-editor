@@ -45,7 +45,7 @@ export function ImportButton() {
             <DialogDescription>在游戏内战术板右键菜单「分享-生成分享码」可生成分享码，粘贴到此即可导入</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4">
-            <Textarea className="min-h-32 font-mono break-all" placeholder="[stgy:...]" value={shareCode} onChange={handleShareCodeTextareaChange} />
+            <Textarea className="min-h-32 max-h-64 font-mono break-all" placeholder="[stgy:...]" value={shareCode} onChange={handleShareCodeTextareaChange} />
           </div>
           <DialogFooter>
             <Button className="w-20 cursor-pointer" onClick={handleDialogButtonClick}>
@@ -105,7 +105,7 @@ export function ExportButton() {
             <DialogDescription>在游戏内点击「新建战术板-输入分享码」即可将战术板导入到游戏</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4">
-            <Textarea className="min-h-32 font-mono break-all" readOnly value={shareCode} />
+            <Textarea className="min-h-32 max-h-64 font-mono break-all" readOnly value={shareCode} />
           </div>
           <DialogFooter>
             <Button className="w-32 cursor-pointer" variant="outline" onClick={handleCopyShareCodeToClipboardButtonClick}>
@@ -167,7 +167,7 @@ export function ShareButton() {
             <DialogDescription>复制链接以分享，点击链接可在其他网页窗口预览战术板查看效果</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4">
-            <div className="break-all">
+            <div className="line-clamp-6 break-all">
               <a className="underline underline-offset-2" href={shareUrl} target="_blank">{shareUrl}</a>
             </div>
           </div>
