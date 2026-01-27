@@ -3,6 +3,7 @@
 import { MouseEventHandler, PointerEventHandler, useState, useRef, useEffect, useCallback, useId } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
+import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { ContextMenuContent, ContextMenuItem, ContextMenuShortcut, ContextMenuTrigger, ContextMenu, ContextMenuGroup, ContextMenuSeparator } from '@/components/ui/context-menu'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -210,28 +211,39 @@ export function LayersPanel() {
       </div>
       <ContextMenu modal={false}>
         <ContextMenuTrigger asChild>
-          <ScrollArea className="flex-1 min-h-0 pb-4">
-            <div className="px-2 flex flex-col gap-0.5">
-              <DndContext
-                id={dndContextId}
-                sensors={sensors}
-                modifiers={[restrictToVerticalAxis, restrictToFirstScrollableAncestor]}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext items={scene.objects} strategy={verticalListSortingStrategy}>
-                  {scene.objects.map(({ id }) => (
-                    <SortableLayer key={id} id={id} />
-                  ))}
-                  <DragOverlay className="**:cursor-grabbing">
-                    {draggingObjectId && (
-                      <Layer id={draggingObjectId} />
-                    )}
-                  </DragOverlay>
-                </SortableContext>
-              </DndContext>
-            </div>
-          </ScrollArea>
+          {scene.objects.length ? (
+            <ScrollArea className="flex-1 min-h-0 pb-4">
+              <div className="px-2 flex flex-col gap-0.5">
+                <DndContext
+                  id={dndContextId}
+                  sensors={sensors}
+                  modifiers={[restrictToVerticalAxis, restrictToFirstScrollableAncestor]}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext items={scene.objects} strategy={verticalListSortingStrategy}>
+                    {scene.objects.map(({ id }) => (
+                      <SortableLayer key={id} id={id} />
+                    ))}
+                    <DragOverlay className="**:cursor-grabbing">
+                      {draggingObjectId && (
+                        <Layer id={draggingObjectId} />
+                      )}
+                    </DragOverlay>
+                  </SortableContext>
+                </DndContext>
+              </div>
+            </ScrollArea>
+          ) : (
+            <Empty className="mb-40">
+              <EmptyHeader>
+                <EmptyTitle>暂无图层</EmptyTitle>
+                <EmptyDescription className="text-pretty">
+                  从左侧图形库拖拽图形添加到战术板
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          )}
         </ContextMenuTrigger>
         <ContextMenuContent>
           <ContextMenuGroup>
