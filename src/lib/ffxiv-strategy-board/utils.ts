@@ -1,7 +1,7 @@
-import { v7 as uuidV7 } from 'uuid'
+import { nanoid } from 'nanoid'
 
 export function uuid(): string {
-  return uuidV7()
+  return nanoid()
 }
 
 export function transformStreamToUint8ArrayTransformer(transformStream: TransformStream): (input: Uint8Array) => Promise<Uint8Array> {
