@@ -207,7 +207,6 @@ export function StrategyBoardCanvas() {
   const objectHitCanvasesRef = useRef<{ id: string, selected: boolean, canvas: HitCanvas, offset: { x: number, y: number } }[]>(null)
 
   const handleStagePointerDown = useCallback((event: Konva.KonvaEventObject<PointerEvent>): void => {
-    if (event.evt.pointerType !== 'mouse' || event.evt.button !== 0) return
     const multiselect = event.evt.shiftKey || event.evt.ctrlKey
     if (!multiselect) selectObjects([])
     const stage = stageRef.current
@@ -469,6 +468,10 @@ export function StrategyBoardCanvas() {
     }
     const boundingBox = event.target.findAncestor('.object-bounding-box', true)
     if (boundingBox) {
+      return
+    }
+    if (event.evt.pointerType === 'touch') {
+      stageRef.current?.startDrag()
       return
     }
     handleStagePointerDown(event)

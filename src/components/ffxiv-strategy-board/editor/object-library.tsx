@@ -4,7 +4,7 @@ import { ReactNode, useState, useCallback, useId } from 'react'
 import Image from 'next/image'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
-import { PointerSensor, DragStartEvent, DragEndEvent, DndContext, DragOverlay, useSensor, useSensors, useDroppable, useDraggable } from '@dnd-kit/core'
+import { MouseSensor, TouchSensor, DragStartEvent, DragEndEvent, DndContext, DragOverlay, useSensor, useSensors, useDroppable, useDraggable } from '@dnd-kit/core'
 import { restrictToWindowEdges } from '@dnd-kit/modifiers'
 import { ffxivImageUrl } from '@/lib/utils'
 import { StrategyBoardObjectType } from '@/lib/ffxiv-strategy-board'
@@ -65,7 +65,8 @@ export function ObjectLibraryDraggingContainer(props: { children?: ReactNode }) 
   const contextId = useId()
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(MouseSensor),
+    useSensor(TouchSensor),
   )
 
   const handleDragStart = useCallback((event: DragStartEvent): void => {

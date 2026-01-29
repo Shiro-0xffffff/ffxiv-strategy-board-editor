@@ -7,7 +7,7 @@ import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/u
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { ContextMenuContent, ContextMenuItem, ContextMenuShortcut, ContextMenuTrigger, ContextMenu, ContextMenuGroup, ContextMenuSeparator } from '@/components/ui/context-menu'
 import { Skeleton } from '@/components/ui/skeleton'
-import { PointerSensor, DragStartEvent, DragEndEvent, DndContext, DragOverlay, useSensor, useSensors } from '@dnd-kit/core'
+import { MouseSensor, TouchSensor, DragStartEvent, DragEndEvent, DndContext, DragOverlay, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { restrictToVerticalAxis, restrictToFirstScrollableAncestor } from '@dnd-kit/modifiers'
 import { CSS } from '@dnd-kit/utilities'
@@ -184,7 +184,12 @@ export function LayersPanel() {
   const dndContextId = useId()
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 4,
+      },
+    }),
+    useSensor(TouchSensor, {
       activationConstraint: {
         distance: 4,
       },
