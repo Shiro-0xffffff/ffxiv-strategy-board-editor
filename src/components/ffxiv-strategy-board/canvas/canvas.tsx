@@ -456,6 +456,7 @@ export function StrategyBoardCanvas() {
   }, [zoomIn, zoomOut])
 
   const handlePointerDown = useCallback((event: Konva.KonvaEventObject<PointerEvent>): void => {
+    if (Konva.isDragging()) return
     if (event.evt.button === 1) {
       stageRef.current?.startDrag()
       return
@@ -478,6 +479,7 @@ export function StrategyBoardCanvas() {
   }, [handleStagePointerDown, handleObjectPointerDown])
 
   const handlePointerClick = useCallback((event: Konva.KonvaEventObject<PointerEvent>): void => {
+    if (Konva.isDragging()) return
     const canvasObject = event.target.findAncestor('.object', true)
     if (canvasObject) {
       const id = canvasObject.getAttr('data-id') as string
@@ -486,6 +488,7 @@ export function StrategyBoardCanvas() {
     }
   }, [handleObjectPointerClick])
   const handleTap = useCallback((event: Konva.KonvaEventObject<TouchEvent>): void => {
+    if (Konva.isDragging()) return
     const canvasObject = event.target.findAncestor('.object', true)
     if (canvasObject) {
       return
