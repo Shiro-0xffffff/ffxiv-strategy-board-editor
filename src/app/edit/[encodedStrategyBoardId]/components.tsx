@@ -2,7 +2,6 @@
 
 import { useTransition, useOptimistic } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -16,7 +15,7 @@ import {
   StrategyBoardEditor,
   StrategyBoardEditorSkeleton,
 } from '@/components/ffxiv-strategy-board'
-import { ShareButton, ShareButtonSkeleton } from '@/components/share-button'
+import { ShareButton, ShareButtonSkeleton } from '@/components/top-bar'
 import { House } from 'lucide-react'
 import { InferSelectModel } from 'drizzle-orm'
 import { schema } from '@/db'
@@ -24,8 +23,8 @@ import { StrategyBoardScene } from '@/lib/ffxiv-strategy-board'
 
 import { updateSceneContent } from './actions'
 
-function TopBar() {
-  const { encodedStrategyBoardId } = useParams<{ encodedStrategyBoardId: string }>()
+function TopBar(props: { encodedStrategyBoardId: string }) {
+  const { encodedStrategyBoardId } = props
 
   return (
     <header className="h-16 border-b px-4 flex items-center justify-between gap-2 bg-card">
@@ -68,8 +67,8 @@ function TopBarSkeleton() {
   )
 }
 
-export function EditPageContent(props: { strategyBoard: InferSelectModel<typeof schema.strategyBoards> & { scenes: InferSelectModel<typeof schema.scenes>[] } }) {
-  const { strategyBoard } = props
+export function EditPage(props: { encodedStrategyBoardId: string, strategyBoard: InferSelectModel<typeof schema.strategyBoards> & { scenes: InferSelectModel<typeof schema.scenes>[] } }) {
+  const { encodedStrategyBoardId, strategyBoard } = props
 
   const scene = strategyBoard.scenes[0].content
 
@@ -85,10 +84,9 @@ export function EditPageContent(props: { strategyBoard: InferSelectModel<typeof 
 
   return (
     <div className="w-full h-dvh flex flex-col">
-      <title>{optimisticScene?.name ? `${optimisticScene.name} - FF14 战术板编辑器` : 'FF14 战术板编辑器'}</title>
       {optimisticScene ? (
         <StrategyBoardProvider scene={optimisticScene} onSceneChange={handleEditorSceneChange}>
-          <TopBar />
+          <TopBar encodedStrategyBoardId={encodedStrategyBoardId} />
           <StrategyBoardEditor />
         </StrategyBoardProvider>
       ) : (

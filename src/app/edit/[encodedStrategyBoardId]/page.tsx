@@ -1,14 +1,21 @@
 import { Metadata } from 'next'
 import { decodeUUID } from '@/lib/utils'
 
-import { EditPageContent } from './components'
+import { EditPage } from './components'
 import { getStrategyBoard } from './actions'
 
-export const metadata: Metadata = {
-  title: null,
+export async function generateMetadata({ params }: { params: Promise<{ encodedStrategyBoardId: string }> }): Promise<Metadata> {
+  const { encodedStrategyBoardId } = await params
+
+  const strategyBoardId = decodeUUID(encodedStrategyBoardId)
+  const strategyBoard = await getStrategyBoard(strategyBoardId)
+
+  return {
+    title: strategyBoard?.name ? `${strategyBoard.name} - FF14 战术板编辑器` : 'FF14 战术板编辑器',
+  }
 }
 
-export default async function EditPage({ params }: { params: Promise<{ encodedStrategyBoardId: string }> }) {
+export default async function Page({ params }: { params: Promise<{ encodedStrategyBoardId: string }> }) {
   const { encodedStrategyBoardId } = await params
 
   const strategyBoardId = decodeUUID(encodedStrategyBoardId)
@@ -16,6 +23,6 @@ export default async function EditPage({ params }: { params: Promise<{ encodedSt
   if (!strategyBoard) return null
 
   return (
-    <EditPageContent strategyBoard={strategyBoard} />
+    <EditPage encodedStrategyBoardId={encodedStrategyBoardId} strategyBoard={strategyBoard} />
   )
 }

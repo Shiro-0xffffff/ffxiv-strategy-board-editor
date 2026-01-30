@@ -1,10 +1,30 @@
 'use client'
 
 import { MouseEventHandler, useState } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
-import { Share2, ClipboardCopy } from 'lucide-react'
+import { Pencil, Share2, ClipboardCopy } from 'lucide-react'
+
+export function EditButton(props: { encodedStrategyBoardId: string }) {
+  const { encodedStrategyBoardId } = props
+
+  return (
+    <>
+      <Button className="hidden sm:flex w-20 cursor-pointer" variant="outline" asChild>
+        <Link href={`/edit/${encodedStrategyBoardId}`}>
+          <Pencil /> 编辑
+        </Link>
+      </Button>
+      <Button className="sm:hidden cursor-pointer" variant="outline" size="icon" asChild>
+        <Link href={`/edit/${encodedStrategyBoardId}`}>
+          <Pencil />
+        </Link>
+      </Button>
+    </>
+  )
+}
 
 export function ShareButton(props: { encodedStrategyBoardId: string }) {
   const { encodedStrategyBoardId } = props
