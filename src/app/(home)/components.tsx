@@ -1,32 +1,34 @@
 'use client'
 
-import { MouseEventHandler, ChangeEventHandler, useState, useCallback } from 'react'
+import { MouseEventHandler, ChangeEventHandler, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { FileInput, Plus } from 'lucide-react'
-import { shareCodeToScene } from '@/lib/ffxiv-strategy-board'
+import { encodeUUID } from '@/lib/utils'
+
+import { importStrategyBoard, createStrategyBoard } from './actions'
 
 export function ImportPanel() {
   const router = useRouter()
 
   const [shareCode, setShareCode] = useState<string>('')
 
-  const handleImportShareCodeTextareaChange = useCallback<ChangeEventHandler<HTMLInputElement>>(({ target }) => {
+  const handleImportShareCodeTextareaChange: ChangeEventHandler<HTMLInputElement> = ({ target }) => {
     setShareCode(target.value)
-  }, [])
-  const handleDialogImportButtonClick = useCallback<MouseEventHandler<HTMLButtonElement>>(async () => {
+  }
+  const handleDialogImportButtonClick: MouseEventHandler<HTMLButtonElement> = async () => {
     try {
-      const scene = await shareCodeToScene(shareCode)
-      window.sessionStorage.setItem('scene', JSON.stringify(scene))
-      router.push('/edit')
+      const strategyBoardId = await importStrategyBoard(shareCode)
+      const encodedStrategyBoardId = encodeUUID(strategyBoardId)
+      router.push(`/edit/${encodedStrategyBoardId}`)
     } catch (err) {
       const detailedMessage = (err as Error).message
       toast.error(`导入失败：${detailedMessage}`)
     }
-  }, [shareCode, router])
+  }
 
   return (
     <div className="flex gap-2">
@@ -46,10 +48,11 @@ export function ImportPanel() {
 export function CreatePanel() {
   const router = useRouter()
 
-  const handleCreateEmptyStrategyBoardClick = useCallback<MouseEventHandler<HTMLDivElement>>(() => {
-    window.sessionStorage.removeItem('scene')
-    router.push('/edit')
-  }, [router])
+  const handleCreateEmptyStrategyBoardClick: MouseEventHandler<HTMLDivElement> = async () => {
+    const strategyBoardId = await createStrategyBoard()
+    const encodedStrategyBoardId = encodeUUID(strategyBoardId)
+    router.push(`/edit/${encodedStrategyBoardId}`)
+  }
 
   return (
     <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

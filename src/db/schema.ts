@@ -1,4 +1,5 @@
-import { pgTable, primaryKey, smallint, integer, bigint, text, char, varchar, jsonb, timestamp } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
+import { pgTable, primaryKey, uuid, smallint, bigint, text, char, varchar, jsonb, timestamp } from 'drizzle-orm/pg-core'
 import { StrategyBoardScene } from '@/lib/ffxiv-strategy-board'
 
 const timestamps = {
@@ -7,7 +8,7 @@ const timestamps = {
 }
 
 export const users = pgTable('users', {
-  id: bigint({ mode: 'number' }).primaryKey().generatedAlwaysAsIdentity({ startWith: 100000 }),
+  id: uuid().primaryKey().default(sql`uuid_generate_v7()`),
   nickname: text().notNull(),
   ...timestamps,
 })
@@ -19,7 +20,7 @@ export const roles = pgTable('roles', {
 })
 
 export const userRoles = pgTable('user_roles', {
-  userId: bigint({ mode: 'number' }).notNull().references(() => users.id),
+  userId: uuid().notNull().references(() => users.id),
   roleId: smallint().notNull().references(() => roles.id),
   ...timestamps,
 }, table => [
@@ -28,22 +29,22 @@ export const userRoles = pgTable('user_roles', {
 
 export const credentials = pgTable('credentials', {
   id: bigint({ mode: 'number' }).primaryKey().generatedAlwaysAsIdentity({ startWith: 100000 }),
-  userId: bigint({ mode: 'number' }).notNull().references(() => users.id),
+  userId: uuid().notNull().references(() => users.id),
   username: varchar({ length: 50 }).unique().notNull(),
   passwordHash: char({ length: 60 }).notNull(),
   ...timestamps,
 })
 
 export const strategyBoards = pgTable('strategy_boards', {
-  id: bigint({ mode: 'number' }).primaryKey().generatedAlwaysAsIdentity({ startWith: 1000000000 }),
+  id: uuid().primaryKey().default(sql`uuid_generate_v7()`),
   name: text().notNull(),
-  ownerUserId: bigint({ mode: 'number' }).references(() => users.id),
+  ownerUserId: uuid().references(() => users.id),
   ...timestamps,
 })
 
 export const scenes = pgTable('scenes', {
-  id: bigint({ mode: 'number' }).primaryKey().generatedAlwaysAsIdentity({ startWith: 1000000000 }),
-  strategyBoardId: integer().notNull().references(() => strategyBoards.id),
+  id: uuid().primaryKey().default(sql`uuid_generate_v7()`),
+  strategyBoardId: uuid().notNull().references(() => strategyBoards.id),
   name: text().notNull(),
   content: jsonb().notNull().$type<StrategyBoardScene>(),
   ...timestamps,

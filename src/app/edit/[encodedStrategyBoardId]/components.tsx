@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useTransition, useOptimistic } from 'react'
 import Link from 'next/link'
+import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -10,18 +11,22 @@ import {
   StrategyBoardName,
   ImportButton,
   ExportButton,
-  ShareButton,
   ImportButtonSkeleton,
   ExportButtonSkeleton,
-  ShareButtonSkeleton,
   StrategyBoardEditor,
   StrategyBoardEditorSkeleton,
 } from '@/components/ffxiv-strategy-board'
+import { ShareButton, ShareButtonSkeleton } from '@/components/share-button'
 import { House } from 'lucide-react'
-import { StrategyBoardScene, StrategyBoardBackground } from '@/lib/ffxiv-strategy-board'
-import { debounce } from 'es-toolkit'
+import { InferSelectModel } from 'drizzle-orm'
+import { schema } from '@/db'
+import { StrategyBoardScene } from '@/lib/ffxiv-strategy-board'
+
+import { updateSceneContent } from './actions'
 
 function TopBar() {
+  const { encodedStrategyBoardId } = useParams<{ encodedStrategyBoardId: string }>()
+
   return (
     <header className="h-16 border-b px-4 flex items-center justify-between gap-2 bg-card">
       <div className="flex-1 flex items-center gap-2">
@@ -36,7 +41,7 @@ function TopBar() {
       <div className="flex items-center gap-2">
         <ImportButton />
         <ExportButton />
-        <ShareButton />
+        <ShareButton encodedStrategyBoardId={encodedStrategyBoardId} />
       </div>
     </header>
   )
@@ -63,36 +68,26 @@ function TopBarSkeleton() {
   )
 }
 
-export function EditPageContent() {
-  const [scene, setScene] = useState<StrategyBoardScene | null>(null)
+export function EditPageContent(props: { strategyBoard: InferSelectModel<typeof schema.strategyBoards> & { scenes: InferSelectModel<typeof schema.scenes>[] } }) {
+  const { strategyBoard } = props
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    try {
-      const scene: StrategyBoardScene = JSON.parse(window.sessionStorage.getItem('scene')!)
-      if (scene) {
-        Promise.resolve().then(() => setScene(scene))
-        return
-      }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (err) {}
-    Promise.resolve().then(() => setScene({ name: '未命名战术板', background: StrategyBoardBackground.None, objects: [] }))
-  }, [])
+  const scene = strategyBoard.scenes[0].content
 
-  const saveSceneDraft = useMemo(() => debounce((scene: StrategyBoardScene) => {
-    window.sessionStorage.setItem('scene', JSON.stringify(scene))
-  }, 500), [])
+  const [isPending, startTransition] = useTransition()
+  const [optimisticScene, updateOptimisticScene] = useOptimistic(scene, (scene, newScene: StrategyBoardScene) => newScene)
 
-  const handleEditorSceneChange = useCallback((scene: StrategyBoardScene): void => {
-    setScene(scene)
-    saveSceneDraft(scene)
-  }, [saveSceneDraft])
+  const handleEditorSceneChange = (scene: StrategyBoardScene): void => {
+    startTransition(async () => {
+      updateOptimisticScene(scene)
+      await updateSceneContent(strategyBoard.scenes[0].id, scene)
+    })
+  }
 
   return (
     <div className="w-full h-dvh flex flex-col">
-      <title>{scene?.name ? `${scene.name} - FF14 战术板编辑器` : 'FF14 战术板编辑器'}</title>
-      {scene ? (
-        <StrategyBoardProvider scene={scene} onSceneChange={handleEditorSceneChange}>
+      <title>{optimisticScene?.name ? `${optimisticScene.name} - FF14 战术板编辑器` : 'FF14 战术板编辑器'}</title>
+      {optimisticScene ? (
+        <StrategyBoardProvider scene={optimisticScene} onSceneChange={handleEditorSceneChange}>
           <TopBar />
           <StrategyBoardEditor />
         </StrategyBoardProvider>

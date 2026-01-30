@@ -1,25 +1,16 @@
-'use client'
-
-import { MouseEventHandler, useState, useEffect, useCallback } from 'react'
+import { Metadata } from 'next'
 import Link from 'next/link'
-import { useRouter, useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { StrategyBoardProvider, StrategyBoardViewer, StrategyBoardName, ExportButton, ShareButton } from '@/components/ffxiv-strategy-board'
+import { StrategyBoardProvider, StrategyBoardViewer, StrategyBoardName, ExportButton } from '@/components/ffxiv-strategy-board'
+import { ShareButton } from '@/components/share-button'
 import { House, Pencil } from 'lucide-react'
-import { StrategyBoardScene, StrategyBoardBackground, shareCodeToScene } from '@/lib/ffxiv-strategy-board'
+import { decodeUUID } from '@/lib/utils'
 
-function TopBar() {
-  const { strippedShareCode } = useParams<{ strippedShareCode: string }>()
+import { getStrategyBoard } from './actions'
 
-  const router = useRouter()
-
-  const handleEditButtonClick = useCallback<MouseEventHandler<HTMLButtonElement>>(async () => {
-    const shareCode = `[stgy:${strippedShareCode.replaceAll('_', '+')}]`
-    const scene = await shareCodeToScene(shareCode)
-    window.sessionStorage.setItem('scene', JSON.stringify(scene))
-    router.push('/edit')
-  }, [strippedShareCode, router])
+export function TopBar(props: { encodedStrategyBoardId: string }) {
+  const { encodedStrategyBoardId } = props
 
   return (
     <header className="h-16 border-b bg-card">
@@ -35,14 +26,18 @@ function TopBar() {
             <StrategyBoardName readOnly />
           </div>
           <div className="flex items-center gap-2">
-            <Button className="hidden sm:flex w-20 cursor-pointer" variant="outline" onClick={handleEditButtonClick}>
-              <Pencil /> 编辑
+            <Button className="hidden sm:flex w-20 cursor-pointer" variant="outline" asChild>
+              <Link href={`/edit/${encodedStrategyBoardId}`}>
+                <Pencil /> 编辑
+              </Link>
             </Button>
-            <Button className="sm:hidden cursor-pointer" variant="outline" size="icon" onClick={handleEditButtonClick}>
-              <Pencil />
+            <Button className="sm:hidden cursor-pointer" variant="outline" size="icon" asChild>
+              <Link href={`/edit/${encodedStrategyBoardId}`}>
+                <Pencil />
+              </Link>
             </Button>
             <ExportButton />
-            <ShareButton />
+            <ShareButton encodedStrategyBoardId={encodedStrategyBoardId} />
           </div>
         </div>
       </div>
@@ -50,21 +45,24 @@ function TopBar() {
   )
 }
 
-export function ViewPageContent() {
-  const { strippedShareCode } = useParams<{ strippedShareCode: string }>()
+export const metadata: Metadata = {
+  title: null,
+}
 
-  const [scene, setScene] = useState<StrategyBoardScene>({ name: '', background: StrategyBoardBackground.None, objects: [] })
+export default async function ViewPage({ params }: { params: Promise<{ encodedStrategyBoardId: string }> }) {
+  const { encodedStrategyBoardId } = await params
+  
+  const strategyBoardId = decodeUUID(encodedStrategyBoardId)
+  const strategyBoard = await getStrategyBoard(strategyBoardId)
+  if (!strategyBoard) return null
 
-  useEffect(() => {
-    const shareCode = `[stgy:${strippedShareCode.replaceAll('_', '+')}]`
-    shareCodeToScene(shareCode).then(scene => setScene(scene))
-  }, [strippedShareCode])
+  const scene = strategyBoard.scenes[0].content
 
   return (
     <div className="min-h-dvh flex flex-col">
       <title>{scene?.name ? `${scene.name} - FF14 战术板编辑器` : 'FF14 战术板编辑器'}</title>
       <StrategyBoardProvider scene={scene}>
-        <TopBar />
+        <TopBar encodedStrategyBoardId={encodedStrategyBoardId} />
         <main className="flex-1 mx-auto container px-4 py-12">
           <div className="mx-auto max-w-6xl">
             <StrategyBoardViewer />
